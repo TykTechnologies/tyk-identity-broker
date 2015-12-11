@@ -32,6 +32,10 @@ func (s *Social) Name() string {
 	return "SocialProvider"
 }
 
+func (s *Social) ProviderType() tap.ProviderType {
+	return tap.REDIRECT_PROVIDER
+}
+
 func (s *Social) UseCallback() bool {
 	return true
 }

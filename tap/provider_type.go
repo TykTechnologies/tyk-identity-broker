@@ -1,4 +1,4 @@
-package main
+package tap
 
 type ProviderType string
 
