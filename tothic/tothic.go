@@ -21,6 +21,8 @@ import (
 // SessionName is the key used to access the session store.
 const SessionName = "_gothic_session"
 
+var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
+
 // Store can/should be set by applications using gothic. The default is a cookie store.
 var Store sessions.Store
 
@@ -45,8 +47,9 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) {
 	url, err := GetAuthURL(res, req, toth)
 	if err != nil {
-		res.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintln(res, err)
+		//res.WriteHeader(http.StatusBadRequest)
+		//fmt.Fprintln(res, err)
+		TothErrorHandler("[TOTHIC]", err.Error(), err, http.StatusBadRequest, res, req)
 		return
 	}
 

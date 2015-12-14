@@ -29,6 +29,19 @@ func getId(req *http.Request) (string, error) {
 	return id, nil
 }
 
+func getIdentityHandler(name tap.Action) tap.IdentityHandler {
+	var thisIdentityHandler tap.IdentityHandler
+
+	switch name {
+	case tap.GenerateOrLoginDeveloperProfile:
+		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
+	case tap.GenerateOrLoginUserProfile:
+		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
+	}
+
+	return thisIdentityHandler
+}
+
 func getTAProvider(conf tap.Profile) tap.TAProvider {
 
 	var thisProvider tap.TAProvider
@@ -38,14 +51,7 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 		thisProvider = &providers.Social{}
 	}
 
-	var thisIdentityHandler tap.IdentityHandler
-
-	switch conf.ActionType {
-	case tap.GenerateOrLoginDeveloperProfile:
-		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
-	case tap.GenerateOrLoginUserProfile:
-		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
-	}
+	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)
 
 	thisProvider.Init(thisIdentityHandler, conf, []byte(conf.ProviderConfig))
 	return thisProvider
@@ -112,14 +118,21 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, profile tap.Profile) {
-	switch profile.ActionType {
-	case tap.GenerateOrLoginDeveloperProfile:
-		log.Info(HandlerLogTag + " --> Handling new or existing developer profile")
-	case tap.GenerateOrLoginUserProfile:
-		log.Info(HandlerLogTag + " --> Handling new or existing dashboard profile")
+	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(profile.ActionType)
+
+	log.Warning(HandlerLogTag+" --> Developer Data: ", user)
+
+	// Lets finish things, if we have a user, log in and create the identities
+	identityErr := thisIdentityHandler.CompleteIdentityAction(user)
+	if identityErr != nil {
+		HandleError(HandlerLogTag, "Failed to complete identity transaction", identityErr, 400, w, r)
 	}
 
-	log.Info(HandlerLogTag+" --> Developer Data: ", user)
-	log.Warning(HandlerLogTag + " --> TODO: handle redirects!")
-	fmt.Fprintf(w, "Success!")
+	if profile.ReturnURL != "" {
+		http.Redirect(w, r, profile.ReturnURL, 301)
+		return
+	}
+
+	log.Warning("No return URL found, redirect failed.")
+	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }

@@ -6,10 +6,12 @@ import (
 	"github.com/gorilla/pat"
 	"github.com/lonelycode/tyk-auth-proxy/backends"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/lonelycode/tyk-auth-proxy/tothic"
 	"net/http"
 )
 
 var AuthConfigStore tap.AuthRegisterBackend
+var IDHandler tap.IdentityHandler
 var log = logrus.New()
 
 func initBackend(name string) {
@@ -64,6 +66,8 @@ func init() {
 	AuthConfigStore.SetKey("1", testConfig)
 
 	/// END TEST INIT
+
+	tothic.TothErrorHandler = HandleError
 }
 
 func main() {

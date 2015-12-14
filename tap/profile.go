@@ -9,6 +9,7 @@ type Profile struct {
 	ProviderName        string
 	ProviderConfig      string
 	ProviderConstraints ProfileConstraint
+	ReturnURL           string
 }
 
 type ProfileConstraint struct {

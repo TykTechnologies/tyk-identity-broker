@@ -92,9 +92,6 @@ func (s *Social) checkConstraints(user interface{}) error {
 }
 
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onSuccess func(http.ResponseWriter, *http.Request, interface{}, tap.Profile), onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
-	// print our state string to the console
-	// fmt.Println(gothic.GetState(r))
-
 	user, err := tothic.CompleteUserAuth(w, r, &s.toth)
 	if err != nil {
 		fmt.Fprintln(w, err)
