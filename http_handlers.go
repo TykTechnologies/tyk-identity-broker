@@ -107,9 +107,8 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider.HandleCallback(w, r, HandleSuccess)
+	thisIdentityProvider.HandleCallback(w, r, HandleSuccess, HandleError)
 	return
-
 }
 
 func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, profile tap.Profile) {
@@ -121,5 +120,6 @@ func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, pro
 	}
 
 	log.Info(HandlerLogTag+" --> Developer Data: ", user)
+	log.Warning(HandlerLogTag + " --> TODO: handle redirects!")
 	fmt.Fprintf(w, "Success!")
 }

@@ -54,6 +54,10 @@ func init() {
 		Type:            tap.REDIRECT_PROVIDER,
 		ProviderName:    "SocialProvider",
 		ProviderConfig:  config,
+		ProviderConstraints: tap.ProfileConstraint{
+			Domain: "tyk.io",
+			Group:  "Banana",
+		},
 	}
 
 	// Lets create some configurations!
