@@ -60,6 +60,7 @@ func init() {
 			Domain: "tyk.io",
 			Group:  "Banana",
 		},
+		ReturnURL: "http://sharrow.tyk.io:3000/",
 	}
 
 	// Lets create some configurations!
@@ -76,5 +77,5 @@ func main() {
 	p.Get("/auth/{id}/{provider}", HandleAuth)
 
 	fmt.Println("Listening...")
-	http.ListenAndServe(":3000", p)
+	http.ListenAndServe(":3010", p)
 }

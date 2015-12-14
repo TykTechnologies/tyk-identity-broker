@@ -120,7 +120,7 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, profile tap.Profile) {
 	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(profile.ActionType)
 
-	log.Warning(HandlerLogTag+" --> Developer Data: ", user)
+	log.Debug(HandlerLogTag+" --> Developer Data: ", user)
 
 	// Lets finish things, if we have a user, log in and create the identities
 	identityErr := thisIdentityHandler.CompleteIdentityAction(user)
@@ -128,11 +128,13 @@ func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, pro
 		HandleError(HandlerLogTag, "Failed to complete identity transaction", identityErr, 400, w, r)
 	}
 
+	// This isn;t working properly
+	log.Debug(HandlerLogTag + " --> Running redirect...")
 	if profile.ReturnURL != "" {
 		http.Redirect(w, r, profile.ReturnURL, 301)
 		return
 	}
 
-	log.Warning("No return URL found, redirect failed.")
+	log.Warning(HandlerLogTag + "No return URL found, redirect failed.")
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }

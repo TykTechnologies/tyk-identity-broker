@@ -108,5 +108,6 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onSucces
 }
 
 func (s *Social) getCallBackURL(provider string) string {
-	return "http://sharrow.tyk.io:3000/auth/" + s.profile.ID + "/" + provider + "/callback"
+	log.Warning("TODO: Callback URL must b dynamic!!!!")
+	return "http://sharrow.tyk.io:3010/auth/" + s.profile.ID + "/" + provider + "/callback"
 }
