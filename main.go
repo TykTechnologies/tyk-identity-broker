@@ -2,27 +2,28 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/pat"
-	"github.com/lonelycode/tyk-auth-proxy/providers"
+	"github.com/lonelycode/tyk-auth-proxy/backends"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"net/http"
 )
 
-var AuthConfigStore AuthRegisterBackend
+var AuthConfigStore tap.AuthRegisterBackend
+var log = logrus.New()
 
 func initBackend(name string) {
 	found := false
 
 	switch name {
 	case "in_memory":
-		AuthConfigStore = backends.InMemoryBackend{}
+		AuthConfigStore = &backends.InMemoryBackend{}
 		found = true
 	}
 
 	if !found {
 		fmt.Println("No backend set!")
-		AuthConfigStore = backends.InMemoryBackend{}
+		AuthConfigStore = &backends.InMemoryBackend{}
 	}
 
 	AuthConfigStore.Init()
@@ -39,8 +40,8 @@ func init() {
 		"UseProviders": [
 			{
 				"Name": "gplus",
-				"Key": "504206531762-e3nk43d2svtut98odmknrclf6aa1hd4n.apps.googleusercontent.com",
-				"Secret": "kRqL0F0ysPiM2sv-oyEwkw2F"
+				"Key": "504206531762-lcdhc8vmveckktcbbevme0n2vgd5v0ve.apps.googleusercontent.com",
+				"Secret": "bIboXfuaJh1qnJHi0K_P1MyL"
 			}
 		]
 	}`
@@ -49,57 +50,21 @@ func init() {
 		ID:              "1",
 		OrgID:           "TEST",
 		ActionType:      tap.GenerateOrLoginDeveloperProfile,
-		MatchedPolicyID: "1",
+		MatchedPolicyID: "1A",
 		Type:            tap.REDIRECT_PROVIDER,
 		ProviderName:    "SocialProvider",
 		ProviderConfig:  config,
 	}
 
 	// Lets create some configurations!
-	AuthConfigStore.SetKey("configs", []tap.Profile{testConfig})
+	AuthConfigStore.SetKey("1", testConfig)
 
 	/// END TEST INIT
 }
 
 func main() {
-
-	var config string = `
-	{
-		"UseProviders": [
-			{
-				"Name": "gplus",
-				"Key": "504206531762-e3nk43d2svtut98odmknrclf6aa1hd4n.apps.googleusercontent.com",
-				"Secret": "kRqL0F0ysPiM2sv-oyEwkw2F"
-			}
-		]
-	}
-	`
-	var theseConfigs []tap.Profile
-	theseConfigs := AuthConfigStore.GetKey("configs")
-
 	p := pat.New()
-
-	for _, conf := range theseConfigs {
-		var thisProvider tap.TAProvider
-
-		switch conf.ProviderName {
-		case "SocialProvider":
-			thisProvider = providers.Social{}
-		}
-
-		var thisIdentityHandler IdentityHandler
-
-		switch conf.ActionType {
-		case GenerateOrLoginDeveloperProfile:
-			thisIdentityHandler = tap.DummyIdentityHandler{} // TODO: Change These
-		case GenerateOrLoginUserProfile:
-			thisIdentityHandler = tap.DummyIdentityHandler{} // TODO: Change These
-		}
-
-		thisProvider.Init(thisIdentityHandler, []byte(conf.ProviderConfig))
-	}
-
-	p.Get("/auth/{id}/{provider}/callback", HandleAuthCallback)
+	p.Get("/auth/{id}/{provider}/callback", HandleAuthCallback) // TODO: WRITE THESE!!!
 	p.Get("/auth/{id}/{provider}", HandleAuth)
 
 	fmt.Println("Listening...")

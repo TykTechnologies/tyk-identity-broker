@@ -3,6 +3,6 @@ package tap
 type Action string
 
 const (
-	GenerateOrLoginDeveloperProfile Action = "GenerateOrLoginUserProfile"
+	GenerateOrLoginDeveloperProfile Action = "GenerateOrLoginDeveloperProfile"
 	GenerateOrLoginUserProfile      Action = "GenerateOrLoginUserProfile"
 )

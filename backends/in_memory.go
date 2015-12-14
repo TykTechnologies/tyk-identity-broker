@@ -1,5 +1,10 @@
 package backends
 
+import (
+	"encoding/json"
+	"errors"
+)
+
 type InMemoryBackend struct {
 	kv map[string]interface{}
 }
@@ -10,18 +15,28 @@ func (m *InMemoryBackend) Init() {
 
 func (m *InMemoryBackend) SetKey(key string, val interface{}) error {
 	if m.kv == nil {
-		return errors.New("Store inot initialised!")
+		return errors.New("Store not initialised!")
 	}
 
-	m.kv[key] = val
+	asByte, encErr := json.Marshal(val)
+	if encErr != nil {
+		return encErr
+	}
+
+	m.kv[key] = asByte
 	return nil
 }
-func (m *InMemoryBackend) GetKey(key string) (interface{}, error) {
+func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 	v, ok := m.kv[key]
 
 	if !ok {
-		return nil, errors.New("Not found")
+		return errors.New("Not found")
 	}
 
-	return v, nil
+	decErr := json.Unmarshal(v.([]byte), target)
+	if decErr != nil {
+		return decErr
+	}
+
+	return nil
 }

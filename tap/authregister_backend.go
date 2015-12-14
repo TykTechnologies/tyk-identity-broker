@@ -2,6 +2,6 @@ package tap
 
 type AuthRegisterBackend interface {
 	Init()
-	SetKey(string, string)
-	GetKey(string, string)
+	SetKey(string, interface{}) error
+	GetKey(string, interface{}) error
 }

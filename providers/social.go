@@ -16,6 +16,7 @@ type Social struct {
 	handler tap.IdentityHandler
 	config  GothConfig
 	toth    toth.TothInstance
+	profile tap.Profile
 }
 
 type GothProviderConfig struct {
@@ -40,8 +41,9 @@ func (s *Social) UseCallback() bool {
 	return true
 }
 
-func (s *Social) Init(handler tap.IdentityHandler, config []byte) error {
+func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
 	s.handler = handler
+	s.profile = profile
 
 	s.toth = toth.TothInstance{}
 	s.toth.Init()
@@ -67,19 +69,19 @@ func (s *Social) Handle(w http.ResponseWriter, r *http.Request) {
 	tothic.BeginAuthHandler(w, r, &s.toth)
 }
 
-func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request) {
+func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onSuccess func(http.ResponseWriter, *http.Request, interface{}, tap.Profile)) {
 	// print our state string to the console
-	fmt.Println(gothic.GetState(r))
+	// fmt.Println(gothic.GetState(r))
 
 	user, err := tothic.CompleteUserAuth(w, r, &s.toth)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return
 	}
-	fmt.Println(user)
-	fmt.Fprintln(w, "WHEEEE")
+
+	onSuccess(w, r, user, s.profile)
 }
 
 func (s *Social) getCallBackURL(provider string) string {
-	return "http://sharrow.tyk.io:3000/auth/" + provider + "/callback"
+	return "http://sharrow.tyk.io:3000/auth/" + s.profile.ID + "/" + provider + "/callback"
 }
