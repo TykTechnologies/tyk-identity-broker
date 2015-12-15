@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/pat"
 	"github.com/lonelycode/tyk-auth-proxy/backends"
@@ -14,7 +13,9 @@ var AuthConfigStore tap.AuthRegisterBackend
 var IDHandler tap.IdentityHandler
 var log = logrus.New()
 
-func initBackend(name string) {
+var config Configuration
+
+func initBackend(name string, configuration interface{}) {
 	found := false
 
 	switch name {
@@ -24,28 +25,58 @@ func initBackend(name string) {
 	}
 
 	if !found {
-		fmt.Println("No backend set!")
+		log.Warning("[MAIN] No backend set!")
 		AuthConfigStore = &backends.InMemoryBackend{}
 	}
 
-	AuthConfigStore.Init()
+	AuthConfigStore.Init(configuration)
 }
 
-func init() {
-
+func setupTestConfig() {
 	/// TEST ONLY
 
-	initBackend("in_memory")
+	// SOCIAL
+	// ------
+	// var testConf string = `
+	// {
+	// 	"UseProviders": [
+	// 		{
+	// 			"Name": "gplus",
+	// 			"Key": "504206531762-lcdhc8vmveckktcbbevme0n2vgd5v0ve.apps.googleusercontent.com",
+	// 			"Secret": "bIboXfuaJh1qnJHi0K_P1MyL"
+	// 		}
+	// 	],
+	// 	"CallbackBaseURL": "http://sharrow.tyk.io:3010"
+	// }`
 
-	var config string = `
+	// testConfig := tap.Profile{
+	// 	ID:              "1",
+	// 	OrgID:           "TEST",
+	// 	ActionType:      tap.GenerateOrLoginDeveloperProfile,
+	// 	MatchedPolicyID: "1A",
+	// 	Type:            tap.REDIRECT_PROVIDER,
+	// 	ProviderName:    "SocialProvider",
+	// 	ProviderConfig:  testConf,
+	// 	ProviderConstraints: tap.ProfileConstraint{
+	// 		Domain: "tyk.io",
+	// 		Group:  "",
+	// 	},
+	// 	ReturnURL: "http://sharrow.tyk.io:3000/bounce",
+	// }
+
+	// LDAP
+	// ----
+
+	var testConf string = `
 	{
-		"UseProviders": [
-			{
-				"Name": "gplus",
-				"Key": "504206531762-lcdhc8vmveckktcbbevme0n2vgd5v0ve.apps.googleusercontent.com",
-				"Secret": "bIboXfuaJh1qnJHi0K_P1MyL"
-			}
-		]
+		"LDAPServer": "localhost",
+		"LDAPPort": "389",
+		"LDAPUserDN": "cn=*USERNAME*,dc=test-ldap,dc=tyk,dc=io",
+		"LDAPBaseDN": "dc=test-ldap,dc=tyk,dc=io",
+		"LDAPFilter": "(cn=*USERNAME*)",
+		"LDAPAttributes": [],
+		"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
+		"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce"
 	}`
 
 	testConfig := tap.Profile{
@@ -53,29 +84,43 @@ func init() {
 		OrgID:           "TEST",
 		ActionType:      tap.GenerateOrLoginDeveloperProfile,
 		MatchedPolicyID: "1A",
-		Type:            tap.REDIRECT_PROVIDER,
-		ProviderName:    "SocialProvider",
-		ProviderConfig:  config,
+		Type:            tap.PASSTHROUGH_PROVIDER,
+		ProviderName:    "ADProvider",
+		ProviderConfig:  testConf,
 		ProviderConstraints: tap.ProfileConstraint{
-			Domain: "tyk.io",
-			Group:  "Banana",
+			Domain: "",
+			Group:  "",
 		},
-		ReturnURL: "http://sharrow.tyk.io:3000/",
+		ReturnURL: "http://sharrow.tyk.io:3000/bounce",
 	}
 
 	// Lets create some configurations!
-	AuthConfigStore.SetKey("1", testConfig)
+	inputErr := AuthConfigStore.SetKey("1", testConfig)
+	if inputErr != nil {
+		log.Error("Couldn't encode configuration: ", inputErr)
+	}
 
 	/// END TEST INIT
+}
+
+func init() {
+	loadConfig("tap.conf", &config)
+	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
+
+	// --- Testing
+	setupTestConfig()
+	// --- End test
 
 	tothic.TothErrorHandler = HandleError
 }
 
 func main() {
 	p := pat.New()
-	p.Get("/auth/{id}/{provider}/callback", HandleAuthCallback) // TODO: WRITE THESE!!!
+	p.Get("/auth/{id}/{provider}/callback", HandleAuthCallback)
+	p.Post("/auth/{id}/{provider}/callback", HandleAuthCallback)
+	p.Post("/auth/{id}/{provider}", HandleAuth)
 	p.Get("/auth/{id}/{provider}", HandleAuth)
 
-	fmt.Println("Listening...")
+	log.Info("[MAIN] Listening...")
 	http.ListenAndServe(":3010", p)
 }

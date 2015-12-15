@@ -49,6 +49,8 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 	switch conf.ProviderName {
 	case "SocialProvider":
 		thisProvider = &providers.Social{}
+	case "ADProvider":
+		thisProvider = &providers.ADProvider{}
 	}
 
 	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)
@@ -113,28 +115,6 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider.HandleCallback(w, r, HandleSuccess, HandleError)
+	thisIdentityProvider.HandleCallback(w, r, HandleError)
 	return
-}
-
-func HandleSuccess(w http.ResponseWriter, r *http.Request, user interface{}, profile tap.Profile) {
-	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(profile.ActionType)
-
-	log.Debug(HandlerLogTag+" --> Developer Data: ", user)
-
-	// Lets finish things, if we have a user, log in and create the identities
-	identityErr := thisIdentityHandler.CompleteIdentityAction(user)
-	if identityErr != nil {
-		HandleError(HandlerLogTag, "Failed to complete identity transaction", identityErr, 400, w, r)
-	}
-
-	// This isn;t working properly
-	log.Debug(HandlerLogTag + " --> Running redirect...")
-	if profile.ReturnURL != "" {
-		http.Redirect(w, r, profile.ReturnURL, 301)
-		return
-	}
-
-	log.Warning(HandlerLogTag + "No return URL found, redirect failed.")
-	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }

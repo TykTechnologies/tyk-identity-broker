@@ -3,13 +3,17 @@ package backends
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 type InMemoryBackend struct {
 	kv map[string]interface{}
 }
 
-func (m *InMemoryBackend) Init() {
+func (m *InMemoryBackend) Init(config interface{}) {
+	log.Info("[IN-MEMORY STORE] Initialised")
 	m.kv = make(map[string]interface{})
 }
 

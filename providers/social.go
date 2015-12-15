@@ -31,7 +31,8 @@ type GothProviderConfig struct {
 }
 
 type GothConfig struct {
-	UseProviders []GothProviderConfig
+	UseProviders    []GothProviderConfig
+	CallbackBaseURL string
 }
 
 func (s *Social) Name() string {
@@ -91,7 +92,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 	return nil
 }
 
-func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onSuccess func(http.ResponseWriter, *http.Request, interface{}, tap.Profile), onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 	user, err := tothic.CompleteUserAuth(w, r, &s.toth)
 	if err != nil {
 		fmt.Fprintln(w, err)
@@ -104,10 +105,10 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onSucces
 		return
 	}
 
-	onSuccess(w, r, user, s.profile)
+	// Complete login and redirect
+	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 }
 
 func (s *Social) getCallBackURL(provider string) string {
-	log.Warning("TODO: Callback URL must b dynamic!!!!")
-	return "http://sharrow.tyk.io:3010/auth/" + s.profile.ID + "/" + provider + "/callback"
+	return s.config.CallbackBaseURL + "/auth/" + s.profile.ID + "/" + provider + "/callback"
 }
