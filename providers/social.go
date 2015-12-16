@@ -33,6 +33,7 @@ type GothProviderConfig struct {
 type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
+	FailureRedirect string
 }
 
 func (s *Social) Name() string {
@@ -101,7 +102,12 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 
 	constraintErr := s.checkConstraints(user)
 	if constraintErr != nil {
-		onError(SocialLogTag, "Constraint failed", constraintErr, 400, w, r)
+		if s.config.FailureRedirect == "" {
+			onError(SocialLogTag, "Constraint failed", constraintErr, 400, w, r)
+			return
+		}
+
+		http.Redirect(w, r, s.config.FailureRedirect, 301)
 		return
 	}
 

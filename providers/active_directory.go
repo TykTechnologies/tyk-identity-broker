@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lonelycode/go-ldap"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/markbates/goth"
 	"net/http"
 	"strings"
 )
@@ -19,14 +20,16 @@ type ADProvider struct {
 }
 
 type ADConfig struct {
-	LDAPServer      string
-	LDAPPort        string
-	LDAPUserDN      string
-	LDAPBaseDN      string
-	LDAPFilter      string
-	LDAPAttributes  []string
-	FailureRedirect string
-	SuccessRedirect string
+	LDAPServer         string
+	LDAPPort           string
+	LDAPUserDN         string
+	LDAPBaseDN         string
+	LDAPFilter         string
+	LDAPEmailAttribute string
+	LDAPAttributes     []string
+	FailureRedirect    string
+	SuccessRedirect    string
+	DefaultDomain      string
 }
 
 func (s *ADProvider) Name() string {
@@ -42,16 +45,16 @@ func (s *ADProvider) UseCallback() bool {
 }
 
 func (s *ADProvider) connect() {
-	log.Warning(ADProviderLogTag + " Connect: starting...")
+	log.Debug(ADProviderLogTag + " Connect: starting...")
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
-	log.Warning(ADProviderLogTag+" --> To: ", sName)
+	log.Debug(ADProviderLogTag+" --> To: ", sName)
 	s.connection, err = ldap.Dial("tcp", sName)
 	if err != nil {
 		log.Error(ADProviderLogTag+" Failed to dial: ", err)
 		return
 	}
-	log.Warning(ADProviderLogTag + " Connect: finished...")
+	log.Debug(ADProviderLogTag + " Connect: finished...")
 }
 
 func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -82,32 +85,80 @@ func (s *ADProvider) prepDN(thisUserName string) string {
 	return newFilter
 }
 
-func (s *ADProvider) getUserData(username string) (interface{}, error) {
-	log.Warning(ADProviderLogTag + " Search: starting...")
-
-	search_request := ldap.NewSearchRequest(
-		s.config.LDAPBaseDN,
-		ldap.ScopeSingleLevel,
-		ldap.DerefAlways,
-		0,
-		0,
-		false,
-		s.prepFilter(username),
-		s.config.LDAPAttributes,
-		nil)
-
-	sr, err := s.connection.Search(search_request)
-	if err != nil {
-		log.Error(ADProviderLogTag+" Failure in search: ", err)
-		return nil, err
+func (s *ADProvider) generateUsername(username string) string {
+	var uname string
+	if strings.Contains(username, "@") {
+		uname = username
+	} else {
+		asSlug := Slug(username)
+		domain := s.config.DefaultDomain
+		if s.config.DefaultDomain == "" {
+			domain = s.profile.OrgID + "-" + "ADProvider.com"
+		}
+		uname = asSlug + "@" + domain
 	}
+	return uname
+}
 
-	for _, i := range sr.Entries {
-		log.Info(i)
+func (s *ADProvider) getUserData(username string) (goth.User, error) {
+	log.Debug(ADProviderLogTag + " Search: starting...")
+	thisUser := goth.User{
+		UserID:   username,
+		Provider: "ADProvider",
 	}
-	log.Warning(ADProviderLogTag+" User Data:", sr)
-	log.Warning(ADProviderLogTag+" Search:", search_request.Filter, "-> num of entries = ", len(sr.Entries))
-	return sr, nil
+	var attrs []string
+	attrs = s.config.LDAPAttributes
+	attrs = append(attrs, s.config.LDAPEmailAttribute)
+
+	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
+	// otherwise we use an algo to create one
+
+	// search_request := ldap.NewSearchRequest(
+	// 	s.config.LDAPBaseDN,
+	// 	ldap.ScopeSingleLevel,
+	// 	ldap.DerefAlways,
+	// 	0,
+	// 	0,
+	// 	false,
+	// 	s.prepFilter(username),
+	// 	s.config.LDAPAttributes,
+	// 	nil)
+
+	// sr, err := s.connection.Search(search_request)
+	// if err != nil {
+	// 	log.Error(ADProviderLogTag+" Failure in search: ", err)
+	// 	return thisUser, err
+	// }
+
+	// emailFound := false
+	// for _, entry := range sr.Entries {
+	// 	for _, j := range entry.Attributes {
+	// 		log.Debug("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
+	// 		if j.Name == s.config.LDAPEmailAttribute {
+	// 			thisUser.Email = j.Values[0]
+	// 			emailFound = true
+	// 			break
+	// 		}
+	// 	}
+	// 	if emailFound {
+	// 		break
+	// 	}
+	// }
+
+	// if !emailFound {
+	// 	log.Warning("User email not found, generating from username")
+	// 	if strings.Contains(username, "@") {
+	// 		thisUser.Email = username
+	// 	} else {
+	// 		thisUser.Email = username + "@" + s.profile.OrgID + "-" + "ADProvider.com"
+	// 	}
+	// }
+
+	thisUser.Email = s.generateUsername(username)
+
+	log.Debug(ADProviderLogTag+" User Data:", thisUser)
+	//log.Debug(ADProviderLogTag+" Search:", search_request.Filter, "-> num of entries = ", len(sr.Entries))
+	return thisUser, nil
 }
 
 func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
@@ -123,6 +174,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 		s.provideErrorRedirect(w, r)
 		return
 	}
+	log.Info(ADProviderLogTag+" User bind successful: ", username)
 
 	user, uErr := s.getUserData(username)
 	if uErr != nil {
@@ -141,7 +193,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 
-	log.Warning(ADProviderLogTag + " Closing connection")
+	log.Debug(ADProviderLogTag + " Closing connection")
 	closeFail := s.connection.Close()
 	if closeFail != nil {
 		log.Error(ADProviderLogTag+" Closing failed! ", closeFail)
@@ -149,7 +201,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {
-	log.Warning(ADProviderLogTag + " Constraints for AD must be set in DN")
+	log.Debug(ADProviderLogTag + " Constraints for AD must be set in DN")
 	return nil
 }
 

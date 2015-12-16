@@ -42,6 +42,15 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 	return thisIdentityHandler
 }
 
+func hackProviderConf(conf interface{}) []byte {
+	thisConf, err := json.Marshal(conf)
+	if err != nil {
+		log.Warning("Failure in JSON conversion")
+		return []byte{}
+	}
+	return thisConf
+}
+
 func getTAProvider(conf tap.Profile) tap.TAProvider {
 
 	var thisProvider tap.TAProvider
@@ -55,7 +64,7 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 
 	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)
 
-	thisProvider.Init(thisIdentityHandler, conf, []byte(conf.ProviderConfig))
+	thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
 	return thisProvider
 
 }

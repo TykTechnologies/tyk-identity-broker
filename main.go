@@ -64,41 +64,57 @@ func setupTestConfig() {
 	// 	ReturnURL: "http://sharrow.tyk.io:3000/bounce",
 	// }
 
-	// LDAP
-	// ----
+	// LDAP (local and remote)
+	// ----------------------
+	// http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
 
-	var testConf string = `
-	{
-		"LDAPServer": "localhost",
-		"LDAPPort": "389",
-		"LDAPUserDN": "cn=*USERNAME*,dc=test-ldap,dc=tyk,dc=io",
-		"LDAPBaseDN": "dc=test-ldap,dc=tyk,dc=io",
-		"LDAPFilter": "(cn=*USERNAME*)",
-		"LDAPAttributes": [],
-		"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
-		"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce"
-	}`
+	// var testConf string = `
+	// {
+	// 	"LDAPServer": "localhost",
+	// 	"LDAPPort": "389",
+	// 	"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io",
+	// 	"LDAPBaseDN": "cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io",
+	// 	"LDAPFilter": "(&(objectCategory=person)(objectClass=user)(cn=*USERNAME*))",
+	// 	"LDAPAttributes": [],
+	// 	"LDAPEmailAttribute": "mail",
+	// 	"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
+	// 	"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce"
+	// }`
 
-	testConfig := tap.Profile{
-		ID:              "1",
-		OrgID:           "TEST",
-		ActionType:      tap.GenerateOrLoginDeveloperProfile,
-		MatchedPolicyID: "1A",
-		Type:            tap.PASSTHROUGH_PROVIDER,
-		ProviderName:    "ADProvider",
-		ProviderConfig:  testConf,
-		ProviderConstraints: tap.ProfileConstraint{
-			Domain: "",
-			Group:  "",
-		},
-		ReturnURL: "http://sharrow.tyk.io:3000/bounce",
-	}
+	// var testConf string = `
+	// {
+	// 	"LDAPServer": "ldap.forumsys.com",
+	// 	"LDAPPort": "389",
+	// 	"LDAPUserDN": "uid=*USERNAME*,dc=example,dc=com",
+	// 	"LDAPBaseDN": "dc=example,dc=com",
+	// 	"LDAPFilter": "(uid=*USERNAME*)",
+	// 	"LDAPAttributes": [],
+	// 	"LDAPEmailAttribute": "mail",
+	// 	"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
+	// 	"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce",
+	// 	"DefaultDomain": "tyk.io"
+	// }`
 
-	// Lets create some configurations!
-	inputErr := AuthConfigStore.SetKey("1", testConfig)
-	if inputErr != nil {
-		log.Error("Couldn't encode configuration: ", inputErr)
-	}
+	// testConfig := tap.Profile{
+	// 	ID:              "1",
+	// 	OrgID:           "TEST",
+	// 	ActionType:      tap.GenerateOrLoginDeveloperProfile,
+	// 	MatchedPolicyID: "1A",
+	// 	Type:            tap.PASSTHROUGH_PROVIDER,
+	// 	ProviderName:    "ADProvider",
+	// 	ProviderConfig:  testConf,
+	// 	ProviderConstraints: tap.ProfileConstraint{
+	// 		Domain: "",
+	// 		Group:  "",
+	// 	},
+	// 	ReturnURL: "http://sharrow.tyk.io:3000/bounce",
+	// }
+
+	// // Lets create some configurations!
+	// inputErr := AuthConfigStore.SetKey("1", testConfig)
+	// if inputErr != nil {
+	// 	log.Error("Couldn't encode configuration: ", inputErr)
+	// }
 
 	/// END TEST INIT
 }
@@ -108,7 +124,16 @@ func init() {
 	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
 
 	// --- Testing
-	setupTestConfig()
+	//setupTestConfig()
+
+	loaderConf := FileLoaderConf{
+		FileName: "./test_apps.json",
+	}
+
+	loader := FileLoader{}
+	loader.Init(loaderConf)
+	loader.LoadIntoStore(AuthConfigStore)
+
 	// --- End test
 
 	tothic.TothErrorHandler = HandleError

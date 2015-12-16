@@ -7,7 +7,7 @@ type Profile struct {
 	MatchedPolicyID     string
 	Type                ProviderType
 	ProviderName        string
-	ProviderConfig      string
+	ProviderConfig      interface{}
 	ProviderConstraints ProfileConstraint
 	ReturnURL           string
 }
