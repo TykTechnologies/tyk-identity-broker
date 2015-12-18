@@ -1,15 +1,16 @@
 package tap
 
 type Profile struct {
-	ID                  string
-	OrgID               string
-	ActionType          Action
-	MatchedPolicyID     string
-	Type                ProviderType
-	ProviderName        string
-	ProviderConfig      interface{}
-	ProviderConstraints ProfileConstraint
-	ReturnURL           string
+	ID                    string
+	OrgID                 string
+	ActionType            Action
+	MatchedPolicyID       string
+	Type                  ProviderType
+	ProviderName          string
+	ProviderConfig        interface{}
+	IdentityHandlerConfig interface{}
+	ProviderConstraints   ProfileConstraint
+	ReturnURL             string
 }
 
 type ProfileConstraint struct {

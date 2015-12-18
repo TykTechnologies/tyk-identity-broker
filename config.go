@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
 	"io/ioutil"
 )
 
@@ -10,6 +11,7 @@ type Configuration struct {
 		Name            string
 		BackendSettings interface{}
 	}
+	TykAPISettings tyk.TykAPI
 }
 
 func loadConfig(filePath string, configStruct *Configuration) {
@@ -23,4 +25,6 @@ func loadConfig(filePath string, configStruct *Configuration) {
 			log.Error("Couldn't unmarshal configuration: ", jsErr)
 		}
 	}
+
+	log.Warning(configStruct.TykAPISettings)
 }

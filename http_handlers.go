@@ -34,9 +34,9 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 
 	switch name {
 	case tap.GenerateOrLoginDeveloperProfile:
-		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{API: &TykAPIHandler} // TODO: Change These
 	case tap.GenerateOrLoginUserProfile:
-		thisIdentityHandler = identityHandlers.DummyIdentityHandler{} // TODO: Change These
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{API: &TykAPIHandler} // TODO: Change These
 	}
 
 	return thisIdentityHandler
@@ -63,7 +63,7 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 	}
 
 	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)
-
+	thisIdentityHandler.Init(conf)
 	thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
 	return thisProvider
 

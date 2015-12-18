@@ -6,6 +6,7 @@ import (
 	"github.com/lonelycode/tyk-auth-proxy/backends"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"github.com/lonelycode/tyk-auth-proxy/tothic"
+	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
 	"net/http"
 )
 
@@ -14,6 +15,7 @@ var IDHandler tap.IdentityHandler
 var log = logrus.New()
 
 var config Configuration
+var TykAPIHandler tyk.TykAPI
 
 func initBackend(name string, configuration interface{}) {
 	found := false
@@ -122,6 +124,8 @@ func setupTestConfig() {
 func init() {
 	loadConfig("tap.conf", &config)
 	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
+
+	TykAPIHandler = config.TykAPISettings
 
 	// --- Testing
 	//setupTestConfig()

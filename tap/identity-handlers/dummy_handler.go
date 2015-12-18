@@ -12,6 +12,10 @@ var DummyLogTag string = "[DUMMY ID HANDLER]"
 
 type DummyIdentityHandler struct{}
 
+func (d DummyIdentityHandler) Init(conf interface{}) error {
+	return nil
+}
+
 func (d DummyIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	log.Info("[DUMMY-ID-HANDLER]  Creating identity for: ", i)
 	return "", nil
