@@ -549,6 +549,7 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 	}
 
 	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body)
+	log.Info("Returned: ", retData)
 
 	return dErr
 }
