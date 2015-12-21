@@ -9,7 +9,9 @@ import (
 	"io/ioutil"
 	"labix.org/v2/mgo/bson"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 )
 
 type MinimalApiDef struct {
@@ -88,6 +90,24 @@ type TykDashboardUserlist struct {
 	Users []TykDashboardUser `json:"users"`
 }
 
+type PortalDeveloper struct {
+	Id            bson.ObjectId     `bson:"_id,omitempty" json:"id"`
+	Email         string            `bson:"email" json:"email"`
+	Password      string            `bson:"password" json:"password"`
+	DateCreated   time.Time         `bson:"date_created" json:"date_created"`
+	InActive      bool              `bson:"inactive" json:"inactive"`
+	OrgId         string            `bson:"org_id" json:"org_id"`
+	ApiKeys       map[string]string `bson:"api_keys" json:"api_keys"`
+	Subscriptions map[string]string `bson:"subscriptions" json:"subscriptions"`
+	Fields        map[string]string `bson:"fields" json:"fields"`
+	Nonce         string            `bson:"nonce" json:"nonce"`
+}
+
+type ReturnDataStruct struct {
+	Data  []interface{}
+	Pages int
+}
+
 type Endpoint string
 type TykAPIName string
 
@@ -102,6 +122,8 @@ const (
 	PORTAL_PAGE      Endpoint = "/api/portal/pages"
 	PORTAL_CSS       Endpoint = "/api/portal/css"
 	PORTAL_MENUS     Endpoint = "/api/portal/menus"
+	PORTAL_DEVS      Endpoint = "/api/portal/developers/email"
+	PORTAL_DEV       Endpoint = "/api/portal/developers"
 	SSO              Endpoint = "/admin/sso"
 
 	GATEWAY    TykAPIName = "gateway"
@@ -486,4 +508,47 @@ func (t *TykAPI) CreateSSONonce(target Endpoint, data interface{}) (interface{},
 	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body)
 
 	return returnVal, dErr
+}
+
+func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDeveloper, error) {
+	asStr := url.QueryEscape(DeveloperEmail)
+	target := strings.Join([]string{string(PORTAL_DEVS), asStr}, "/")
+
+	retUser := PortalDeveloper{}
+
+	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil)
+
+	return retUser, dErr
+}
+
+func (t *TykAPI) UpdateDeveloper(UserCred string, dev PortalDeveloper) error {
+	target := strings.Join([]string{string(PORTAL_DEV), dev.Id.Hex()}, "/")
+
+	retData := map[string]interface{}{}
+	data, err := json.Marshal(dev)
+	body := bytes.NewBuffer(data)
+
+	if err != nil {
+		return err
+	}
+
+	dErr := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body)
+
+	return dErr
+}
+
+func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
+	target := strings.Join([]string{string(PORTAL_DEV)}, "/")
+
+	retData := map[string]interface{}{}
+	data, err := json.Marshal(dev)
+	body := bytes.NewBuffer(data)
+
+	if err != nil {
+		return err
+	}
+
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body)
+
+	return dErr
 }
