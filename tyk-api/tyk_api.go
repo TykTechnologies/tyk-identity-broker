@@ -42,13 +42,15 @@ type PortalDeveloper struct {
 	Subscriptions map[string]string `bson:"subscriptions" json:"subscriptions"`
 	Fields        map[string]string `bson:"fields" json:"fields"`
 	Nonce         string            `bson:"nonce" json:"nonce"`
+	SSOKey        string            `bson:"sso_key" json:"sso_key"`
 }
 
 const (
 	// Main endpoints used in this wrapper
-	PORTAL_DEVS Endpoint = "/api/portal/developers/email"
-	PORTAL_DEV  Endpoint = "/api/portal/developers"
-	SSO         Endpoint = "/admin/sso"
+	PORTAL_DEVS     Endpoint = "/api/portal/developers/email"
+	PORTAL_DEVS_SSO Endpoint = "/api/portal/developers/ssokey"
+	PORTAL_DEV      Endpoint = "/api/portal/developers"
+	SSO             Endpoint = "/admin/sso"
 
 	// Main APis used in this wrapper
 	GATEWAY    TykAPIName = "gateway"
@@ -219,6 +221,18 @@ func (t *TykAPI) CreateSSONonce(target Endpoint, data interface{}) (interface{},
 func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDeveloper, error) {
 	asStr := url.QueryEscape(DeveloperEmail)
 	target := strings.Join([]string{string(PORTAL_DEVS), asStr}, "/")
+
+	retUser := PortalDeveloper{}
+
+	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil)
+
+	return retUser, dErr
+}
+
+// GetDeveloperBySSOKey will retrieve a deverloper from the Advanced API using their SSO Key address
+func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, DeveloperEmail string) (PortalDeveloper, error) {
+	asStr := url.QueryEscape(DeveloperEmail)
+	target := strings.Join([]string{string(PORTAL_DEVS_SSO), asStr}, "/")
 
 	retUser := PortalDeveloper{}
 

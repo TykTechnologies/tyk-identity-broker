@@ -11,7 +11,13 @@ import (
 	"github.com/lonelycode/tyk-auth-proxy/toth"
 	"github.com/lonelycode/tyk-auth-proxy/tothic"
 	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/bitbucket"
+	"github.com/markbates/goth/providers/digitalocean"
+	"github.com/markbates/goth/providers/dropbox"
+	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/gplus"
+	"github.com/markbates/goth/providers/linkedin"
+	"github.com/markbates/goth/providers/twitter"
 	"net/http"
 	"strings"
 )
@@ -79,6 +85,24 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 		switch provider.Name {
 		case "gplus":
 			gothProviders = append(gothProviders, gplus.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "github":
+			gothProviders = append(gothProviders, github.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "twitter":
+			gothProviders = append(gothProviders, twitter.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "linkedin":
+			gothProviders = append(gothProviders, linkedin.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "dropbox":
+			gothProviders = append(gothProviders, dropbox.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "digitalocean":
+			gothProviders = append(gothProviders, digitalocean.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "bitbucket":
+			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 		}
 	}
 

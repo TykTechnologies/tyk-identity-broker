@@ -117,7 +117,7 @@ func (s *ADProvider) generateUsername(username string) string {
 func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	log.Debug(ADProviderLogTag + " Search: starting...")
 	thisUser := goth.User{
-		UserID:   username,
+		UserID:   Slug(username),
 		Provider: "ADProvider",
 	}
 	var attrs []string
@@ -168,7 +168,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	// 	}
 	// }
 
-	thisUser.Email = s.generateUsername(username)
+	thisUser.Email = tap.GenerateSSOKey(thisUser)
 
 	log.Debug(ADProviderLogTag+" User Data:", thisUser)
 	//log.Debug(ADProviderLogTag+" Search:", search_request.Filter, "-> num of entries = ", len(sr.Entries))

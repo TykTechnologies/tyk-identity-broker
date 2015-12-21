@@ -3,6 +3,7 @@ proxy */
 package tap
 
 import (
+	"github.com/markbates/goth"
 	"net/http"
 )
 
@@ -12,4 +13,8 @@ import (
 type IdentityHandler interface {
 	Init(interface{}) error
 	CompleteIdentityAction(http.ResponseWriter, *http.Request, interface{}, Profile)
+}
+
+func GenerateSSOKey(user goth.User) string {
+	return user.UserID + "@" + user.Provider
 }

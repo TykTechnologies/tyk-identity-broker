@@ -121,8 +121,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	// Check if user exists
-	userEmail := i.(goth.User).Email
-	thisUser, retErr := t.API.GetDeveloper(t.dashboardUserAPICred, userEmail)
+	sso_key := tap.GenerateSSOKey(i.(goth.User))
+	thisUser, retErr := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
 	log.Warning(TykAPILogTag+" Returned: ", thisUser)
 
 	createUser := false
@@ -134,9 +134,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 	// If not, create user
 	if createUser {
+		if thisUser.Email == "" {
+			thisUser.Email = sso_key
+		}
+
 		log.Info(TykAPILogTag + " Creating user")
 		newUser := tyk.PortalDeveloper{
-			Email:         i.(goth.User).Email,
+			Email:         thisUser.Email,
 			Password:      "",
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
@@ -144,6 +148,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 			Subscriptions: map[string]string{},
 			Fields:        map[string]string{},
 			Nonce:         nonce,
+			SSOKey:        sso_key,
 		}
 		createErr := t.API.CreateDeveloper(t.dashboardUserAPICred, newUser)
 		if createErr != nil {
