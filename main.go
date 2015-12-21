@@ -10,13 +10,18 @@ import (
 	"net/http"
 )
 
+// AuthConfigStore Is the back end we are storing our configuration files to
 var AuthConfigStore tap.AuthRegisterBackend
-var IDHandler tap.IdentityHandler
-var log = logrus.New()
 
+//  config is the system-wide configuration
 var config Configuration
+
+// TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
 var TykAPIHandler tyk.TykAPI
 
+var log = logrus.New()
+
+// Get our bak end to use, new beack-ends must be registered here
 func initBackend(name string, configuration interface{}) {
 	found := false
 
@@ -34,93 +39,6 @@ func initBackend(name string, configuration interface{}) {
 	AuthConfigStore.Init(configuration)
 }
 
-func setupTestConfig() {
-	/// TEST ONLY
-
-	// SOCIAL
-	// ------
-	// var testConf string = `
-	// {
-	// 	"UseProviders": [
-	// 		{
-	// 			"Name": "gplus",
-	// 			"Key": "504206531762-lcdhc8vmveckktcbbevme0n2vgd5v0ve.apps.googleusercontent.com",
-	// 			"Secret": "bIboXfuaJh1qnJHi0K_P1MyL"
-	// 		}
-	// 	],
-	// 	"CallbackBaseURL": "http://sharrow.tyk.io:3010"
-	// }`
-
-	// testConfig := tap.Profile{
-	// 	ID:              "1",
-	// 	OrgID:           "TEST",
-	// 	ActionType:      tap.GenerateOrLoginDeveloperProfile,
-	// 	MatchedPolicyID: "1A",
-	// 	Type:            tap.REDIRECT_PROVIDER,
-	// 	ProviderName:    "SocialProvider",
-	// 	ProviderConfig:  testConf,
-	// 	ProviderConstraints: tap.ProfileConstraint{
-	// 		Domain: "tyk.io",
-	// 		Group:  "",
-	// 	},
-	// 	ReturnURL: "http://sharrow.tyk.io:3000/bounce",
-	// }
-
-	// LDAP (local and remote)
-	// ----------------------
-	// http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
-
-	// var testConf string = `
-	// {
-	// 	"LDAPServer": "localhost",
-	// 	"LDAPPort": "389",
-	// 	"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io",
-	// 	"LDAPBaseDN": "cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io",
-	// 	"LDAPFilter": "(&(objectCategory=person)(objectClass=user)(cn=*USERNAME*))",
-	// 	"LDAPAttributes": [],
-	// 	"LDAPEmailAttribute": "mail",
-	// 	"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
-	// 	"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce"
-	// }`
-
-	// var testConf string = `
-	// {
-	// 	"LDAPServer": "ldap.forumsys.com",
-	// 	"LDAPPort": "389",
-	// 	"LDAPUserDN": "uid=*USERNAME*,dc=example,dc=com",
-	// 	"LDAPBaseDN": "dc=example,dc=com",
-	// 	"LDAPFilter": "(uid=*USERNAME*)",
-	// 	"LDAPAttributes": [],
-	// 	"LDAPEmailAttribute": "mail",
-	// 	"FailureRedirect": "http://sharrow.tyk.io:3000/failure",
-	// 	"SuccessRedirect": "http://sharrow.tyk.io:3000/bounce",
-	// 	"DefaultDomain": "tyk.io"
-	// }`
-
-	// testConfig := tap.Profile{
-	// 	ID:              "1",
-	// 	OrgID:           "TEST",
-	// 	ActionType:      tap.GenerateOrLoginDeveloperProfile,
-	// 	MatchedPolicyID: "1A",
-	// 	Type:            tap.PASSTHROUGH_PROVIDER,
-	// 	ProviderName:    "ADProvider",
-	// 	ProviderConfig:  testConf,
-	// 	ProviderConstraints: tap.ProfileConstraint{
-	// 		Domain: "",
-	// 		Group:  "",
-	// 	},
-	// 	ReturnURL: "http://sharrow.tyk.io:3000/bounce",
-	// }
-
-	// // Lets create some configurations!
-	// inputErr := AuthConfigStore.SetKey("1", testConfig)
-	// if inputErr != nil {
-	// 	log.Error("Couldn't encode configuration: ", inputErr)
-	// }
-
-	/// END TEST INIT
-}
-
 func init() {
 	loadConfig("tap.conf", &config)
 	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
@@ -128,7 +46,6 @@ func init() {
 	TykAPIHandler = config.TykAPISettings
 
 	// --- Testing
-	//setupTestConfig()
 
 	loaderConf := FileLoaderConf{
 		FileName: "./test_apps.json",

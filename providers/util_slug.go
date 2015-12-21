@@ -1,3 +1,5 @@
+/* package providers is a catch-all for all TAP auth provider types (e.g. social, active directory), if you are
+extending TAP to use more providers, add them to this section */
 package providers
 
 import (
@@ -6,6 +8,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 )
+
+// This lib nabbed from https://github.com/extemporalgenome/slug/blob/master/slug.go
 
 var lat = []*unicode.RangeTable{unicode.Letter, unicode.Number}
 var nop = []*unicode.RangeTable{unicode.Mark, unicode.Sk, unicode.Lm}

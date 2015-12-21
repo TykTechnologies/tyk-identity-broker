@@ -1,5 +1,5 @@
 /*
-Package gothic wraps common behaviour when using Goth. This makes it quick, and easy, to get up
+Package Tothic wraps Gothic behaviour for multi-tenant usage. Package gothic wraps common behaviour when using Goth. This makes it quick, and easy, to get up
 and running with Goth. Of course, if you want complete control over how things flow, in regards
 to the authentication process, feel free and use Goth directly.
 

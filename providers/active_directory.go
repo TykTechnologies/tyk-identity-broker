@@ -1,3 +1,5 @@
+/* package providers is a catch-all for all TAP auth provider types (e.g. social, active directory), if you are
+extending TAP to use more providers, add them to this section */
 package providers
 
 import (
@@ -10,8 +12,10 @@ import (
 	"strings"
 )
 
+// ADProviderLogTag is the log tag for the active directory provider
 var ADProviderLogTag = "[AD AUTH]"
 
+// ADProvider is an auth delegation provider for LDAP protocol
 type ADProvider struct {
 	handler    tap.IdentityHandler
 	config     ADConfig
@@ -19,6 +23,7 @@ type ADProvider struct {
 	connection *ldap.Conn
 }
 
+// ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
 	LDAPServer         string
 	LDAPPort           string
@@ -32,14 +37,19 @@ type ADConfig struct {
 	DefaultDomain      string
 }
 
+// Name provides the name of the ID provider
 func (s *ADProvider) Name() string {
 	return "ADProvider"
 }
 
+// ProviderType returns the type of the provider, can be PASSTHROUGH_PROVIDER or REDIRECT dependin on the auth process
+// LDAP is a pass -through provider, it will take authentication variables such as username and password and authenticate
+// directly with the LDAP server with those values instead of delegating to a third-party such as OAuth.
 func (s *ADProvider) ProviderType() tap.ProviderType {
 	return tap.PASSTHROUGH_PROVIDER
 }
 
+// UseCallback signals whether this provider uses the callback endpoints
 func (s *ADProvider) UseCallback() bool {
 	return false
 }
@@ -57,6 +67,10 @@ func (s *ADProvider) connect() {
 	log.Debug(ADProviderLogTag + " Connect: finished...")
 }
 
+// Init initialises the handler with it's IdentityHandler (the interface handling actual account SSO on the target)
+// profile - the Profile to use for this request and the specific configuration for the handler as a byte stream.
+// The config is a byte stream as a hack so we do not need to type cast a map[string]interface{} manually from
+// a JSON configuration
 func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
 	s.handler = handler
 	s.profile = profile
@@ -161,6 +175,8 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	return thisUser, nil
 }
 
+// Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
+// and password from the request and atempt to bind tot he AD host.
 func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	s.connect()
 
@@ -205,6 +221,7 @@ func (s *ADProvider) checkConstraints(user interface{}) error {
 	return nil
 }
 
+// HandleCallback is not used
 func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 
 	log.Warning(ADProviderLogTag + " Callback not implemented for provider")

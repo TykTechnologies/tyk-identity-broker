@@ -1,3 +1,5 @@
+/* package toth is a clone of goth, but modified for multi-tenant usage instead of using
+globals everywhere */
 package toth
 
 import (
@@ -5,10 +7,12 @@ import (
 	"github.com/markbates/goth"
 )
 
+// TothInstance wraps a goth configuration
 type TothInstance struct {
 	providers goth.Providers
 }
 
+// Init just creates the basic configuration objects
 func (t *TothInstance) Init() {
 	t.providers = goth.Providers{}
 }

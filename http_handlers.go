@@ -16,8 +16,10 @@ type APIErrorMessage struct {
 	Error  string `json:"error"`
 }
 
+// HandlerLogTag is a tag we are uing to identify log messages from the handler
 var HandlerLogTag = "[AUTH HANDLERS]"
 
+// Returns a profile ID
 func getId(req *http.Request) (string, error) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
@@ -29,6 +31,7 @@ func getId(req *http.Request) (string, error) {
 	return id, nil
 }
 
+// Maps an identity handler from an Action type, register new Identity Handlers and methods here
 func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 	var thisIdentityHandler tap.IdentityHandler
 
@@ -42,6 +45,7 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 	return thisIdentityHandler
 }
 
+// A hack to marshal a provider conf from map[string]interface{} intoa type without type checking, ugly, but effective
 func hackProviderConf(conf interface{}) []byte {
 	thisConf, err := json.Marshal(conf)
 	if err != nil {
@@ -51,6 +55,7 @@ func hackProviderConf(conf interface{}) []byte {
 	return thisConf
 }
 
+// return a provider based on the name of the provider type, add new providers here
 func getTAProvider(conf tap.Profile) tap.TAProvider {
 
 	var thisProvider tap.TAProvider
@@ -69,6 +74,7 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 
 }
 
+// HandleError is a generic error handler
 func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
 	log.Error(tag+" "+errorMsg+": ", rawErr)
 
@@ -107,6 +113,7 @@ func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, erro
 	return thisIdentityProvider, nil
 }
 
+// HandleAuth is the main entrypoint handler for any profile (i.e. /auth/:profile-id/:provider)
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 	thisIdentityProvider, err := getTapProfile(w, r)
 	if err != nil {
@@ -117,6 +124,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// HandleAuthCallback Is a callback URL passed to OAuth providers such as Social, handles completing an auth request
 func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	thisIdentityProvider, err := getTapProfile(w, r)

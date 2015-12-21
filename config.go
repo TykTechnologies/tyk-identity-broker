@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 )
 
+// Configuration holds all configuration settings for TAP
 type Configuration struct {
 	BackEnd struct {
 		Name            string
@@ -14,6 +15,7 @@ type Configuration struct {
 	TykAPISettings tyk.TykAPI
 }
 
+// loadConfig will load the config from a file
 func loadConfig(filePath string, configStruct *Configuration) {
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {

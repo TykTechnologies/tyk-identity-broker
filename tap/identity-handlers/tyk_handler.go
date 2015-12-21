@@ -1,3 +1,5 @@
+/* package identityHandlers provides a collection of handlers for target systems,
+these handlers create accounts and sso tokens */
 package identityHandlers
 
 import (
@@ -10,20 +12,23 @@ import (
 	"time"
 )
 
-var TykAPILogTag string = "[TYK ID HANDLER]"
+var TykAPILogTag string = "[TYK ID HANDLER]" // log tag
 
-type ModuleName string
+type ModuleName string // To separate out target modules of the dashboard
 
 const (
+	// Enums to identify which target it being used, dashbaord or portal, they are distinct.
 	SSOForDashboard ModuleName = "dashboard"
 	SSOForPortal    ModuleName = "portal"
 )
 
+// SSOAccessData is the data type used for speaking to the SSO endpoint in the advanced API
 type SSOAccessData struct {
 	ForSection ModuleName
 	OrgID      string
 }
 
+// TykIdentityHandler provides an interface for generating SSO identities on a tyk node
 type TykIdentityHandler struct {
 	API                  *tyk.TykAPI
 	profile              tap.Profile
@@ -42,6 +47,8 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 	return SSOForPortal, errors.New("Action does not exist")
 }
 
+// initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
+// up in main
 func (t *TykIdentityHandler) Init(conf interface{}) error {
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {
@@ -51,6 +58,8 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 	return nil
 }
 
+// CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
+// Identity is assumed to be a goth.User object as this is what we arestnadardiseing on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	log.Info(TykAPILogTag+" Creating identity for: ", i)
 
@@ -75,11 +84,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	return asMapString["Meta"].(string), nil
 }
 
-func (t *TykIdentityHandler) LoginIdentity(user string, pass string) (string, error) {
-	// Not used
-	return "", nil
-}
-
+// CompleteIdentityActionForDashboard handles a dashboard identity. No ise is created, only an SSO login session
 func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	nonce, nErr := t.CreateIdentity(i)
 
@@ -102,6 +107,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 
 }
 
+// CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
+// user depnding on if they exist or not and validate the login using a one-time nonce.
 func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	// Create a nonce
 	log.Info(TykAPILogTag + " Creating nonce")
@@ -168,6 +175,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }
 
+// CompleteIdentityAction will log a user into Tyk dashbaord or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
 		t.CompleteIdentityActionForDashboard(w, r, i, profile)

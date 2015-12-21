@@ -6,24 +6,29 @@ import (
 	"io/ioutil"
 )
 
+// DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
 type DataLoader interface {
 	Init(conf interface{}) error
 	LoadIntoStore(tap.AuthRegisterBackend) error
 }
 
+// FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
 type FileLoaderConf struct {
 	FileName string
 }
 
+// FileLoader implements DataLoader and will load TAP Profiles from a file
 type FileLoader struct {
 	config FileLoaderConf
 }
 
+// Init initialises the file loader
 func (f *FileLoader) Init(conf interface{}) error {
 	f.config = conf.(FileLoaderConf)
 	return nil
 }
 
+// LoadIntoStore will load, unmarshal and copy profiles into a an AuthRegisterBackend
 func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	thisSet, err := ioutil.ReadFile(f.config.FileName)
 	profiles := []tap.Profile{}
