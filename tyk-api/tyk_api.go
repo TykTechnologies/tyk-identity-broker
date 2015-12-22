@@ -45,17 +45,79 @@ type PortalDeveloper struct {
 	SSOKey        string            `bson:"sso_key" json:"sso_key"`
 }
 
+// HashType is an encryption method for basic auth keys
+type HashType string
+
+// AccessSpecs define what URLS a user has access to an what methods are enabled
+type AccessSpec struct {
+	URL     string   `json:"url"`
+	Methods []string `json:"methods"`
+}
+
+// AccessDefinition defines which versions of an API a key has access to
+type AccessDefinition struct {
+	APIName     string       `json:"api_name"`
+	APIID       string       `json:"api_id"`
+	Versions    []string     `json:"versions"`
+	AllowedURLs []AccessSpec `bson:"allowed_urls"  json:"allowed_urls"` // mapped string MUST be a valid regex
+}
+
+// SessionState objects represent a current API session, mainly used for rate limiting.
+type SessionState struct {
+	LastCheck        int64                       `json:"last_check"`
+	Allowance        float64                     `json:"allowance"`
+	Rate             float64                     `json:"rate"`
+	Per              float64                     `json:"per"`
+	Expires          int64                       `json:"expires"`
+	QuotaMax         int64                       `json:"quota_max"`
+	QuotaRenews      int64                       `json:"quota_renews"`
+	QuotaRemaining   int64                       `json:"quota_remaining"`
+	QuotaRenewalRate int64                       `json:"quota_renewal_rate"`
+	AccessRights     map[string]AccessDefinition `json:"access_rights"`
+	OrgID            string                      `json:"org_id"`
+	OauthClientID    string                      `json:"oauth_client_id"`
+	OauthKeys        map[string]string           `json:"oauth_keys"`
+	BasicAuthData    struct {
+		Password string   `json:"password"`
+		Hash     HashType `json:"hash_type"`
+	} `json:"basic_auth_data"`
+	JWTData struct {
+		Secret string `json:"secret"`
+	} `json:"jwt_data"`
+	HMACEnabled   bool   `json:"hmac_enabled"`
+	HmacSecret    string `json:"hmac_string"`
+	IsInactive    bool   `json:"is_inactive"`
+	ApplyPolicyID string `json:"apply_policy_id"`
+	DataExpires   int64  `json:"data_expires"`
+	Monitor       struct {
+		TriggerLimits []float64 `json:"trigger_limits"`
+	} `json:"monitor"`
+	MetaData interface{} `json:"meta_data"`
+	Tags     []string    `json:"tags"`
+}
+
+type OAuthResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   string `json:"expires_in"`
+	RedirectTo  string `json:"redirect_to"`
+	TokenType   string `json:"token_type"`
+}
+
 const (
 	// Main endpoints used in this wrapper
 	PORTAL_DEVS     Endpoint = "/api/portal/developers/email"
 	PORTAL_DEVS_SSO Endpoint = "/api/portal/developers/ssokey"
 	PORTAL_DEV      Endpoint = "/api/portal/developers"
 	SSO             Endpoint = "/admin/sso"
+	OAUTH_AUTHORIZE Endpoint = "tyk/oauth/authorize-client/"
 
 	// Main APis used in this wrapper
 	GATEWAY    TykAPIName = "gateway"
 	DASH       TykAPIName = "dash"
 	DASH_SUPER TykAPIName = "dash_super"
+
+	HASH_PlainText HashType = ""
+	HASH_BCrypt    HashType = "bcrypt"
 )
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
@@ -274,4 +336,68 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 	log.Info("Returned: ", retData)
 
 	return dErr
+}
+
+type OAuthMethod string
+
+var Access OAuthMethod = "AccessToken"
+
+func generateBasicTykSesion(baseAPIID, baseVersion, policyID, orgID string) SessionState {
+	// Create a generic access token withour policy
+	basicSessionState := SessionState{
+		Allowance:        1,
+		Rate:             1,
+		Per:              1,
+		Expires:          -1,
+		QuotaMax:         1,
+		QuotaRenews:      60,
+		QuotaRemaining:   1,
+		QuotaRenewalRate: 1,
+		AccessRights:     map[string]AccessDefinition{},
+		OrgID:            orgID,
+		ApplyPolicyID:    policyID,
+		MetaData:         map[string]string{"Origin": "TAP"},
+		Tags:             []string{"TykOrigin-TAP"},
+	}
+
+	accessEntry := AccessDefinition{
+		APIName:  "Base",
+		APIID:    baseAPIID,
+		Versions: []string{baseVersion},
+	}
+	basicSessionState.AccessRights[baseAPIID] = accessEntry
+
+	return basicSessionState
+}
+
+func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, clientId, secret, orgID, policyID, BaseAPIID string) (*OAuthResponse, error) {
+	// Create a generic access token withour policy
+	basicSessionState := generateBasicTykSesion(BaseAPIID, "Default", policyID, orgID)
+	basicSessionState.OauthClientID = clientId
+
+	keyDataJSON, err := json.Marshal(basicSessionState)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if clientId != "" {
+		return nil, errors.New("Requires client ID")
+	}
+
+	// Make the Auth request
+	response := OAuthResponse{}
+	target := strings.Join([]string{APIlistenPath, string(OAUTH_AUTHORIZE)}, "/")
+	data := "response_type=" + responseType
+	data += "&client_id=" + clientId
+	data += "&redirect_uri=" + redirect_uri
+	data += "&key_rules=" + url.QueryEscape(string(keyDataJSON))
+	body := bytes.NewBuffer([]byte(data))
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, &response, "", body)
+
+	if dErr != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
