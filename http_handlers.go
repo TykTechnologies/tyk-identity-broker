@@ -37,9 +37,17 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 
 	switch name {
 	case tap.GenerateOrLoginDeveloperProfile:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{API: &TykAPIHandler} // TODO: Change These
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
+			API:   &TykAPIHandler,
+			Store: IdentityKeyStore}
 	case tap.GenerateOrLoginUserProfile:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{API: &TykAPIHandler} // TODO: Change These
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
+			API:   &TykAPIHandler,
+			Store: IdentityKeyStore}
+	case tap.GenerateOAuthTokenForClient:
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
+			API:   &TykAPIHandler,
+			Store: IdentityKeyStore}
 	}
 
 	return thisIdentityHandler

@@ -24,6 +24,13 @@ type EndpointConfig struct {
 	AdminSecret string
 }
 
+type OAuthResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int64  `json:"expires_in"`
+	RedirectTo  string `json:"redirect_to"`
+	TokenType   string `json:"token_type"`
+}
+
 // TykAPI is the main object (and configuration) of the Tyk API wrapper
 type TykAPI struct {
 	GatewayConfig   EndpointConfig
@@ -96,13 +103,6 @@ type SessionState struct {
 	Tags     []string    `json:"tags"`
 }
 
-type OAuthResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   string `json:"expires_in"`
-	RedirectTo  string `json:"redirect_to"`
-	TokenType   string `json:"token_type"`
-}
-
 const (
 	// Main endpoints used in this wrapper
 	PORTAL_DEVS     Endpoint = "/api/portal/developers/email"
@@ -110,6 +110,7 @@ const (
 	PORTAL_DEV      Endpoint = "/api/portal/developers"
 	SSO             Endpoint = "/admin/sso"
 	OAUTH_AUTHORIZE Endpoint = "tyk/oauth/authorize-client/"
+	TOKENS          Endpoint = "/api/apis/{APIID}/keys"
 
 	// Main APis used in this wrapper
 	GATEWAY    TykAPIName = "gateway"
@@ -124,7 +125,7 @@ const (
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
-	log.Warning("Calling: ", preparedEndpoint)
+	log.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
 		log.Error("Failed to create request")
@@ -148,6 +149,7 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 
 	if response.StatusCode > 201 {
 		log.Warning("Response code was: ", response.StatusCode)
+		log.Warning("GOT:", string(retBody))
 		return retBody, errors.New("Response code was not 200!")
 	}
 
@@ -170,7 +172,7 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
-	log.Warning("Calling: ", preparedEndpoint)
+	log.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
 		log.Error("Failed to create request")
@@ -200,17 +202,22 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 }
 
 // DispatchGateway will dispatch a request to the gateway API
-func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader) ([]byte, error) {
+func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader, ctype string) ([]byte, error) {
 	preparedEndpoint := t.GatewayConfig.Endpoint + ":" + t.GatewayConfig.Port + string(target)
 
-	log.Warning("Calling: ", preparedEndpoint)
+	log.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
 		log.Error("Failed to create request")
 		log.Error(err)
 	}
 
+	if ctype == "" {
+		ctype = "application/json"
+	}
+
 	newRequest.Header.Add("x-tyk-authorization", t.GatewayConfig.AdminSecret)
+	newRequest.Header.Add("content-type", ctype)
 	c := &http.Client{}
 	response, reqErr := c.Do(newRequest)
 
@@ -228,6 +235,8 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader)
 		return retBody, errors.New("Response code was not 200!")
 	}
 
+	log.Debug("API Response: ", string(retBody))
+
 	return retBody, nil
 }
 
@@ -238,13 +247,13 @@ func (t *TykAPI) Decode(raw []byte, retVal interface{}) error {
 }
 
 // DispatchAndDecode will select the API to target, dispatch the request, then decode ther esponse to return to the caller
-func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader) error {
+func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader, ctype string) error {
 	var retBytes []byte
 	var dispatchErr error
 
 	switch APIName {
 	case GATEWAY:
-		retBytes, dispatchErr = t.DispatchGateway(target, method, body)
+		retBytes, dispatchErr = t.DispatchGateway(target, method, body, ctype)
 	case DASH:
 		retBytes, dispatchErr = t.DispatchDashboard(target, method, creds, body)
 	case DASH_SUPER:
@@ -274,7 +283,7 @@ func (t *TykAPI) CreateSSONonce(target Endpoint, data interface{}) (interface{},
 
 	var returnVal interface{}
 	body := bytes.NewBuffer(SSODataJSON)
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body)
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body, "")
 
 	return returnVal, dErr
 }
@@ -286,7 +295,7 @@ func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDev
 
 	retUser := PortalDeveloper{}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil)
+	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
 	return retUser, dErr
 }
@@ -298,7 +307,7 @@ func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, DeveloperEmail string) (P
 
 	retUser := PortalDeveloper{}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil)
+	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
 	return retUser, dErr
 }
@@ -315,7 +324,7 @@ func (t *TykAPI) UpdateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body)
+	dErr := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body, "")
 
 	return dErr
 }
@@ -332,8 +341,8 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body)
-	log.Info("Returned: ", retData)
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
+	log.Debug("Returned: ", retData)
 
 	return dErr
 }
@@ -381,23 +390,39 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 		return nil, err
 	}
 
-	if clientId != "" {
+	if clientId == "" {
 		return nil, errors.New("Requires client ID")
 	}
 
 	// Make the Auth request
-	response := OAuthResponse{}
-	target := strings.Join([]string{APIlistenPath, string(OAUTH_AUTHORIZE)}, "/")
+	response := &OAuthResponse{}
+	target := "/" + strings.Join([]string{APIlistenPath, string(OAUTH_AUTHORIZE)}, "/")
 	data := "response_type=" + responseType
 	data += "&client_id=" + clientId
 	data += "&redirect_uri=" + redirect_uri
 	data += "&key_rules=" + url.QueryEscape(string(keyDataJSON))
+
+	log.Debug("Request data sent: ", data)
+
 	body := bytes.NewBuffer([]byte(data))
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, &response, "", body)
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
+
+	log.Debug("Returned: ", response)
 
 	if dErr != nil {
 		return nil, err
 	}
 
-	return &response, nil
+	return response, nil
+}
+
+func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) error {
+	target := strings.Join([]string{string(TOKENS), token}, "/")
+	target = strings.Replace(target, "{APIID}", BaseAPI, 1)
+
+	log.Info("Target is: ", target)
+	var reply interface{}
+	oErr := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
+
+	return oErr
 }

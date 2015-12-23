@@ -13,6 +13,9 @@ import (
 // AuthConfigStore Is the back end we are storing our configuration files to
 var AuthConfigStore tap.AuthRegisterBackend
 
+// IdentityKeyStore keeps a record of identities tied to tokens (if needed)
+var IdentityKeyStore tap.AuthRegisterBackend
+
 //  config is the system-wide configuration
 var config Configuration
 
@@ -28,15 +31,19 @@ func initBackend(name string, configuration interface{}) {
 	switch name {
 	case "in_memory":
 		AuthConfigStore = &backends.InMemoryBackend{}
+		IdentityKeyStore = &backends.InMemoryBackend{}
 		found = true
 	}
 
 	if !found {
 		log.Warning("[MAIN] No backend set!")
 		AuthConfigStore = &backends.InMemoryBackend{}
+		IdentityKeyStore = &backends.InMemoryBackend{}
+
 	}
 
 	AuthConfigStore.Init(configuration)
+	IdentityKeyStore.Init(configuration)
 }
 
 func init() {
