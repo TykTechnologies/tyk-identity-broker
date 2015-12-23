@@ -39,7 +39,7 @@ type TykIdentityHandler struct {
 
 // OAuthSettings determine the OAuth parameters for the tap.GenerateOAuthTokenForClient action
 type OAuthSettings struct {
-	APIlistenPath string
+	APIListenPath string
 	RedirectURI   string
 	ResponseType  string
 	ClientId      string
@@ -73,7 +73,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 		if ok {
 			log.Debug(TykAPILogTag + "Found Oauth configuration, loading...")
 			t.oauth = OAuthSettings{}
-			t.oauth.APIlistenPath = oauthSettings.(map[string]interface{})["APIlistenPath"].(string)
+			t.oauth.APIListenPath = oauthSettings.(map[string]interface{})["APIListenPath"].(string)
 			t.oauth.RedirectURI = oauthSettings.(map[string]interface{})["RedirectURI"].(string)
 			t.oauth.ResponseType = oauthSettings.(map[string]interface{})["ResponseType"].(string)
 			t.oauth.ClientId = oauthSettings.(map[string]interface{})["ClientId"].(string)
@@ -207,25 +207,27 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 }
 
 func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+	log.Info(TykAPILogTag + " Starting OAuth Flow...")
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
 	id_with_profile := t.profile.ID + "-" + sso_key
 	// Check if key already exists
 
 	value := ""
-	log.Warning("Store is: ", t.Store)
-	log.Info("ID IS: ", id_with_profile)
+	log.Debug("Store is: ", t.Store)
+	log.Debug("ID IS: ", id_with_profile)
 	fErr := t.Store.GetKey(id_with_profile, &value)
 	if fErr == nil {
 		// Key found
 		log.Warning(TykAPILogTag + " --> Token exists, invalidating")
-		t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
-	} else {
-		log.Warning(fErr)
+		iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
+		if iErr != nil {
+			log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+		}
 	}
 
 	// Generate OAuth
-	resp, oErr := t.API.RequestOAuthToken(t.oauth.APIlistenPath,
+	resp, oErr := t.API.RequestOAuthToken(t.oauth.APIListenPath,
 		t.oauth.RedirectURI,
 		t.oauth.ResponseType,
 		t.oauth.ClientId,
@@ -248,8 +250,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	// After login, we need to redirect this user
 	log.Info(TykAPILogTag + " --> Running oauth redirect...")
-	if profile.ReturnURL != "" {
-		log.Info(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
+	if resp.RedirectTo != "" {
+		log.Debug(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
 		http.Redirect(w, r, resp.RedirectTo, 301)
 		return
 	}

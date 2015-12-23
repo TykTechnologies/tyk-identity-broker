@@ -420,7 +420,7 @@ func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) 
 	target := strings.Join([]string{string(TOKENS), token}, "/")
 	target = strings.Replace(target, "{APIID}", BaseAPI, 1)
 
-	log.Info("Target is: ", target)
+	log.Debug("Target is: ", target)
 	var reply interface{}
 	oErr := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
 
