@@ -213,6 +213,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	log.Info(TykAPILogTag + " Starting OAuth Flow...")
+
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
 	id_with_profile := t.profile.ID + "-" + sso_key
