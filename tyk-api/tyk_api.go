@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"github.com/markbates/goth"
 	"io"
 	"io/ioutil"
 	"labix.org/v2/mgo/bson"
@@ -365,7 +366,7 @@ func generateBasicTykSesion(baseAPIID, baseVersion, policyID, orgID string) Sess
 		AccessRights:     map[string]AccessDefinition{},
 		OrgID:            orgID,
 		ApplyPolicyID:    policyID,
-		MetaData:         map[string]string{"Origin": "TAP"},
+		MetaData:         map[string]interface{}{"Origin": "TAP"},
 		Tags:             []string{"TykOrigin-TAP"},
 	}
 
@@ -379,10 +380,25 @@ func generateBasicTykSesion(baseAPIID, baseVersion, policyID, orgID string) Sess
 	return basicSessionState
 }
 
-func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, clientId, secret, orgID, policyID, BaseAPIID string) (*OAuthResponse, error) {
+func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, clientId, secret, orgID, policyID, BaseAPIID string, userInfo interface{}) (*OAuthResponse, error) {
 	// Create a generic access token withour policy
 	basicSessionState := generateBasicTykSesion(BaseAPIID, "Default", policyID, orgID)
 	basicSessionState.OauthClientID = clientId
+	basicSessionState.MetaData.(map[string]interface{})["AuthProviderUserID"] = userInfo.(goth.User).UserID
+	basicSessionState.MetaData.(map[string]interface{})["AuthProviderSource"] = userInfo.(goth.User).Provider
+	basicSessionState.MetaData.(map[string]interface{})["AccessToken"] = userInfo.(goth.User).AccessToken
+	basicSessionState.MetaData.(map[string]interface{})["AccessTokenSecret"] = userInfo.(goth.User).AccessTokenSecret
+
+	/*
+
+		Can be extracted in Global header settings as:
+
+		X-Origin-Tyk: $tyk_meta.Origin
+		X-Tyk-TAP-AccessToken: $tyk_meta.AccessToken
+		X-Tyk-TAP-ID: $tyk_meta.AuthProviderUserID
+		X-Tyk-TAP-Provider: $tyk_meta.AuthProviderSource
+
+	*/
 
 	keyDataJSON, err := json.Marshal(basicSessionState)
 

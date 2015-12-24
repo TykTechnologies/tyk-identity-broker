@@ -243,12 +243,19 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		t.oauth.Secret,
 		t.profile.OrgID,
 		t.profile.MatchedPolicyID,
-		t.oauth.BaseAPIID)
+		t.oauth.BaseAPIID,
+		i)
 
 	// Redirect request
 	if oErr != nil {
 		log.Error("Failed to generate OAuth token ", oErr)
 		fmt.Fprintf(w, "OAuth token generation failed")
+		return
+	}
+
+	if resp == nil {
+		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
+		fmt.Fprintf(w, "Login failed")
 		return
 	}
 
