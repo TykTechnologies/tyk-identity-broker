@@ -30,11 +30,12 @@ type SSOAccessData struct {
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
 type TykIdentityHandler struct {
-	API                  *tyk.TykAPI
-	Store                tap.AuthRegisterBackend
-	profile              tap.Profile
-	dashboardUserAPICred string
-	oauth                OAuthSettings
+	API                   *tyk.TykAPI
+	Store                 tap.AuthRegisterBackend
+	profile               tap.Profile
+	dashboardUserAPICred  string
+	oauth                 OAuthSettings
+	disableOneTokenPerAPI bool
 }
 
 // OAuthSettings determine the OAuth parameters for the tap.GenerateOAuthTokenForClient action
@@ -67,6 +68,10 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})
 		if theseConfs["DashboardCredential"] != nil {
 			t.dashboardUserAPICred = theseConfs["DashboardCredential"].(string)
+		}
+
+		if theseConfs["DisableOneTokenPerAPI"] != nil {
+			t.disableOneTokenPerAPI = theseConfs["DisableOneTokenPerAPI"].(bool)
 		}
 
 		oauthSettings, ok := theseConfs["OAuth"]
@@ -216,13 +221,16 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	value := ""
 	log.Debug("Store is: ", t.Store)
 	log.Debug("ID IS: ", id_with_profile)
-	fErr := t.Store.GetKey(id_with_profile, &value)
-	if fErr == nil {
-		// Key found
-		log.Warning(TykAPILogTag + " --> Token exists, invalidating")
-		iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
-		if iErr != nil {
-			log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+
+	if !t.disableOneTokenPerAPI {
+		fErr := t.Store.GetKey(id_with_profile, &value)
+		if fErr == nil {
+			// Key found
+			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
+			iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
+			if iErr != nil {
+				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+			}
 		}
 	}
 

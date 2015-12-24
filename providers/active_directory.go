@@ -33,7 +33,6 @@ type ADConfig struct {
 	LDAPEmailAttribute string
 	LDAPAttributes     []string
 	FailureRedirect    string
-	SuccessRedirect    string
 	DefaultDomain      string
 }
 
