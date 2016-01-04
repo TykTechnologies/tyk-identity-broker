@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/jeffail/gabs"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"github.com/markbates/goth"
 	"io/ioutil"
@@ -12,13 +13,18 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"strings"
 )
 
 type ProxyHandlerConfig struct {
-	TargetHost string
-	OKCode     int
-	OKResponse string
-	OKRegex    string
+	TargetHost                         string
+	OKCode                             int
+	OKResponse                         string
+	OKRegex                            string
+	ResponseIsJson                     bool
+	AccessTokenField                   string
+	UsernameField                      string
+	ExrtactUserNameFromBasicAuthHeader bool
 }
 
 type ProxyProvider struct {
@@ -117,10 +123,51 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	thisUser := goth.User{
-		UserID:   RandStringRunes(12),
-		Provider: p.Name(),
+	uName := RandStringRunes(12)
+	if p.config.ExrtactUserNameFromBasicAuthHeader {
+		authHeader := r.Header.Get("Authorization")
+		splitFields := strings.Split(authHeader, " ")
+		if len(splitFields) == 2 {
+			upEnc, decErr := b64.StdEncoding.DecodeString(splitFields[1])
+			if decErr == nil {
+				// split out again
+				splitUP := strings.Split(string(upEnc), ":")
+				if len(splitUP) == 2 {
+					uName = splitUP[0]
+				}
+			}
+		}
 	}
+
+	AccessToken := ""
+	if p.config.ResponseIsJson {
+		parsed, pErr := gabs.ParseJSON(thisBody)
+		if pErr != nil {
+			log.Warning("Parsing for access token field failed: ")
+		} else {
+			if p.config.AccessTokenField != "" {
+				tok, fT := parsed.Path(p.config.AccessTokenField).Data().(string)
+				if fT {
+					AccessToken = tok
+				}
+			}
+			if p.config.UsernameField != "" {
+				thisU, fU := parsed.Path(p.config.UsernameField).Data().(string)
+				if fU {
+					uName = thisU
+				}
+			}
+		}
+	}
+
+	thisUser := goth.User{
+		UserID:      uName,
+		Provider:    p.Name(),
+		AccessToken: AccessToken,
+	}
+
+	log.Info("Username: ", thisUser.UserID)
+	log.Info("Access token: ", thisUser.AccessToken)
 
 	// Complete the identity action
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
