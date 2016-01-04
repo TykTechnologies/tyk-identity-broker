@@ -48,6 +48,10 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
 			API:   &TykAPIHandler,
 			Store: IdentityKeyStore}
+	case tap.GenerateTemporaryAuthToken:
+		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
+			API:   &TykAPIHandler,
+			Store: IdentityKeyStore}
 	}
 
 	return thisIdentityHandler

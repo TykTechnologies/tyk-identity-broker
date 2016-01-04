@@ -3,6 +3,7 @@ these handlers create accounts and sso tokens */
 package identityHandlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
@@ -35,6 +36,7 @@ type TykIdentityHandler struct {
 	profile               tap.Profile
 	dashboardUserAPICred  string
 	oauth                 OAuthSettings
+	token                 TokenSettings
 	disableOneTokenPerAPI bool
 }
 
@@ -46,6 +48,11 @@ type OAuthSettings struct {
 	ClientId      string
 	Secret        string
 	BaseAPIID     string
+}
+
+type TokenSettings struct {
+	BaseAPIID string
+	Expires   int64
 }
 
 func mapActionToModule(action tap.Action) (ModuleName, error) {
@@ -84,6 +91,23 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 			t.oauth.ClientId = oauthSettings.(map[string]interface{})["ClientId"].(string)
 			t.oauth.Secret = oauthSettings.(map[string]interface{})["Secret"].(string)
 			t.oauth.BaseAPIID = oauthSettings.(map[string]interface{})["BaseAPIID"].(string)
+		}
+
+		tokenSettings, tokenOk := theseConfs["TokenAuth"]
+		if tokenOk {
+			if tokenSettings.(map[string]interface{})["BaseAPIID"] == nil {
+				log.Error(TykAPILogTag + " Base API is empty!")
+				return errors.New("Base API cannot be empty")
+			}
+			t.token.BaseAPIID = tokenSettings.(map[string]interface{})["BaseAPIID"].(string)
+
+			if tokenSettings.(map[string]interface{})["ExpirySeconds"] == nil {
+				log.Warning(TykAPILogTag + " No expiry found - defaulting to 3600 seconds")
+				t.token.Expires = 3600
+			} else {
+				t.token.Expires = int64(tokenSettings.(map[string]interface{})["ExpirySeconds"].(float64))
+			}
+
 		}
 	}
 
@@ -273,6 +297,76 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	}
 }
 
+func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+	log.Info(TykAPILogTag + " Starting OAuth Flow...")
+
+	// Generate identity key match ID
+	sso_key := tap.GenerateSSOKey(i.(goth.User))
+	id_with_profile := t.profile.ID + "-" + sso_key
+	// Check if key already exists
+
+	value := ""
+	log.Debug("Store is: ", t.Store)
+	log.Debug("ID IS: ", id_with_profile)
+
+	if !t.disableOneTokenPerAPI {
+		fErr := t.Store.GetKey(id_with_profile, &value)
+		if fErr == nil {
+			// Key found
+			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
+			iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.token.BaseAPIID, value)
+			if iErr != nil {
+				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+			}
+		}
+	}
+
+	// Generate Token
+	resp, tErr := t.API.RequestStandardToken(t.profile.OrgID,
+		t.profile.MatchedPolicyID,
+		t.token.BaseAPIID,
+		t.dashboardUserAPICred,
+		t.token.Expires,
+		i)
+
+	if tErr != nil {
+		log.Error("Failed to generate OAuth token ", tErr)
+		fmt.Fprintf(w, "OAuth token generation failed")
+		return
+	}
+
+	if resp == nil {
+		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
+		fmt.Fprintf(w, "Login failed")
+		return
+	}
+
+	if resp.KeyID != "" {
+		log.Warning(TykAPILogTag + " --> Storing token reference")
+		t.Store.SetKey(id_with_profile, resp.KeyID)
+	}
+
+	// After login, we need to redirect this user
+	if t.profile.ReturnURL != "" {
+		log.Info(TykAPILogTag + " --> Running auth redirect...")
+		cleanURL := t.profile.ReturnURL + "#token=" + resp.KeyID
+		log.Debug(TykAPILogTag+" --> URL is: ", cleanURL)
+		http.Redirect(w, r, cleanURL, 301)
+		return
+	}
+
+	asJson, jErr := json.Marshal(resp)
+	if jErr != nil {
+		log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
+		fmt.Fprintf(w, "Data Failure")
+	}
+
+	log.Info(TykAPILogTag + " --> No redirect, returning token...")
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, string(asJson))
+	return
+}
+
 // CompleteIdentityAction will log a user into Tyk dashbaord or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
@@ -283,6 +377,9 @@ func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *ht
 		return
 	} else if profile.ActionType == tap.GenerateOAuthTokenForClient {
 		t.CompleteIdentityActionForOAuth(w, r, i, profile)
+		return
+	} else if profile.ActionType == tap.GenerateTemporaryAuthToken {
+		t.CompleteIdentityActionForTokenAuth(w, r, i, profile)
 		return
 	}
 }

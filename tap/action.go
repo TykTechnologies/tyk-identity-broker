@@ -12,7 +12,7 @@ const (
 	GenerateOrLoginUserProfile      Action = "GenerateOrLoginUserProfile"      // Dashboard
 	GenerateOAuthTokenForClient     Action = "GenerateOAuthTokenForClient"     // OAuth token flow
 
-	// Direct
+	// Direct or redirect
 	GenerateTemporaryAuthToken    Action = "GenerateTemporaryAuthToken"  // Tyk Access Token
 	GenerateOAuthTokenForPassword Action = "GenerateOAuthTokenForClient" // OAuth PW flow
 )

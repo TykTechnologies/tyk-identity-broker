@@ -32,6 +32,10 @@ type OAuthResponse struct {
 	TokenType   string `json:"token_type"`
 }
 
+type TokenResponse struct {
+	KeyID string `json:"key_id"`
+}
+
 // TykAPI is the main object (and configuration) of the Tyk API wrapper
 type TykAPI struct {
 	GatewayConfig   EndpointConfig
@@ -112,6 +116,7 @@ const (
 	SSO             Endpoint = "/admin/sso"
 	OAUTH_AUTHORIZE Endpoint = "tyk/oauth/authorize-client/"
 	TOKENS          Endpoint = "/api/apis/{APIID}/keys"
+	STANDARD_TOKENS Endpoint = "/api/keys"
 
 	// Main APis used in this wrapper
 	GATEWAY    TykAPIName = "gateway"
@@ -422,6 +427,51 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 
 	body := bytes.NewBuffer([]byte(data))
 	dErr := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
+
+	log.Debug("Returned: ", response)
+
+	if dErr != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (t *TykAPI) RequestStandardToken(orgID, policyID, BaseAPIID, UserCred string, expires int64, userInfo interface{}) (*TokenResponse, error) {
+	// Create a generic access token withour policy
+	basicSessionState := generateBasicTykSesion(BaseAPIID, "Default", policyID, orgID)
+	basicSessionState.MetaData.(map[string]interface{})["AuthProviderUserID"] = userInfo.(goth.User).UserID
+	basicSessionState.MetaData.(map[string]interface{})["AuthProviderSource"] = userInfo.(goth.User).Provider
+	basicSessionState.MetaData.(map[string]interface{})["AccessToken"] = userInfo.(goth.User).AccessToken
+	basicSessionState.MetaData.(map[string]interface{})["AccessTokenSecret"] = userInfo.(goth.User).AccessTokenSecret
+	basicSessionState.Expires = time.Now().Add(time.Duration(expires) * time.Second).Unix()
+
+	/*
+
+		Can be extracted in Global header settings as:
+
+		X-Origin-Tyk: $tyk_meta.Origin
+		X-Tyk-TAP-AccessToken: $tyk_meta.AccessToken
+		X-Tyk-TAP-ID: $tyk_meta.AuthProviderUserID
+		X-Tyk-TAP-Provider: $tyk_meta.AuthProviderSource
+
+	*/
+
+	keyDataJSON, err := json.Marshal(basicSessionState)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Make the Auth request
+	response := &TokenResponse{}
+	target := strings.Join([]string{string(STANDARD_TOKENS)}, "/")
+	data := keyDataJSON
+
+	log.Debug("Request data sent: ", data)
+
+	body := bytes.NewBuffer([]byte(data))
+	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
 
 	log.Debug("Returned: ", response)
 
