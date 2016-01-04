@@ -77,6 +77,8 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 		thisProvider = &providers.Social{}
 	case "ADProvider":
 		thisProvider = &providers.ADProvider{}
+	case "ProxyProvider":
+		thisProvider = &providers.ProxyProvider{}
 	}
 
 	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)

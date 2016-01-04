@@ -298,7 +298,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 }
 
 func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	log.Info(TykAPILogTag + " Starting OAuth Flow...")
+	log.Info(TykAPILogTag + " Starting Token Flow...")
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -330,8 +330,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		i)
 
 	if tErr != nil {
-		log.Error("Failed to generate OAuth token ", tErr)
-		fmt.Fprintf(w, "OAuth token generation failed")
+		log.Error("Failed to generate Auth token ", tErr)
+		fmt.Fprintf(w, "Auth token generation failed")
 		return
 	}
 
