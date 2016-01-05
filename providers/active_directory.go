@@ -25,15 +25,17 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
-	LDAPServer         string
-	LDAPPort           string
-	LDAPUserDN         string
-	LDAPBaseDN         string
-	LDAPFilter         string
-	LDAPEmailAttribute string
-	LDAPAttributes     []string
-	FailureRedirect    string
-	DefaultDomain      string
+	LDAPServer          string
+	LDAPPort            string
+	LDAPUserDN          string
+	LDAPBaseDN          string
+	LDAPFilter          string
+	LDAPEmailAttribute  string
+	LDAPAttributes      []string
+	FailureRedirect     string
+	DefaultDomain       string
+	GetAuthFromBAHeader bool
+	SlugifyUserName     bool
 }
 
 // Name provides the name of the ID provider
@@ -115,8 +117,13 @@ func (s *ADProvider) generateUsername(username string) string {
 
 func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	log.Debug(ADProviderLogTag + " Search: starting...")
+	uname := username
+	if s.config.SlugifyUserName {
+		uname = Slug(username)
+	}
+
 	thisUser := goth.User{
-		UserID:   Slug(username),
+		UserID:   uname,
 		Provider: "ADProvider",
 	}
 	var attrs []string
@@ -181,6 +188,11 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
+
+	if s.config.GetAuthFromBAHeader {
+		username, password = ExtractBAUsernameAndPasswordFromRequest(r)
+	}
+
 	bindErr := s.connection.Bind(s.prepDN(username), password)
 
 	if bindErr != nil {

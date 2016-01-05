@@ -13,7 +13,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
-	"strings"
 )
 
 type ProxyHandlerConfig struct {
@@ -125,17 +124,9 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 
 	uName := RandStringRunes(12)
 	if p.config.ExrtactUserNameFromBasicAuthHeader {
-		authHeader := r.Header.Get("Authorization")
-		splitFields := strings.Split(authHeader, " ")
-		if len(splitFields) == 2 {
-			upEnc, decErr := b64.StdEncoding.DecodeString(splitFields[1])
-			if decErr == nil {
-				// split out again
-				splitUP := strings.Split(string(upEnc), ":")
-				if len(splitUP) == 2 {
-					uName = splitUP[0]
-				}
-			}
+		thisU, _ := ExtractBAUsernameAndPasswordFromRequest(r)
+		if thisU != "" {
+			uName = thisU
 		}
 	}
 
@@ -166,8 +157,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		AccessToken: AccessToken,
 	}
 
-	log.Info("Username: ", thisUser.UserID)
-	log.Info("Access token: ", thisUser.AccessToken)
+	log.Debug("Username: ", thisUser.UserID)
+	log.Debug("Access token: ", thisUser.AccessToken)
 
 	// Complete the identity action
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
