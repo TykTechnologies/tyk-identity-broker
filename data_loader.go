@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"io/ioutil"
+	"time"
+	"path"
+	"strconv"
 )
 
 // DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
 type DataLoader interface {
 	Init(conf interface{}) error
 	LoadIntoStore(tap.AuthRegisterBackend) error
+	Flush(tap.AuthRegisterBackend) error
 }
 
 // FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
@@ -55,4 +59,39 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 
 	log.Info("[FILE LOADER] Loaded: ", loaded, " profiles from ", f.config.FileName)
 	return nil
+}
+
+func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
+	oldSet, err := ioutil.ReadFile(f.config.FileName)
+	if err != nil {
+		log.Error("[FILE LOADER] load failed! ", err)
+		return err
+	}
+
+	ts := strconv.Itoa(int(time.Now().Unix()))
+	bkFilename := "profiles_backup_" + ts + ".json"
+	bkLocation := path.Join(config.ProfileDir, bkFilename)
+
+	wErr := ioutil.WriteFile(bkLocation, oldSet, 0644)
+	if wErr != nil {
+		log.Error("[FILE LOADER] backup failed! ", wErr)
+		return wErr
+	}
+
+	newSet := store.GetAll()
+	asJson, encErr := json.Marshal(newSet)
+	if encErr != nil {
+		log.Error("[FILE LOADER] Encoding failed! ", encErr)
+		return encErr
+	}
+
+	savePath := path.Join(config.ProfileDir, ProfileFilename)
+	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
+	if wErr != nil {
+		log.Error("[FILE LOADER] flush failed! ", w2Err)
+		return w2Err
+	}
+
+	return nil
+
 }

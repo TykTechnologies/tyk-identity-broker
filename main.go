@@ -24,7 +24,11 @@ var config Configuration
 // TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
 var TykAPIHandler tyk.TykAPI
 
+var GlobalDataLoader DataLoader
+
 var log = logrus.New()
+
+const ProfileFilename string = "profiles.json"
 
 // Get our bak end to use, new beack-ends must be registered here
 func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
@@ -47,14 +51,14 @@ func init() {
 
 	TykAPIHandler = config.TykAPISettings
 
-	pDir := path.Join(config.ProfileDir, "profiles.json")
+	pDir := path.Join(config.ProfileDir, ProfileFilename)
 	loaderConf := FileLoaderConf{
 		FileName: pDir,
 	}
 
-	loader := FileLoader{}
-	loader.Init(loaderConf)
-	loader.LoadIntoStore(AuthConfigStore)
+	GlobalDataLoader = &FileLoader{}
+	GlobalDataLoader.Init(loaderConf)
+	GlobalDataLoader.LoadIntoStore(AuthConfigStore)
 
 	tothic.TothErrorHandler = HandleError
 }
@@ -64,6 +68,7 @@ func main() {
 	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
 	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
 
+	p.Handle("/api/profiles/save", IsAuthenticated(http.HandlerFunc(HandleFlushProfileList))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleAddProfile))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleUpdateProfile))).Methods("PUT")

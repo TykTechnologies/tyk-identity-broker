@@ -181,3 +181,13 @@ func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]string)
 	HandleAPIOK(data, key, 200, w, r)
 }
+
+func HandleFlushProfileList(w http.ResponseWriter, r *http.Request) {
+	fErr := GlobalDataLoader.Flush(AuthConfigStore)
+	if fErr != nil {
+		HandleAPIError(APILogTag, "Flush failed", fErr, 400, w, r)
+		return
+	}
+	data := make(map[string]string)
+	HandleAPIOK(data, "", 200, w, r)
+}
