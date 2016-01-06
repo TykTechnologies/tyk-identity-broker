@@ -76,7 +76,10 @@ func main() {
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleCreateProfile))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleUpdateProfile))).Methods("PUT")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleDeleteProfile))).Methods("DELETE")
+
 	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGetProfileList))).Methods("GET")
+
+	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGenerateProfile))).Methods("POST")
 
 	log.Info("[MAIN] Listening...")
 	http.ListenAndServe(":3010", p)
