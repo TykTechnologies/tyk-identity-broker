@@ -46,6 +46,6 @@ func (d DummyIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *h
 		return
 	}
 
-	log.Warning(DummyLogTag + "No return URL found, redirect failed.")
+	log.Warning(DummyLogTag + " No return URL found, redirect failed.")
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }

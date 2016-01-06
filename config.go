@@ -8,6 +8,7 @@ import (
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
+	Secret  string
 	BackEnd struct {
 		Name            string
 		BackendSettings interface{}

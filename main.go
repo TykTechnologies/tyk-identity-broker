@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/gorilla/pat"
+	"github.com/gorilla/mux"
 	"github.com/lonelycode/tyk-auth-proxy/backends"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"github.com/lonelycode/tyk-auth-proxy/tothic"
@@ -68,11 +68,10 @@ func init() {
 }
 
 func main() {
-	p := pat.New()
-	p.Get("/auth/{id}/{provider}/callback", HandleAuthCallback)
-	p.Post("/auth/{id}/{provider}/callback", HandleAuthCallback)
-	p.Post("/auth/{id}/{provider}", HandleAuth)
-	p.Get("/auth/{id}/{provider}", HandleAuth)
+	p := mux.NewRouter()
+	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
+	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
+	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGetProfileList))).Methods("GET")
 
 	log.Info("[MAIN] Listening...")
 	http.ListenAndServe(":3010", p)

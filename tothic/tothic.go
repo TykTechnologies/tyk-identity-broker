@@ -10,12 +10,12 @@ package tothic
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
-
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/lonelycode/tyk-auth-proxy/toth"
 	"github.com/markbates/goth"
+	"net/http"
+	"os"
 )
 
 // SessionName is the key used to access the session store.
@@ -153,9 +153,9 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 var GetProviderName = getProviderName
 
 func getProviderName(req *http.Request) (string, error) {
-	provider := req.URL.Query().Get("provider")
+	provider := mux.Vars(req)["provider"]
 	if provider == "" {
-		provider = req.URL.Query().Get(":provider")
+		provider = mux.Vars(req)[":provider"]
 	}
 	if provider == "" {
 		return provider, errors.New("you must select a provider")

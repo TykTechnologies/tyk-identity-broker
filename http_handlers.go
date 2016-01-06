@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/lonelycode/tyk-auth-proxy/providers"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"github.com/lonelycode/tyk-auth-proxy/tap/identity-handlers"
@@ -21,9 +22,9 @@ var HandlerLogTag = "[AUTH HANDLERS]"
 
 // Returns a profile ID
 func getId(req *http.Request) (string, error) {
-	id := req.URL.Query().Get("id")
+	id := mux.Vars(req)["id"]
 	if id == "" {
-		id = req.URL.Query().Get(":id")
+		id = mux.Vars(req)[":id"]
 	}
 	if id == "" {
 		return id, errors.New("No profile id detected")
