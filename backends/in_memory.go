@@ -37,6 +37,12 @@ func (m *InMemoryBackend) SetKey(key string, val interface{}) error {
 	return nil
 }
 
+// SetKey will set the value of a key in the map
+func (m *InMemoryBackend) DeleteKey(key string) error {
+	delete(m.kv, key)
+	return nil
+}
+
 // GetKey will retuyrn the value of a key as an interface
 func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 	v, ok := m.kv[key]

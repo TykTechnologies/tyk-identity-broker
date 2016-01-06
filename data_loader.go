@@ -53,6 +53,6 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 		}
 	}
 
-	log.Info("[FILE LOADER] Loaded: ", loaded, " profiles...")
+	log.Info("[FILE LOADER] Loaded: ", loaded, " profiles from ", f.config.FileName)
 	return nil
 }

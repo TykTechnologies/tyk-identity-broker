@@ -8,6 +8,8 @@ import (
 	"github.com/lonelycode/tyk-auth-proxy/tothic"
 	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
 	"net/http"
+	"path"
+	"strconv"
 )
 
 // AuthConfigStore Is the back end we are storing our configuration files to
@@ -25,25 +27,15 @@ var TykAPIHandler tyk.TykAPI
 var log = logrus.New()
 
 // Get our bak end to use, new beack-ends must be registered here
-func initBackend(name string, configuration interface{}) {
-	found := false
+func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
 
-	switch name {
-	case "in_memory":
-		AuthConfigStore = &backends.InMemoryBackend{}
-		IdentityKeyStore = &backends.InMemoryBackend{}
-		found = true
-	}
+	AuthConfigStore = &backends.InMemoryBackend{}
+	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
 
-	if !found {
-		log.Warning("[MAIN] No backend set!")
-		AuthConfigStore = &backends.InMemoryBackend{}
-		IdentityKeyStore = &backends.InMemoryBackend{}
-
-	}
-
-	AuthConfigStore.Init(configuration)
-	IdentityKeyStore.Init(configuration)
+	log.Info("[MAIN] Initialising Profile Configuration Store")
+	AuthConfigStore.Init(profileBackendConfiguration)
+	log.Info("[MAIN] Initialising Identity Cache")
+	IdentityKeyStore.Init(identityBackendConfiguration)
 }
 
 func init() {
@@ -51,21 +43,18 @@ func init() {
 	log.Info("Copyright Martin Buhr 2016\n")
 
 	loadConfig("tib.conf", &config)
-	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
+	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
 
-	// --- Testing
-
+	pDir := path.Join(config.ProfileDir, "profiles.json")
 	loaderConf := FileLoaderConf{
-		FileName: "./test_apps.json",
+		FileName: pDir,
 	}
 
 	loader := FileLoader{}
 	loader.Init(loaderConf)
 	loader.LoadIntoStore(AuthConfigStore)
-
-	// --- End test
 
 	tothic.TothErrorHandler = HandleError
 }
@@ -84,6 +73,12 @@ func main() {
 
 	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGenerateProfile))).Methods("POST")
 
-	log.Info("[MAIN] --> Server Listening...")
-	http.ListenAndServe(":3010", p)
+	listenPort := "3010"
+	if config.Port != 0 {
+		listenPort = strconv.Itoa(config.Port)
+	}
+
+	log.Info("[MAIN] Broker Listening on :", listenPort)
+
+	http.ListenAndServe(":"+listenPort, p)
 }
