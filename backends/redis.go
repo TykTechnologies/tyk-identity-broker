@@ -176,3 +176,9 @@ func (r *RedisBackend) GetKey(key string, target interface{}) error {
 
 	return nil
 }
+
+func (r *RedisBackend) GetAll() []interface{} {
+	target := make([]interface{}, 0)
+	log.Warning("[REDIS STORE] GetAll(): Not implemented")
+	return target
+}

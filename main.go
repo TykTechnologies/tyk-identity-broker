@@ -65,13 +65,11 @@ func main() {
 	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
 
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")
-	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleCreateProfile))).Methods("POST")
+	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleAddProfile))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleUpdateProfile))).Methods("PUT")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleDeleteProfile))).Methods("DELETE")
 
 	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGetProfileList))).Methods("GET")
-
-	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGenerateProfile))).Methods("POST")
 
 	listenPort := "3010"
 	if config.Port != 0 {

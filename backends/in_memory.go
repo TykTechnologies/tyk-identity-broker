@@ -58,3 +58,17 @@ func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 
 	return nil
 }
+
+func (m *InMemoryBackend) GetAll() []interface{} {
+	target := make([]interface{}, 0)
+	for _, v := range m.kv {
+		var thisVal interface{}
+		decErr := json.Unmarshal(v.([]byte), &thisVal)
+		if decErr != nil {
+			log.Error("[IN-MEMORY STORE] ", decErr)
+		} else {
+			target = append(target, thisVal)
+		}
+	}
+	return target
+}

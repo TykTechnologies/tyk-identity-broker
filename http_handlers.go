@@ -13,8 +13,8 @@ import (
 
 // APIErrorMessage is an object that defines when a generic error occurred
 type APIErrorMessage struct {
-	Status string `json:"status"`
-	Error  string `json:"error"`
+	Status string
+	Error  string
 }
 
 // HandlerLogTag is a tag we are uing to identify log messages from the handler
