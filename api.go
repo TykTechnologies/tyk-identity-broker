@@ -27,6 +27,7 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 	fmt.Fprintf(w, string(responseMsg))
 }
 
+// ------ Middleware methods -------
 func IsAuthenticated(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != config.Secret {
@@ -38,7 +39,34 @@ func IsAuthenticated(h http.Handler) http.Handler {
 	})
 }
 
+// ------ End Middleware methods -------
+
 func HandleGetProfileList(w http.ResponseWriter, r *http.Request) {
+
+	return
+}
+
+func HandleGetProfile(w http.ResponseWriter, r *http.Request) {
+
+	return
+}
+
+func HandleGenerateProfile(w http.ResponseWriter, r *http.Request) {
+
+	return
+}
+
+func HandleCreateProfile(w http.ResponseWriter, r *http.Request) {
+
+	return
+}
+
+func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+
+	return
+}
+
+func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
