@@ -47,7 +47,10 @@ func initBackend(name string, configuration interface{}) {
 }
 
 func init() {
-	loadConfig("tap.conf", &config)
+	log.Info("Tyk Identity Broker v0.1")
+	log.Info("Copyright Martin Buhr 2016\n")
+
+	loadConfig("tib.conf", &config)
 	initBackend(config.BackEnd.Name, config.BackEnd.BackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
@@ -81,6 +84,6 @@ func main() {
 
 	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGenerateProfile))).Methods("POST")
 
-	log.Info("[MAIN] Listening...")
+	log.Info("[MAIN] --> Server Listening...")
 	http.ListenAndServe(":3010", p)
 }

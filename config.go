@@ -29,5 +29,5 @@ func loadConfig(filePath string, configStruct *Configuration) {
 		}
 	}
 
-	log.Warning(configStruct.TykAPISettings)
+	log.Debug("[MAIN] Settings Struct: ", configStruct.TykAPISettings)
 }
