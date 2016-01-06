@@ -1,4 +1,5 @@
 ._*
 *.conf
 *.json
+certs/
 tyk-auth-proxy

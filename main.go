@@ -81,7 +81,16 @@ func main() {
 		listenPort = strconv.Itoa(config.Port)
 	}
 
-	log.Info("[MAIN] Broker Listening on :", listenPort)
+	if config.HttpServerOptions.UseSSL {
+		log.Info("[MAIN] Broker Listening on :443")
+		err := http.ListenAndServeTLS(":443", config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
+	    if err != nil {
+	        log.Fatal("ListenAndServe: ", err)
+	    }
+	} else {
+		log.Info("[MAIN] Broker Listening on :", listenPort)
+		http.ListenAndServe(":"+listenPort, p)
+	} 
 
-	http.ListenAndServe(":"+listenPort, p)
+
 }

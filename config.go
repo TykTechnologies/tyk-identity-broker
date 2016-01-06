@@ -16,6 +16,11 @@ type Configuration struct {
 		IdentityBackendSettings interface{}
 	}
 	TykAPISettings tyk.TykAPI
+	HttpServerOptions struct {
+		UseSSL           bool       
+		CertFile string 
+		KeyFile  string 
+	} 
 }
 
 // loadConfig will load the config from a file
