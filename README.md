@@ -550,6 +550,7 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 
 #### Logging into the dashboard using a proxy provider
 
+```
 {
 	"ActionType": "GenerateOrLoginUserProfile",
 	"ID": "7",
@@ -568,9 +569,11 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 	"ReturnURL": "http://{DASH-DOMAIN}:{DASH-PORT}/tap",
 	"Type": "redirect"
 }
+```
 
 #### Generating a standard Auth Token using a Proxy Provider
 
+```
 {
 	"ActionType": "GenerateTemporaryAuthToken",
 	"ID": "8",
@@ -597,6 +600,7 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 	"ReturnURL": "",
 	"Type": "passthrough"
 }
+```
 
 ## The Broker API
 
