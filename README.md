@@ -1,39 +1,240 @@
-Tyk Identity Broker (TIB)
-=========================
+Tyk Identity Broker (TIB) v0.1
+==============================
 
-## What is it?
+## What is Tyk Identity Broker?
 
-The Tyk Identity Broker provides a service-level component that can enable delegated identities for various Tyk components. 
+The Tyk Identity Broker provides a service-level component that enables delegated identities to be authorized and provide authenticated access to various Tyk-powered components such as the Tyk Dashboard, the Tyk Developer Portal and Tyk Gateway API flows such as OAuth access tokens, and regular API tokens.
 
-This is best described in an example:
+### How it works
 
-#### Use case 1 - Portal + Social
+Tyk Identity Broker provides a simple API, which traffic can be sent *through*, the API will match the request to a *profile* which then exposes two things:
 
-As a developer in an organisation that uses Google services (for email, calendar, docs etc.) I want to be able to log into and register for the Tyk Developer Portal using my Google account.
+- An Identity Provider - the thing that will authorize a user and validate their identity
+- An Identity Handler - the thing that will authenticate a user with a delegated service (in this case, Tyk)
 
-#### Use case 2 - Portal + LDAP
+#### Identity Providers
 
-As a developer in an organisation that ususes ActiveDirectory or LDAP to log into the Tyk developer portal.
+Identity providers can be anything, so long as they implement the `tap.TAProvider` interface. Bundled with TIB at the moment you have three providers:
 
-#### Use case 3 - Admin + Social
+1. Social - Provides OAuth handlers for many popular social logins (such as Google, Github and Bitbucket)
+2. LDAP - A simple LDAP protocol binder that can validate a username and password against an LDAP server (tested against OpenLDAP)
+3. Proxy - A generic proxy handler that will forward a request to a third party and provides multiple "validators" to identify whether a response is succesful or not (e.g. status code, content match and regex)
 
-As a developer in an organisation that uses Google services (for email, calendar, docs etc.) I want to be able to log into the Tyk Dashboard admin using my Google account.
+#### Identity Handlers
 
-#### Use case 3 - Admin + LDAP
+An identity handler will perform a predefined set of actions once a provider has validated an identity, these actions are defined as a set of action types:
 
-As a developer in an organisation that uses ActiveDirectory or LDAP, I want to be able to log into the Tyk Dashboard admin using an LDAP filter.
+**Pass through or redirect user-based actions**
 
-#### Use case 4 - OAuth token + Social
+- `GenerateOrLoginDeveloperProfile` - Will create or login a user to the Tyk Developer Portal
+- `GenerateOrLoginUserProfile`  - Will log a user into the dashboard (this does not create a user, only drops a temporary session for the user to have access)
+- `GenerateOAuthTokenForClient` - Will act as a client ID delegate and grant an Tyk-provided OAuth token for a user using a fragment in the redirect URL (standard flow)
 
-As a developer I want to issue OAuth Access tokens to my iOS app users but have those tokens generated and throttled / managed by Tyk, but user should be able to log in using Google Plus, Facebook or Twitter
+** Direct or redirect **
+- `GenerateTemporaryAuthToken` - Will generate a Tyk standard access token for the user, can be delivered as a redirect fragment OR as a direct API response (JSON)
 
-#### Use case 5 - OAuth token + LDAP
+These are actions are all handled by the `tap.providers.TykIdentityHandler` module which wraps the Tyk Gateway, Dashboard and Admin APIs to grant access to a stack.
 
-As a developer I want to issue OAuth Access tokens to my internal developers but have those tokens generated and throttled / managed by Tyk, the user should be able to log in using their LDAP account.
+Handlers are not limited to Tyk, a handler can be added quite easily by implmementing the `TAProvider` so long as it implements this pattern and is registered it can handle any of the above actions for it's own target.
 
-## The skinny - TIB is a middleman
+## How to configure TIB
 
-You can use TIB to hook up any identity provider:
+Tyk Identity Broker is configured through two files: The configuration file (tib.conf) and the profiles file (profiles.json). TIB can also be managed via the REST API (detailed below) for automated configurations.
+
+### The `tib.conf` file
+
+```
+{
+    "Secret": "test-secret",
+    "HttpServerOptions": {
+        "UseSSL": true,      
+        "CertFile": "./certs/server.pem",
+        "KeyFile": "./certs/server.key"
+    },
+	"BackEnd": {
+		"Name": "in_memory",
+		"IdentityBackendSettings": {
+            "Hosts" : {
+                "localhost": "6379"
+            },
+            "Password": "",
+            "Database": 0,
+            "EnableCluster": false,
+            "MaxIdle": 1000,
+            "MaxActive": 2000
+        }
+	},
+	"TykAPISettings": {
+        "GatewayConfig": {
+            "Endpoint": "http://{GATEWAY-DOMAIN}",
+            "Port": "80",
+            "AdminSecret": "352d20ee67be67f6340b4c0605b044b7"
+        },
+        "DashboardConfig": {
+            "Endpoint": "http://{DASHBOARD-DOMAIN}",
+            "Port": "3000",
+            "AdminSecret": "12345"
+        }
+    }
+}
+```
+
+The various configuration options are outlined below:
+
+#### `Secret`
+
+The REST API secret to configure the TIB broker remotely.
+
+#### `HttpServerOptions.UseSSL`
+
+Set this to `true` to turn on SSL for the server, this is *highly recommended*.
+
+#### `HttpServerOptions.CertFile`
+
+The path to the certifiate file for this server, required for SSL
+
+#### `HttpServerOptions.KeyFile`
+
+The path to the key file for this server, required for SSL
+
+#### `BackEnd`
+
+TIB is quite modular and different back-ends can be generated quite easily, out of the Box, TIb will store profile configurations in memory, which does not require any new configuration. 
+
+For Identity Handlers that provide token-based access, it is possible to enforce a "One token per provider, per user" policy, which keeps a cache of tokens assigned to identities in Redis, this is so that the broker can be scaled and share the cache across instances. 
+
+Since profiles are unlikely to change often, profiles are kept in-memory, but can be added, removed and modified using an API for automated setups if required. 
+
+#### `BackEnd.Hosts`
+
+Add your redis hosts here as a map of `hostname:port`. Since TIB uses the same cluster driver as Tyk, it is possible to have TIB interact with your existing redis cluster if you enable it.
+
+#### `BackEnd.Password`
+
+The password for your Redis DB (recommended)
+
+#### `BackEnd.Database`
+
+If you are using multiple databases (not supported in Redis cluster), let TIB know which DB to use for Identity caching
+
+#### `BackEnd.EnableCluster`
+
+If you are using Redis cluster, enable it here to enable the slots mode
+
+#### `BackEnd.MaxIdle`
+
+Max idel connections to redis
+
+#### `BackEnd.MaxActive`
+
+Max active redis connections
+
+#### `TykAPISettings`
+
+This section enables you to configure the API credentials for the various Tyk Components TIB is interacting with.
+
+#### `TykAPISettings.GatewayConfig.Endpoint`
+
+The Hostname of the Tyk Gateway (this is for token generation purposes)
+
+#### `TykAPISettings.GatewayConfig.Port`
+
+The Port to use on the Tyk Gateway host
+
+#### `TykAPISettings.GatewayConfig.AdminSecret`
+
+The API secret for the Tyk Gateway REST API
+
+#### `TykAPISettings.DashboardConfig.Endpoint`
+
+The hostname of your Dashboard (Advanced API)
+
+#### `TykAPISettings.DashboardConfig.Port`
+
+The port of your Advanced API
+
+#### `TykAPISettings.DashboardConfig.AdminSecret`
+
+The high-level secret for the Advanced API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Advanced API to create one-time tokens for access.
+
+### The `profiles.conf` file
+
+The Profiles configuration file outlines which identity providers to match to which handlers and what actions to perform. The entries in this file encapsulate the activity for a single endpoint based on the ID and provider name.
+
+The file is JSON object which is essentially a list of objects:
+
+```
+[{
+	"ActionType": "GenerateOrLoginUserProfile",
+	"ID": "1",
+	"IdentityHandlerConfig": {},
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://tib.domain.com:3010",
+		"FailureRedirect": "http://tib.domain.com:3000/?fail=true",
+		"UseProviders": [{
+			"Key": "GOOGLE-OAUTH-TOKEN",
+			"Name": "gplus",
+			"Secret": "GOOGLE OAUTH SECRET"
+		}]
+	},
+	"ProviderConstraints": {
+		"Domain": "tyk.io",
+		"Group": ""
+	},
+	"ProviderName": "SocialProvider",
+	"ReturnURL": "http://tyk-dashboard.domain.com:3000/tap",
+	"Type": "redirect"
+}, {
+	"ActionType": "GenerateOAuthTokenForClient",
+	"ID": "2",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "ADVANCED-API-USER-API-TOKEN",
+		"DisableOneTokenPerAPI": false,
+		"OAuth": {
+			"APIListenPath": "oauth-1",
+			"BaseAPIID": "API-To-GRANT-ACCESS-TO",
+			"ClientId": "TYK-OAUTH-CLIENT-ID",
+			"RedirectURI": "http://your-app-domain.com/target-for-fragment",
+			"ResponseType": "token",
+			"Secret": "TYK-OAUTH-CLIENT-SECRET"
+		}
+	},
+	"MatchedPolicyID": "POLICY-TO-ATTACH-TO-KEY",
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"FailureRedirect": "http://yourdomain.com/failure-url",
+		"LDAPAttributes": [],
+		"LDAPBaseDN": "cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com",
+		"LDAPEmailAttribute": "mail",
+		"LDAPFilter": "((objectCategory=person)(objectClass=user)(cn=*USERNAME*))",
+		"LDAPPort": "389",
+		"LDAPServer": "localhost",
+		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com"
+	},
+	"ProviderName": "ADProvider",
+	"ReturnURL": "",
+	"Type": "passthrough"
+}]
+```
+
+Each item in a policy list dictates how that component will behave with the underlying services it is trying to talk to. IN the above two examples, we have a social provider, that will allow Dashboard access to Google plus users that are part of the "tyk.io" domain. In the second example, we are generating an OAuth token for users that are validated via an LDAP server.
+
+In the following sections we outline multiple configurations you can use for Identity Provision and Handling
+
+## Using Identity Providers
+
+Tyk Identity Broker comes with a few providers built-in, these are specialised around a few use cases, but we focus primarily on:
+
+- Enabling easy access via social logins to the developer portal (e.g. Github login)
+- Enabling internal access to the dashboard (e.g. via LDAP/ActiveDirectory)
+- Enabling easy token generation from a third party for things such as mobile apps and webapps without complex configuration
+
+This next section outlines how to configure the various built-in providers.
+
+### Social
+
+The social provider is a thin wrapper around the excellent `goth` social auth library, modified slightly to work with a multi-tenant structure. The social provider should provide seamless integration with:
 
 - Bitbucket
 - Digital Ocean
@@ -47,24 +248,357 @@ You can use TIB to hook up any identity provider:
 - Twitch
 - Twitter
 
-Or enterprise provider:
+The social provider is ideal for SSO-style logins for the dashboard or for the portal, for certain providers (mainly Google+), where email addresses are returned as part fo the user data, a constraint can be added to validate the users domain. This is useful for Google For Business Apss users taht want to grant access to their domain users for the dashboard.
 
-- LDAP
-- SAML assertion (tbc)
-- JSON Web Token claim validation (tbc)
+We've outlined a series of example configurations below for use with the social handler.
 
-And hook up an appropriate action to perform with Tyk Gateway that allows some kind of profile-specific access:
+#### Authenticate a user for the portal using Google and a constraint:
 
-- Tyk Developer Portal Account Login
-- Tyk Dashboard Login
-- Generate OAuth Access Token based on a Tyk API Gateway Policy
-- Generate OAuth Authorization code based on a Tyk API Gateway Policy (tbc)
-- Generate a generec Access Token based on a Tyk API Gateway Policy (tbc)
+The first thing to do with any social provider implementation is to make sure the OAuth client has been set up with the provider, and that the OAuth client has been set up with the correct callback URI.
 
-## How do I use it?
+**Step 1** Set up an OAuth client with google apps
 
-(TODO)
+1. Go to the [Google Developer Console](https://console.developers.google.com/) and create a new app
+2. Register a new OAuth client, lets call it WebApp 1 (Select "New Credentials -> OAuth Client ID")
+3. Select Web App
+4. Add the following URL (mnodified for your domain) to the "Authorized redirect URIs" section: `http://tib-hostname:TIB-PORT/auth/{PROFILE-ID}/gplus/callback`
 
-## How can I contribute?
+Save the client and take note of the secret and ID.
 
-(TODO)
+##### What did we just do?
+
+We created a new OAuth client in Google apps that has a registered call back URL for TIB, the callback is very important, as this is how Google will tell TIB about the user logging in, the callback URI is constructed as follows:
+
+	http://{TIB-HOST}:{TIB-PORT}/auth/{PROFILE-ID}/{PROVIDER-CODE}/callback
+
+If you were to use twitter with a profile ID of 15, you would have a callback for twitter that look slike this:
+
+	http://{TIB-HOST}:{TIB-PORT}/auth/15/twitter/callback
+
+**Step 2** Create a profile object in profiles.json:
+
+```
+[{
+	"ActionType": "GenerateOrLoginDeveloperProfile",
+	"ID": "1",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "YOUR-DASHBOARD-USER-API-KEY"
+	},
+	"OrgID": "YOUR-ORG-ID",
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://{TIB-HOST}:{TIB-PORT}",
+		"FailureRedirect": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/login/",
+		"UseProviders": [{
+			"Name": "gplus",
+			"Key": "GOOGLE-OAUTH-CLIENT-KEY",
+			"Secret": "GOOGLE-OAUTH-CLIENT-SECRET"
+		}]
+	},
+	"ProviderConstraints": {
+		"Domain": "yourdomain.com",
+		"Group": ""
+	},
+	"ProviderName": "SocialProvider",
+	"ReturnURL": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/sso/",
+	"Type": "redirect"
+}]
+```
+
+This profile basically tells TIB to load a profile into memory with the ID of 1, that it should login or generate a developer profile via Google Plus, and it should only allow users from `yourdomain.com` domain-based email accounts.
+
+The Return URL here is important, and is only provided in the *latest* version of Tyk Dashboard, as it makes use of new API endpoints to generate the SSO tokens required to allow remote access.
+
+If your portal is configured undder a differen root (e.g. `/`, then replace the `/portal' component of the URLs with that of your actual portal.)
+
+**Step 3 - Make a request to your TIB endpoint in your browser**
+
+Now, start TIB by entering:
+
+	./tyk-auth-proxy 
+
+And then point your browser at:
+
+	http://{TIB-HOST}:{TIB-PORT}/auth/1/gplus
+
+You will be asked to log into your account (make sure it is one that satisfies the constraints!), and once logged in, you should be redirected back via the TIB proxy to your portal, as a logged in user.
+
+This user will be created with some user profile data, the user can edit and change their email address, but continue to log in with the same Google account (this data is stored seperately).
+
+#### Authenticate a user for the dashboard using Google and a constraint:
+
+Similarly to the above, if we have our callback URL and client IDs set up with Google, we can use the following profile setup to access our developer portal using a social provider:
+
+```
+{
+	"ActionType": "GenerateOrLoginUserProfile",
+	"ID": "2",
+	"IdentityHandlerConfig": null,
+	"MatchedPolicyID": "1C",
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://\:{TIB-PORT}",
+		"FailureRedirect": "http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
+		"UseProviders": [{
+			"Name": "gplus",
+			"Key": "GOOGLE-OAUTH-CLIENT-KEY",
+			"Secret": "GOOGLE-OAUTH-CLIENT-SECRET"
+		}]
+	},
+	"ProviderConstraints": {
+		"Domain": "yourdomain.com",
+		"Group": ""
+	},
+	"ProviderName": "SocialProvider",
+	"ReturnURL": "http://{DASH-DOMAIN}:{DASH-PORT}/tap",
+	"Type": "redirect"
+}
+```
+
+It is worth noting in the above configuration that the return URL's have changed for failure and return states.
+
+The login to the portal, much like the login to the dashboard, makes use of a one-time nonce to log the user in to the session. The nonce is only accessible for a few seconds. It is recommended that in production use, all of these transaction shappen over secure SSL connections to avoid MITM snooping.
+
+#### Create an OAuth token (with redirect) for users lgging into your webapp or iOS app via Google:
+
+A common use case for Tyk Gateway users is to enable users to log into a web app or mobile app using a social provider such as Google, but have that user use a token in the app that is time-delimited and issued by their own API (or in this case, Tyk). 
+
+Tyk can act as an OAuth provider, but requires some glue code to work, in particular, generating a token based on the authentication of athird party, which needs to run on a server hosted by the owner of the application. This is not ideal in many scenarios where authentication has been delegated to a third-party provider (such as Google or Github). 
+
+In this case, we can enable this flow with Tyk Gateway by Using TIB. 
+
+What the broker will do is essentially the final leg of the authentication process without any new code, simply sending the user via TIB to the provider will suffice for them to be granted an OAuth token once they have authenticated in a standard, expected OAuth pattern.
+
+Assuming we hav created an client ID and secret in Google Apps to grant us access to the users data, we need those details, and some additional ones from Tyk itself:
+
+**Step 1 - Create an OAuth Client in Tyk Dashboard**
+
+TIB will use the OAuth credentials for GPlus to access and authenticate the user, it will then use another set of client credentials to make the request to Tyk to generate a token response and redirect the user, this means we need to creat an OAuth client in Tyk Dashboard before we can proceed.
+
+One quirk with the Tyk API is that requests for tokens go via the base APIs listen path (`{listen_path}/toauth/authorize`), so we will need to know the listen path and ID of this APi so TIB can make the correct API calls on your behalf.
+
+
+```
+{
+	"ActionType": "GenerateOAuthTokenForClient",
+	"ID": "3",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "{DASHBAORD-API-ID}",
+		"DisableOneTokenPerAPI": false,
+		"OAuth": {
+			"APIListenPath": "{API-LISTEN-PATH}",
+			"BaseAPIID": "{BASE-API-ID}",
+			"ClientId": "{TYK-OAUTH-CLIENT-ID}",
+			"RedirectURI": "http://{APP-DOMAIN}:{PORT}/{AUTH-SUCCESS-PATH}",
+			"ResponseType": "token",
+			"Secret": "{TYK-OAUTH-CLIENT-SECRET}"
+		}
+	},
+	"MatchedPolicyID": "567a86f630c55e3256000003",
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://{TIB-DOMAIN}:{TIB-PORT}",
+		"FailureRedirect": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/login/?fail=true",
+		"UseProviders": [{
+			"Key": "GOOGLE-OAUTH-CLIENT-KEY",
+			"Name": "gplus",
+			"Secret": "GOOGLE-OAUTH-CLIENT-SECRET"
+		}]
+	},
+	"ProviderConstraints": {
+		"Domain": "",
+		"Group": ""
+	},
+	"ProviderName": "SocialProvider",
+	"ReturnURL": "",
+	"Type": "redirect"
+}
+```
+
+There's a few new things here we need to take into account:
+
+- `API-LISTEN-PATH` - This is the listen apth of your API, TIB uses this to generate the OAuth token
+- `BASE-API-ID` - The base API ID for the listen path mentioned earlier, this forms the basic access grant for the token (this will be superceded by the `MatchedPolicyID`, but is required for token generation)
+- `TYK-OAUTH-CLIENT-ID` - The client ID for this profile within Tyk Gateway
+- `TYK-OAUTH-CLIENT-SECRET` - The Client secret for this profile in Tyk Gateway
+- `RedirectURI: http://{APP-DOMAIN}:{PORT}/{AUTH-SUCCESS-PATH}` - The Redirect URL set for this profile in the Tyk Gateway
+- `ResponseType` - This can be `token` or `authorization_code`, the first will generate a token directly, the second will generate an auth code for follow up access. For SPWA and Mobile Apps it is recommended to just use `token`
+
+When TIB successfully authorises the user, and generates the token using the relevant OAuth credentials, it will redirect the user to the relevant redirect with their token or auth code as a fragment in the URl for the app to decode and use as needed.
+
+There is a simplified flow which does not require a corresponding OAuth client in Tyk Gateway, and can just generate a standard token with the same flow.
+
+### LDAP
+
+The LDAP Identity Provider is experimental currently and provides limited functionality to bind z user to an LDAP server based on a username and password configuration. The LDAP provider currently does not extract user data from the server to populate a user object, but will provide enough defaults to work with all handlers.
+
+#### Log into Tyk Dashboard using LDAP
+
+```
+{
+	"ActionType": "GenerateOrLoginUserProfile",
+	"ID": "4",
+	"OrgID": "{YOUR-ORG-ID}",
+	"ProviderConfig": {
+		"FailureRedirect": "http://http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
+		"LDAPAttributes": [],
+		"LDAPPort": "389",
+		"LDAPServer": "localhost",
+		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io"
+	},
+	"ProviderName": "ADProvider",
+	"ReturnURL": "http://http://{DASH-DOMAIN}:{DASH-PORT}/tap",
+	"Type": "passthrough"
+}
+```
+
+**Step 1: Send a request to the LDAP URL**
+
+TIB can pull a username and password out of a request in two ways:
+
+1. Two form fields called "username" and "password"
+2. A basic auth header using the Basic Authentication standard form
+
+By default, TIB will look for the two form fields. To enable Basic Auth header extraction, add `"GetAuthFromBAHeader": true` to the `ProviderConfig` section.
+
+The request should be a `POST`.
+
+If you make this request with a valid user that can bind to the LDAP server, Tyk will redirect the user to the dashboard with a valid session. There's no more to it, this mecahnism is pass-through and is transparent to the user, with TIB acting as a direct client to the LDAP provider.
+
+**Note** The `LDAPUserDN` field MUST contain the special `*USERNAME*` marker in order to construct the users OU properly.
+
+#### Log into Tyk Portal using LDAP
+
+LDAP requires little configuration, we can use the same provider config above, with one that logs us into the portal instead - notice the change in the handler configuration and the return URL:
+
+```
+{
+	"ActionType": "GenerateOrLoginDeveloperProfile",
+	"ID": "5",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a"
+	},
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"FailureRedirect": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/login/",
+		"LDAPAttributes": [],
+		"LDAPPort": "389",
+		"LDAPServer": "localhost",
+		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io"
+	},
+	"ProviderConstraints": {
+		"Domain": "",
+		"Group": ""
+	},
+	"ProviderName": "ADProvider",
+	"ReturnURL": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/sso/",
+	"Type": "passthrough"
+}
+```
+
+#### Generate an OAuth Token using an LDAP login form
+
+The configuration below will take a request that is posted to TIB, authenticate it against LDAP, if the request is valid, it will redirect to the Tyk Gateway clients Redirect URI with the token as a URL fragment:
+
+```
+{
+	"ActionType": "GenerateOAuthTokenForClient",
+	"ID": "6",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "{DASHBAORD-API-ID}",
+		"DisableOneTokenPerAPI": false,
+		"OAuth": {
+			"APIListenPath": "{API-LISTEN-PATH}",
+			"BaseAPIID": "{BASE-API-ID}",
+			"ClientId": "{TYK-OAUTH-CLIENT-ID}",
+			"RedirectURI": "http://{APP-DOMAIN}:{PORT}/{AUTH-SUCCESS-PATH}",
+			"ResponseType": "token",
+			"Secret": "{TYK-OAUTH-CLIENT-SECRET}"
+		}
+	},
+	"MatchedPolicyID": "POLICY-ID",
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"FailureRedirect": "http://{APP-DOMAIN}:{PORT}/failure",
+		"LDAPAttributes": [],
+		"LDAPPort": "389",
+		"LDAPServer": "localhost",
+		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=ldap,dc=tyk-ldap-test,dc=com"
+	}
+	"ProviderName": "ADProvider",
+	"ReturnURL": "",
+	"Type": "passthrough"
+}
+```
+
+### Proxy Identity Provider
+
+The proxy identity provider is a generic solution to more legacy problems, as well as a way to handle flows such as basic auth access with third party providers or OAUth password grants where the request can just be passed through to the providing endpoint to return a direct response.
+
+The proxy provider will take a request, proxy it to an upstream host, capture the response, and analyse it for triggers of "success", if the triggers come out as true, then the provider will treat the request as authenticated and hand over to the Identity Handler to perform whatever action is required with the user data.
+
+Success can be triggered using three methods:
+
+1. Response code - e.g. if this is an API request, a simple "200" reponse would suffice to act as a successful authentication
+2. Response body exact match - You can have a base64 encoded body that you would expect as a successful match, if the two bodies are the same, then the request will be deemed successful
+3. Regex - Most likely, the response might be dynamic (and return a response code, timestamp or other often changing parameter), in which case you may want to just match the response to a regex.
+
+These can be used in conjunction as gates, e.g. a response must be 200 OK and match the regex in order to be marked as successful.
+
+#### JSON Data and Uernames
+
+The Proxy provider can do some clever things, such as extract JSON data from the response and decode it, as well as pull username data from the Basic Auth header (for example, if your identity provider supports dynamic basic auth).
+
+#### Logging into the dashboard using a proxy provider
+
+{
+	"ActionType": "GenerateOrLoginUserProfile",
+	"ID": "7",
+	"OrgID": "{YOUR-ORG-ID}",
+	"ProviderConfig": {
+		"AccessTokenField": "access_token",
+		"ExrtactUserNameFromBasicAuthHeader": false,
+		"OKCode": 200,
+		"OKRegex": "",
+		"OKResponse": "",
+		"ResponseIsJson": true,
+		"TargetHost": "http://{TARGET-HOSTNAME}:{PORT}/",
+		"UsernameField": "user_name"
+	},
+	"ProviderName": "ProxyProvider",
+	"ReturnURL": "http://{DASH-DOMAIN}:{DASH-PORT}/tap",
+	"Type": "redirect"
+}
+
+#### Generating a standard Auth Token using a Proxy Provider
+
+{
+	"ActionType": "GenerateTemporaryAuthToken",
+	"ID": "8",
+	"IdentityHandlerConfig": {
+		"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+		"DisableOneTokenPerAPI": false,
+		"TokenAuth": {
+			"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+		}
+	},
+	"MatchedPolicyID": "5654566b30c55e3904000003",
+	"OrgID": "53ac07777cbb8c2d53000002",
+	"ProviderConfig": {
+		"AccessTokenField": "access_token",
+		"ExrtactUserNameFromBasicAuthHeader": false,
+		"OKCode": 200,
+		"OKRegex": "",
+		"OKResponse": "",
+		"ResponseIsJson": true,
+		"TargetHost": "http://{TARGET-HOSTNAME}:{PORT}/",
+		"UsernameField": "user_name"
+	},
+	"ProviderName": "ProxyProvider",
+	"ReturnURL": "",
+	"Type": "passthrough"
+}
+
+## The Broker API
+
+[TBC]
+
