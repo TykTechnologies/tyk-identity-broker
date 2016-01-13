@@ -604,5 +604,266 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 
 ## The Broker API
 
-[TBC]
+Tyk Identity Broker has a simple API to allow policies to be created, updated, removed and listed for programatic and automated access. TIB also has a "flush" feature that enables you to flush the current configuration to disk for use when the client starts again.
 
+TIB does not store profiles in shared store, so if you have multiple TIB instances, they need to be configured individually (for now), since we don't expect TIB stores to change often, this is acceptable. 
+
+### List profiles 
+
+```
+GET /api/profiles/
+Authorization: test-secret
+
+{
+    "Status": "ok",
+    "ID": "",
+    "Data": [
+        {
+            "ActionType": "GenerateTemporaryAuthToken",
+            "ID": "11",
+            "IdentityHandlerConfig": {
+                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+                "DisableOneTokenPerAPI": false,
+                "TokenAuth": {
+                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+                }
+            },
+            "MatchedPolicyID": "5654566b30c55e3904000003",
+            "OrgID": "53ac07777cbb8c2d53000002",
+            "ProviderConfig": {
+                "ExrtactUserNameFromBasicAuthHeader": true,
+                "OKCode": 200,
+                "OKRegex": "origin",
+                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+                "TargetHost": "http://sharrow.tyk.io/ba-1/"
+            },
+            "ProviderConstraints": {
+                "Domain": "",
+                "Group": ""
+            },
+            "ProviderName": "ProxyProvider",
+            "ReturnURL": "",
+            "Type": "passthrough"
+        },
+        {
+			"ActionType": "GenerateOAuthTokenForClient",
+			"ID": "6",
+			"IdentityHandlerConfig": {
+				"DashboardCredential": "{DASHBAORD-API-ID}",
+				"DisableOneTokenPerAPI": false,
+				"OAuth": {
+					"APIListenPath": "{API-LISTEN-PATH}",
+					"BaseAPIID": "{BASE-API-ID}",
+					"ClientId": "{TYK-OAUTH-CLIENT-ID}",
+					"RedirectURI": "http://{APP-DOMAIN}:{PORT}/{AUTH-SUCCESS-PATH}",
+					"ResponseType": "token",
+					"Secret": "{TYK-OAUTH-CLIENT-SECRET}"
+				}
+			},
+			"MatchedPolicyID": "POLICY-ID",
+			"OrgID": "53ac07777cbb8c2d53000002",
+			"ProviderConfig": {
+				"FailureRedirect": "http://{APP-DOMAIN}:{PORT}/failure",
+				"LDAPAttributes": [],
+				"LDAPPort": "389",
+				"LDAPServer": "localhost",
+				"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=ldap,dc=tyk-ldap-test,dc=com"
+			}
+			"ProviderName": "ADProvider",
+			"ReturnURL": "",
+			"Type": "passthrough"
+		}
+    ]
+}
+```
+
+### Add profile
+
+#### Request
+
+```
+POST /api/profiles/{id}
+Authorization: test-secret
+
+{
+            "ActionType": "GenerateTemporaryAuthToken",
+            "ID": "11",
+            "IdentityHandlerConfig": {
+                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+                "DisableOneTokenPerAPI": false,
+                "TokenAuth": {
+                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+                }
+            },
+            "MatchedPolicyID": "5654566b30c55e3904000003",
+            "OrgID": "53ac07777cbb8c2d53000002",
+            "ProviderConfig": {
+                "ExrtactUserNameFromBasicAuthHeader": true,
+                "OKCode": 200,
+                "OKRegex": "origin",
+                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+                "TargetHost": "http://sharrow.tyk.io/ba-1/"
+            },
+            "ProviderConstraints": {
+                "Domain": "",
+                "Group": ""
+            },
+            "ProviderName": "ProxyProvider",
+            "ReturnURL": "",
+            "Type": "passthrough"
+}
+```
+
+#### Response
+
+```
+{
+    "Status": "ok",
+    "ID": "11",
+    "Data": {
+        "ID": "11",
+        "OrgID": "53ac07777cbb8c2d53000002",
+        "ActionType": "GenerateTemporaryAuthToken",
+        "MatchedPolicyID": "5654566b30c55e3904000003",
+        "Type": "passthrough",
+        "ProviderName": "ProxyProvider",
+        "ProviderConfig": {
+            "ExrtactUserNameFromBasicAuthHeader": true,
+            "OKCode": 200,
+            "OKRegex": "origin",
+            "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+            "TargetHost": "http://sharrow.tyk.io/ba-1/"
+        },
+        "IdentityHandlerConfig": {
+            "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+            "DisableOneTokenPerAPI": false,
+            "TokenAuth": {
+                "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+            }
+        },
+        "ProviderConstraints": {
+            "Domain": "",
+            "Group": ""
+        },
+        "ReturnURL": ""
+    }
+}
+```
+
+### Update profile
+
+#### Request
+
+```
+PUT /api/profiles/{id}
+Authorization: test-secret
+
+{
+            "ActionType": "GenerateTemporaryAuthToken",
+            "ID": "11",
+            "IdentityHandlerConfig": {
+                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+                "DisableOneTokenPerAPI": false,
+                "TokenAuth": {
+                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+                }
+            },
+            "MatchedPolicyID": "5654566b30c55e3904000003",
+            "OrgID": "53ac07777cbb8c2d53000002",
+            "ProviderConfig": {
+                "ExrtactUserNameFromBasicAuthHeader": true,
+                "OKCode": 200,
+                "OKRegex": "origin",
+                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+                "TargetHost": "http://sharrow.tyk.io/ba-1/"
+            },
+            "ProviderConstraints": {
+                "Domain": "",
+                "Group": ""
+            },
+            "ProviderName": "ProxyProvider",
+            "ReturnURL": "",
+            "Type": "passthrough"
+}
+```
+
+#### Response
+
+```
+{
+    "Status": "ok",
+    "ID": "11",
+    "Data": {
+        "ID": "11",
+        "OrgID": "53ac07777cbb8c2d53000002",
+        "ActionType": "GenerateTemporaryAuthToken",
+        "MatchedPolicyID": "5654566b30c55e3904000003",
+        "Type": "passthrough",
+        "ProviderName": "ProxyProvider",
+        "ProviderConfig": {
+            "ExrtactUserNameFromBasicAuthHeader": true,
+            "OKCode": 200,
+            "OKRegex": "origin",
+            "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+            "TargetHost": "http://sharrow.tyk.io/ba-1/"
+        },
+        "IdentityHandlerConfig": {
+            "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+            "DisableOneTokenPerAPI": false,
+            "TokenAuth": {
+                "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+            }
+        },
+        "ProviderConstraints": {
+            "Domain": "",
+            "Group": ""
+        },
+        "ReturnURL": ""
+    }
+}
+```
+
+### Delete profile
+
+#### Request
+
+```
+Delete /api/profiles/{id}
+Authorization: test-secret
+
+[emtpy body]
+
+```
+
+#### Response
+
+```
+{
+    "Status": "ok",
+    "ID": "200",
+    "Data": {}
+}
+```
+
+### Save profiles to disk
+
+#### Request
+
+```
+POST /aAuthorization: test-secret
+[emtpy body]pi/profiles/save
+```
+
+#### Response
+
+```
+{
+    "Status": "ok",
+    "ID": "",
+    "Data": {}
+}
+```
+
+#### Outcome:
+
+The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new priofiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
