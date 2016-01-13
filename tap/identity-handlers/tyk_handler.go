@@ -48,6 +48,7 @@ type OAuthSettings struct {
 	ClientId      string
 	Secret        string
 	BaseAPIID     string
+	NoRedirect    bool
 }
 
 type TokenSettings struct {
@@ -91,6 +92,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 			t.oauth.ClientId = oauthSettings.(map[string]interface{})["ClientId"].(string)
 			t.oauth.Secret = oauthSettings.(map[string]interface{})["Secret"].(string)
 			t.oauth.BaseAPIID = oauthSettings.(map[string]interface{})["BaseAPIID"].(string)
+			t.oauth.NoRedirect = oauthSettings.(map[string]interface{})["NoRedirect"].(bool)
 		}
 
 		tokenSettings, tokenOk := theseConfs["TokenAuth"]
@@ -286,6 +288,19 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	if resp.AccessToken != "" {
 		log.Warning(TykAPILogTag + " --> Storing token reference")
 		t.Store.SetKey(id_with_profile, resp.AccessToken)
+	}
+
+	if t.oauth.NoRedirect {
+		asJson, jErr := json.Marshal(resp)
+		if jErr != nil {
+			log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
+			fmt.Fprintf(w, "Data Failure")
+		}
+
+		log.Info(TykAPILogTag + " --> No redirect, returning token...")
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, string(asJson))
+		return
 	}
 
 	// After login, we need to redirect this user
