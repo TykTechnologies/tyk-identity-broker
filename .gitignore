@@ -1,5 +1,7 @@
 ._*
-*.conf
+tib.conf
 *.json
 certs/
 tyk-auth-proxy
+tyk-auth-proxy_linux_*
+release/

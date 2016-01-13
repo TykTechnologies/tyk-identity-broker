@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"io/ioutil"
-	"time"
 	"path"
 	"strconv"
+	"time"
 )
 
 // DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
@@ -85,7 +85,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 		return encErr
 	}
 
-	savePath := path.Join(config.ProfileDir, ProfileFilename)
+	savePath := path.Join(config.ProfileDir, *ProfileFilename)
 	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
 	if wErr != nil {
 		log.Error("[FILE LOADER] flush failed! ", w2Err)

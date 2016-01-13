@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/lonelycode/tyk-auth-proxy/backends"
@@ -28,7 +29,7 @@ var GlobalDataLoader DataLoader
 
 var log = logrus.New()
 
-const ProfileFilename string = "profiles.json"
+var ProfileFilename *string
 
 // Get our bak end to use, new beack-ends must be registered here
 func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
@@ -46,12 +47,16 @@ func init() {
 	log.Info("Tyk Identity Broker v0.1")
 	log.Info("Copyright Martin Buhr 2016\n")
 
-	loadConfig("tib.conf", &config)
+	confFile := flag.String("c", "tib.conf", "Path to the config file")
+	ProfileFilename := flag.String("p", "profiles.json", "Path to the profiles file")
+	flag.Parse()
+
+	loadConfig(*confFile, &config)
 	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
 
-	pDir := path.Join(config.ProfileDir, ProfileFilename)
+	pDir := path.Join(config.ProfileDir, *ProfileFilename)
 	loaderConf := FileLoaderConf{
 		FileName: pDir,
 	}
@@ -84,13 +89,12 @@ func main() {
 	if config.HttpServerOptions.UseSSL {
 		log.Info("[MAIN] Broker Listening on :443")
 		err := http.ListenAndServeTLS(":443", config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
-	    if err != nil {
-	        log.Fatal("ListenAndServe: ", err)
-	    }
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
 	} else {
 		log.Info("[MAIN] Broker Listening on :", listenPort)
 		http.ListenAndServe(":"+listenPort, p)
-	} 
-
+	}
 
 }

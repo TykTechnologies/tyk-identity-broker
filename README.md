@@ -5,6 +5,34 @@ Tyk Identity Broker (TIB) v0.1
 
 The Tyk Identity Broker provides a service-level component that enables delegated identities to be authorized and provide authenticated access to various Tyk-powered components such as the Tyk Dashboard, the Tyk Developer Portal and Tyk Gateway API flows such as OAuth access tokens, and regular API tokens.
 
+### Requirements and dependencies
+
+TIB requires:
+
+- Tyk Gateway v1.9.1+
+- Tyk Dashboard v0.9.7.1+
+- Redis
+
+### Installation
+
+Extract the tarball and run the binary:
+
+```
+tar -xvzf tib-linux-amd64-v0.1.tar.gz
+cd tib-v0.1
+./tib
+```
+
+### Usage
+
+No command line arguments are needed, but if you are running TIB from another dir or during startup, you will need to set the absolute paths to the profile and config files
+
+	Usage of ./tyk-auth-proxy:
+	  -c=string
+	        Path to the config file (default "tib.conf")
+	  -p#=string
+	        Path to the profiles file (default "profiles.json")
+
 ### How it works
 
 Tyk Identity Broker provides a simple API, which traffic can be sent *through*, the API will match the request to a *profile* which then exposes two things:
