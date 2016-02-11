@@ -48,7 +48,7 @@ func init() {
 	log.Info("Copyright Martin Buhr 2016\n")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
-	ProfileFilename := flag.String("p", "profiles.json", "Path to the profiles file")
+	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
 	flag.Parse()
 
 	loadConfig(*confFile, &config)

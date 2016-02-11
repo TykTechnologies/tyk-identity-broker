@@ -85,7 +85,11 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 		return encErr
 	}
 
-	savePath := path.Join(config.ProfileDir, *ProfileFilename)
+	savePath := path.Join(config.ProfileDir, f.config.FileName)
+	if ProfileFilename != nil {
+		savePath = path.Join(config.ProfileDir, *ProfileFilename)
+	}
+
 	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
 	if wErr != nil {
 		log.Error("[FILE LOADER] flush failed! ", w2Err)
