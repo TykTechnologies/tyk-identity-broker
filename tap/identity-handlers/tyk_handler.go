@@ -103,11 +103,11 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 			}
 			t.token.BaseAPIID = tokenSettings.(map[string]interface{})["BaseAPIID"].(string)
 
-			if tokenSettings.(map[string]interface{})["ExpirySeconds"] == nil {
+			if tokenSettings.(map[string]interface{})["Expires"] == nil {
 				log.Warning(TykAPILogTag + " No expiry found - defaulting to 3600 seconds")
 				t.token.Expires = 3600
 			} else {
-				t.token.Expires = int64(tokenSettings.(map[string]interface{})["ExpirySeconds"].(float64))
+				t.token.Expires = int64(tokenSettings.(map[string]interface{})["Expires"].(float64))
 			}
 
 		}
