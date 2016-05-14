@@ -25,7 +25,7 @@ type ProxyHandlerConfig struct {
 	ResponseIsJson                     bool
 	AccessTokenField                   string
 	UsernameField                      string
-	ExrtactUserNameFromBasicAuthHeader bool
+	ExtractUserNameFromBasicAuthHeader bool
 }
 
 type ProxyProvider struct {
