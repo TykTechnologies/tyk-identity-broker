@@ -4,10 +4,10 @@ import (
 	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/lonelycode/tyk-auth-proxy/backends"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/tothic"
-	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
+	"tyk-identity-broker/backends"
+	"tyk-identity-broker/tap"
+	"tyk-identity-broker/tothic"
+	"tyk-identity-broker/tyk-api"
 	"net/http"
 	"path"
 	"strconv"
@@ -31,7 +31,7 @@ var log = logrus.New()
 
 var ProfileFilename *string
 
-// Get our bak end to use, new beack-ends must be registered here
+// Get our backend to use, new backends must be registered here
 func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
 
 	AuthConfigStore = &backends.InMemoryBackend{}
@@ -70,8 +70,10 @@ func init() {
 
 func main() {
 	p := mux.NewRouter()
-	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
-	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
+	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback)).Methods("POST")
+	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleCORS)).Methods("OPTIONS")
+	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth)).Methods("POST")
+	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleCORS)).Methods("OPTIONS")
 
 	p.Handle("/api/profiles/save", IsAuthenticated(http.HandlerFunc(HandleFlushProfileList))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")

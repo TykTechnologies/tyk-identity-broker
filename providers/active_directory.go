@@ -4,9 +4,10 @@ package providers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/lonelycode/go-ldap"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"tyk-identity-broker/tap"
 	"github.com/markbates/goth"
 	"net/http"
 	"strings"
@@ -36,6 +37,10 @@ type ADConfig struct {
 	DefaultDomain       string
 	GetAuthFromBAHeader bool
 	SlugifyUserName     bool
+	CORS                bool
+	CORSOrigin          string
+	CORSHeaders         string
+	CORSMaxAge          string
 }
 
 // Name provides the name of the ID provider
@@ -82,6 +87,34 @@ func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, conf
 	}
 
 	return nil
+}
+
+func (p *ADProvider) GetProfile() tap.Profile {
+	return p.profile
+}
+
+func (p *ADProvider) GetHandler() tap.IdentityHandler {
+	return p.handler
+}
+
+func (p *ADProvider) GetLogTag() string {
+	return ProxyLogTag
+}
+
+func (p *ADProvider) GetCORS() bool {
+	return p.config.CORS
+}
+
+func (p *ADProvider) GetCORSOrigin() string {
+	return p.config.CORSOrigin
+}
+
+func (p *ADProvider) GetCORSHeaders() string {
+	return p.config.CORSHeaders
+}
+
+func (p *ADProvider) GetCORSMaxAge() string {
+	return p.config.CORSMaxAge
 }
 
 func (s *ADProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +216,9 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
-func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
+func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) (goth.User, error){
+	var user goth.User
+
 	s.connect()
 
 	username := r.FormValue("username")
@@ -199,7 +234,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 		log.Error(ADProviderLogTag+" Bind failed for user: ", username)
 		log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
 		s.provideErrorRedirect(w, r)
-		return
+		return user, bindErr
 	}
 	log.Info(ADProviderLogTag+" User bind successful: ", username)
 
@@ -208,14 +243,14 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 		log.Error(ADProviderLogTag+" Lookup failed for user: ", username)
 		log.Error(ADProviderLogTag+" --> Error was: ", uErr)
 		s.provideErrorRedirect(w, r)
-		return
+		return user, uErr
 	}
 
 	constraintErr := s.checkConstraints(user)
 	if constraintErr != nil {
 		log.Error(ADProviderLogTag+" Constraint failed: ", constraintErr)
 		s.provideErrorRedirect(w, r)
-		return
+		return user, uErr
 	}
 
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
@@ -225,6 +260,9 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	if closeFail != nil {
 		log.Error(ADProviderLogTag+" Closing failed! ", closeFail)
 	}
+
+
+	return user, errors.New("NOT IMPLEMENTED")
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {

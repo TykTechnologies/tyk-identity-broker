@@ -1,7 +1,6 @@
 ._*
 tib.conf
 *.json
+tyk-identity-broker
 certs/
-tyk-auth-proxy
-tyk-auth-proxy_linux_*
 release/

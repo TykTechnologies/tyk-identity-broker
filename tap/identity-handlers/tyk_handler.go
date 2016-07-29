@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
+	"tyk-identity-broker/tap"
+	"tyk-identity-broker/tyk-api"
 	"github.com/markbates/goth"
 	"net/http"
 	"time"
@@ -18,7 +18,7 @@ var TykAPILogTag string = "[TYK ID HANDLER]" // log tag
 type ModuleName string // To separate out target modules of the dashboard
 
 const (
-	// Enums to identify which target it being used, dashbaord or portal, they are distinct.
+	// Enums to identify which target it being used, dashboard or portal, they are distinct.
 	SSOForDashboard ModuleName = "dashboard"
 	SSOForPortal    ModuleName = "portal"
 )
@@ -145,13 +145,14 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 }
 
 // CompleteIdentityActionForDashboard handles a dashboard identity. No ise is created, only an SSO login session
-func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) ([]byte, error) {
+	var asJson []byte
+
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
 		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
-		fmt.Fprintf(w, "Login failed")
-		return
+		return asJson, errors.New("Login failed")
 	}
 
 	// After login, we need to redirect this user
@@ -159,25 +160,26 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
 		http.Redirect(w, r, newURL, 301)
-		return
+		return asJson, nil
 	}
 
 	log.Warning(TykAPILogTag + "No return URL found, redirect failed.")
-	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
-
+	return asJson, errors.New("Success! (Have you set a return URL?)")
 }
 
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
 // user depnding on if they exist or not and validate the login using a one-time nonce.
-func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) ([]byte, error) {
 	// Create a nonce
 	log.Info(TykAPILogTag + " Creating nonce")
+
+	var asJson []byte
+
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
 		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
-		fmt.Fprintf(w, "Login failed")
-		return
+		return asJson, errors.New("Login failed")
 	}
 
 	// Check if user exists
@@ -213,8 +215,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		createErr := t.API.CreateDeveloper(t.dashboardUserAPICred, newUser)
 		if createErr != nil {
 			log.Error(TykAPILogTag+" failed to create user! ", createErr)
-			fmt.Fprintf(w, "Login failed")
-			return
+			return asJson, errors.New("Login failed")
 		}
 	} else {
 		// Set nonce value in user profile
@@ -222,8 +223,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
 			log.Error("Failed to update user! ", updateErr)
-			fmt.Fprintf(w, "Login failed")
-			return
+			return asJson, errors.New("Login failed")
 		}
 	}
 
@@ -233,15 +233,17 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		newURL := profile.ReturnURL + "?nonce=" + nonce
 		log.Info(TykAPILogTag+" --> URL With NONCE is: ", newURL)
 		http.Redirect(w, r, newURL, 301)
-		return
+		return asJson, nil
 	}
 
 	log.Warning(TykAPILogTag + "No return URL found, redirect failed.")
-	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
+	return asJson, errors.New("Success! (Have you set a return URL?)")
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) ([]byte, error) {
 	log.Info(TykAPILogTag + " Starting OAuth Flow...")
+
+	var asJson []byte
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -278,14 +280,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	// Redirect request
 	if oErr != nil {
 		log.Error("Failed to generate OAuth token ", oErr)
-		fmt.Fprintf(w, "OAuth token generation failed")
-		return
+		return asJson, errors.New("OAuth token generation failed")
 	}
 
 	if resp == nil {
 		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
-		fmt.Fprintf(w, "Login failed")
-		return
+		return asJson, errors.New("Login failed")
 	}
 
 	if resp.AccessToken != "" {
@@ -297,13 +297,11 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
 			log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
-			fmt.Fprintf(w, "Data Failure")
+			return asJson, errors.New("Data Failure")
 		}
 
 		log.Info(TykAPILogTag + " --> No redirect, returning token...")
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, string(asJson))
-		return
+		return asJson, nil
 	}
 
 	// After login, we need to redirect this user
@@ -311,12 +309,16 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	if resp.RedirectTo != "" {
 		log.Debug(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
 		http.Redirect(w, r, resp.RedirectTo, 301)
-		return
+		return asJson, nil
 	}
+
+	return asJson, errors.New("Unable to process request")
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) ([]byte, error) {
 	log.Info(TykAPILogTag + " Starting Token Flow...")
+
+	var asJson []byte
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -349,14 +351,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	if tErr != nil {
 		log.Error("Failed to generate Auth token ", tErr)
-		fmt.Fprintf(w, "Auth token generation failed")
-		return
+		return asJson, errors.New("Auth token generation failed")
 	}
 
 	if resp == nil {
 		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
-		fmt.Fprintf(w, "Login failed")
-		return
+		return asJson, errors.New("Login failed")
 	}
 
 	if resp.KeyID != "" {
@@ -370,34 +370,32 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		cleanURL := t.profile.ReturnURL + "#token=" + resp.KeyID
 		log.Debug(TykAPILogTag+" --> URL is: ", cleanURL)
 		http.Redirect(w, r, cleanURL, 301)
-		return
+		return asJson, nil
 	}
 
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
 		log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
 		fmt.Fprintf(w, "Data Failure")
+		return asJson, jErr
 	}
 
 	log.Info(TykAPILogTag + " --> No redirect, returning token...")
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(asJson))
-	return
+	return asJson, nil
 }
 
-// CompleteIdentityAction will log a user into Tyk dashbaord or Tyk portal
-func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+// CompleteIdentityAction will log a user into Tyk dashboard or Tyk portal
+func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) ([]byte, error){
+	var asJson []byte
+
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
-		t.CompleteIdentityActionForDashboard(w, r, i, profile)
-		return
+		return t.CompleteIdentityActionForDashboard(w, r, i, profile)
 	} else if profile.ActionType == tap.GenerateOrLoginDeveloperProfile {
-		t.CompleteIdentityActionForPortal(w, r, i, profile)
-		return
+		return t.CompleteIdentityActionForPortal(w, r, i, profile)
 	} else if profile.ActionType == tap.GenerateOAuthTokenForClient {
-		t.CompleteIdentityActionForOAuth(w, r, i, profile)
-		return
+		return t.CompleteIdentityActionForOAuth(w, r, i, profile)
 	} else if profile.ActionType == tap.GenerateTemporaryAuthToken {
-		t.CompleteIdentityActionForTokenAuth(w, r, i, profile)
-		return
+		return t.CompleteIdentityActionForTokenAuth(w, r, i, profile)
 	}
+	return asJson, nil
 }
