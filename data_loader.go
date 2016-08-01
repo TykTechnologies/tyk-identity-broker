@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"tyk-identity-broker/tap"
 	"io/ioutil"
 	"path"
 	"strconv"

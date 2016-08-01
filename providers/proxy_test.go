@@ -2,8 +2,8 @@ package providers
 
 import (
 	"encoding/json"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/tap/identity-handlers"
+	"tyk-identity-broker/tap"
+	"tyk-identity-broker/tap/identity-handlers"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

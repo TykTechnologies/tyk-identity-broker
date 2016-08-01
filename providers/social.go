@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/toth"
-	"github.com/lonelycode/tyk-auth-proxy/tothic"
+	"tyk-identity-broker/tap"
+	"tyk-identity-broker/toth"
+	"tyk-identity-broker/tothic"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -48,11 +48,43 @@ type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
 	FailureRedirect string
+	CORS            bool
+	CORSOrigin      string
+	CORSHeaders     string
+	CORSMaxAge      string
 }
 
 // Name returns the name of the provder
 func (s *Social) Name() string {
 	return "SocialProvider"
+}
+
+func (p *Social) GetProfile() tap.Profile {
+	return p.profile
+}
+
+func (p *Social) GetHandler() tap.IdentityHandler {
+	return p.handler
+}
+
+func (p *Social) GetLogTag() string {
+	return ProxyLogTag
+}
+
+func (p *Social) GetCORS() bool {
+	return p.config.CORS
+}
+
+func (p *Social) GetCORSOrigin() string {
+	return p.config.CORSOrigin
+}
+
+func (p *Social) GetCORSHeaders() string {
+	return p.config.CORSHeaders
+}
+
+func (p *Social) GetCORSMaxAge() string {
+	return p.config.CORSMaxAge
 }
 
 // ProviderType returns the type of the provider, Social makes use of the reirect type, as
@@ -111,8 +143,10 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 }
 
 // Handle is the main callback delegate for the generic auth flow
-func (s *Social) Handle(w http.ResponseWriter, r *http.Request) {
+func (s *Social) Handle(w http.ResponseWriter, r *http.Request) (goth.User, error) {
 	tothic.BeginAuthHandler(w, r, &s.toth)
+	var user goth.User
+	return user, errors.New("NOT IMPLEMENTED")
 }
 
 func (s *Social) checkConstraints(user interface{}) error {

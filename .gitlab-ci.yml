@@ -1,0 +1,10 @@
+stages:
+  - release
+
+release:
+  image: gcr.io/help-1272/node:release
+  stage: release
+  script:
+    do-release --publish
+  only:
+    - master

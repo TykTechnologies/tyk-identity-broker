@@ -12,7 +12,7 @@ import (
 // is being used off the back of a delegated authentication provider such as GPlus.
 type IdentityHandler interface {
 	Init(interface{}) error
-	CompleteIdentityAction(http.ResponseWriter, *http.Request, interface{}, Profile)
+	CompleteIdentityAction(http.ResponseWriter, *http.Request, interface{}, Profile) ([]byte, error)
 }
 
 // GenerateSSOKey is a utility function that creates a temporary ID to identity a user from a delegated provider

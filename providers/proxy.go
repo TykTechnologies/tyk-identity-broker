@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jeffail/gabs"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"tyk-identity-broker/tap"
 	"github.com/markbates/goth"
 	"io/ioutil"
 	"net/http"
@@ -25,7 +25,11 @@ type ProxyHandlerConfig struct {
 	ResponseIsJson                     bool
 	AccessTokenField                   string
 	UsernameField                      string
-	ExrtactUserNameFromBasicAuthHeader bool
+	ExtractUserNameFromBasicAuthHeader bool
+	CORS                               bool
+	CORSOrigin                         string
+	CORSHeaders                        string
+	CORSMaxAge                         string
 }
 
 type ProxyProvider struct {
@@ -57,19 +61,46 @@ func (p *ProxyProvider) ProviderType() tap.ProviderType {
 func (p *ProxyProvider) UseCallback() bool {
 	return false
 }
-
-func (p *ProxyProvider) respondFailure(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(401)
-	fmt.Fprintf(rw, "Authentication Failed")
+func (p *ProxyProvider) GetProfile() tap.Profile {
+	return p.profile
 }
 
-func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
+func (p *ProxyProvider) GetHandler() tap.IdentityHandler {
+	return p.handler
+}
+
+func (p *ProxyProvider) GetLogTag() string {
+	return ProxyLogTag
+}
+
+func (p *ProxyProvider) GetCORS() bool {
+	return p.config.CORS
+}
+
+func (p *ProxyProvider) GetCORSOrigin() string {
+	return p.config.CORSOrigin
+}
+
+func (p *ProxyProvider) GetCORSHeaders() string {
+	return p.config.CORSHeaders
+}
+
+func (p *ProxyProvider) GetCORSMaxAge() string {
+	return p.config.CORSMaxAge
+}
+
+
+func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+	return
+}
+
+func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) (goth.User, error){
+	var user goth.User
+
 	// copy the request to a target
 	target, tErr := url.Parse(p.config.TargetHost)
 	if tErr != nil {
-		log.Error(ProxyLogTag+"Failed to parse target URL: ", tErr)
-		p.respondFailure(rw, r)
-		return
+		return user, fmt.Errorf(ProxyLogTag+"Failed to parse target URL: ", tErr)
 	}
 	thisProxy := httputil.NewSingleHostReverseProxy(target)
 
@@ -79,16 +110,12 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	thisProxy.ServeHTTP(recorder, r)
 
 	if recorder.Code >= 400 {
-		log.Error(ProxyLogTag+"Code was: ", recorder.Code)
-		p.respondFailure(rw, r)
-		return
+		return user, fmt.Errorf(ProxyLogTag+"Code was: ", recorder.Code)
 	}
 	// check against passing signal
 	if p.config.OKCode != 0 {
 		if recorder.Code != p.config.OKCode {
-			log.Error(ProxyLogTag+"Code was: ", recorder.Code, " expected: ", p.config.OKCode)
-			p.respondFailure(rw, r)
-			return
+			return user, fmt.Errorf(ProxyLogTag+"Code was: ", recorder.Code, " expected: ", p.config.OKCode)
 		}
 	}
 
@@ -96,9 +123,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.OKResponse != "" {
 		sEnc := b64.StdEncoding.EncodeToString(thisBody)
 		if err != nil {
-			log.Error(ProxyLogTag + "Could not read body.")
-			p.respondFailure(rw, r)
-			return
+			return user, fmt.Errorf(ProxyLogTag + "Could not read body.")
 		}
 
 		if sEnc != p.config.OKResponse {
@@ -106,31 +131,25 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 			if len(sEnc) > 21 {
 				shortStr = sEnc[:20] + "..."
 			}
-			log.Error(ProxyLogTag+"Response was: '", shortStr, "' expected: '", p.config.OKResponse, "'")
-			p.respondFailure(rw, r)
-			return
+			return user, fmt.Errorf(ProxyLogTag+"Response was: '", shortStr, "' expected: '", p.config.OKResponse, "'")
 		}
 	}
 
 	if p.config.OKRegex != "" {
 		thisRegex, rErr := regexp.Compile(p.config.OKRegex)
 		if rErr != nil {
-			log.Error(ProxyLogTag+"Regex failure: ", rErr)
-			p.respondFailure(rw, r)
-			return
+			return user, fmt.Errorf(ProxyLogTag+"Regex failure: ", rErr)
 		}
 
 		found := thisRegex.MatchString(string(thisBody))
 
 		if !found {
-			log.Error(ProxyLogTag + "Regex not found")
-			p.respondFailure(rw, r)
-			return
+			return user, fmt.Errorf(ProxyLogTag + "Regex not found")
 		}
 	}
 
 	uName := RandStringRunes(12)
-	if p.config.ExrtactUserNameFromBasicAuthHeader {
+	if p.config.ExtractUserNameFromBasicAuthHeader {
 		thisU, _ := ExtractBAUsernameAndPasswordFromRequest(r)
 		if thisU != "" {
 			uName = thisU
@@ -158,19 +177,14 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	thisUser := goth.User{
+	user = goth.User{
 		UserID:      uName,
 		Provider:    p.Name(),
 		AccessToken: AccessToken,
 	}
 
-	log.Debug("Username: ", thisUser.UserID)
-	log.Debug("Access token: ", thisUser.AccessToken)
+	log.Debug("Username: ", user.UserID)
+	log.Debug("Access token: ", user.AccessToken)
 
-	// Complete the identity action
-	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
-}
-
-func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
-	return
+	return user, nil
 }

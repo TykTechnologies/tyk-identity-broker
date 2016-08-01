@@ -5,7 +5,7 @@ package identityHandlers
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"tyk-identity-broker/tap"
 	"net/http"
 )
 
