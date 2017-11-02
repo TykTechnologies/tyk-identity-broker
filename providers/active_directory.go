@@ -4,6 +4,7 @@ package providers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/lonelycode/go-ldap"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
@@ -126,58 +127,70 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		UserID:   uname,
 		Provider: "ADProvider",
 	}
-	var attrs []string
-	attrs = s.config.LDAPAttributes
-	attrs = append(attrs, s.config.LDAPEmailAttribute)
+
+	if s.config.LDAPFilter == "" {
+		var attrs []string
+		attrs = s.config.LDAPAttributes
+		attrs = append(attrs, s.config.LDAPEmailAttribute)
+
+		thisUser.Email = tap.GenerateSSOKey(thisUser)
+		log.Debug(ADProviderLogTag+" User Data:", thisUser)
+
+		return thisUser, nil
+	}
+
+	DN := s.config.LDAPBaseDN
+	if DN == "" {
+		DN = s.prepDN(username)
+	}
 
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
+	search_request := ldap.NewSearchRequest(
+		DN,
+		ldap.ScopeSingleLevel,
+		ldap.DerefAlways,
+		0,
+		0,
+		false,
+		s.prepFilter(username),
+		s.config.LDAPAttributes,
+		nil)
 
-	// search_request := ldap.NewSearchRequest(
-	// 	s.config.LDAPBaseDN,
-	// 	ldap.ScopeSingleLevel,
-	// 	ldap.DerefAlways,
-	// 	0,
-	// 	0,
-	// 	false,
-	// 	s.prepFilter(username),
-	// 	s.config.LDAPAttributes,
-	// 	nil)
+	sr, err := s.connection.Search(search_request)
+	if err != nil {
+		log.Error(ADProviderLogTag+" Failure in search: ", err)
+		return thisUser, err
+	}
 
-	// sr, err := s.connection.Search(search_request)
-	// if err != nil {
-	// 	log.Error(ADProviderLogTag+" Failure in search: ", err)
-	// 	return thisUser, err
-	// }
+	if len(sr.Entries) == 0 {
+		return thisUser, errors.New("No users match given filter: " + s.prepFilter(username))
+	}
 
-	// emailFound := false
-	// for _, entry := range sr.Entries {
-	// 	for _, j := range entry.Attributes {
-	// 		log.Debug("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
-	// 		if j.Name == s.config.LDAPEmailAttribute {
-	// 			thisUser.Email = j.Values[0]
-	// 			emailFound = true
-	// 			break
-	// 		}
-	// 	}
-	// 	if emailFound {
-	// 		break
-	// 	}
-	// }
+	emailFound := false
+	for _, entry := range sr.Entries {
+		for _, j := range entry.Attributes {
+			log.Debug("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
+			if j.Name == s.config.LDAPEmailAttribute {
+				thisUser.Email = j.Values[0]
+				emailFound = true
+				break
+			}
+		}
+		if emailFound {
+			break
+		}
+	}
 
-	// if !emailFound {
-	// 	log.Warning("User email not found, generating from username")
-	// 	if strings.Contains(username, "@") {
-	// 		thisUser.Email = username
-	// 	} else {
-	// 		thisUser.Email = username + "@" + s.profile.OrgID + "-" + "ADProvider.com"
-	// 	}
-	// }
+	if !emailFound {
+		log.Warning("User email not found, generating from username")
+		if strings.Contains(username, "@") {
+			thisUser.Email = username
+		} else {
+			thisUser.Email = username + "@" + s.profile.OrgID + "-" + "ADProvider.com"
+		}
+	}
 
-	thisUser.Email = tap.GenerateSSOKey(thisUser)
-
-	log.Debug(ADProviderLogTag+" User Data:", thisUser)
-	//log.Debug(ADProviderLogTag+" Search:", search_request.Filter, "-> num of entries = ", len(sr.Entries))
 	return thisUser, nil
 }
 
