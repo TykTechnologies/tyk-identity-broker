@@ -7,8 +7,9 @@ import (
 	"errors"
 	"fmt"
 	//"github.com/lonelycode/go-ldap"
-    "github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap"
 	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"net/http"
 	"strings"
@@ -130,6 +131,8 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	}
 
 	if s.config.LDAPFilter == "" {
+        log.Debug(ADProviderLogTag + " LDAPFilter is blank, skipping")
+
 		var attrs []string
 		attrs = s.config.LDAPAttributes
 		attrs = append(attrs, s.config.LDAPEmailAttribute)
@@ -145,6 +148,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		DN = s.prepDN(username)
 	}
 
+	log.Debug(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
@@ -166,6 +170,10 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 
 	if len(sr.Entries) == 0 {
 		return thisUser, errors.New("No users match given filter: " + s.prepFilter(username))
+	}
+
+	if len(sr.Entries) > 1 {
+		return thisUser, errors.New("Filter matched multiple users")
 	}
 
 	emailFound := false
@@ -198,6 +206,8 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
 func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
+	log.Level = logrus.DebugLevel
+
 	s.connect()
 
 	username := r.FormValue("username")
@@ -205,6 +215,12 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	if s.config.GetAuthFromBAHeader {
 		username, password = ExtractBAUsernameAndPasswordFromRequest(r)
+	}
+
+	if username == "" || password == "" {
+		log.Error(ADProviderLogTag + "Login attempt with empty username or password")
+		s.provideErrorRedirect(w, r)
+		return
 	}
 
 	bindErr := s.connection.Bind(s.prepDN(username), password)
