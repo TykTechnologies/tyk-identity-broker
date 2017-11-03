@@ -8,7 +8,7 @@ import (
 	"fmt"
 	//"github.com/lonelycode/go-ldap"
 	"github.com/go-ldap/ldap"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"net/http"
@@ -119,7 +119,7 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string) (goth.User, error) {
-	log.Debug(ADProviderLogTag + " Search: starting...")
+	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
 		uname = Slug(username)
@@ -131,14 +131,14 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	}
 
 	if s.config.LDAPFilter == "" {
-        log.Debug(ADProviderLogTag + " LDAPFilter is blank, skipping")
+        log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
 
 		var attrs []string
 		attrs = s.config.LDAPAttributes
 		attrs = append(attrs, s.config.LDAPEmailAttribute)
 
 		thisUser.Email = tap.GenerateSSOKey(thisUser)
-		log.Debug(ADProviderLogTag+" User Data:", thisUser)
+		log.Info(ADProviderLogTag+" User Data:", thisUser)
 
 		return thisUser, nil
 	}
@@ -148,7 +148,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		DN = s.prepDN(username)
 	}
 
-	log.Debug(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
+	log.Info(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
@@ -179,7 +179,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	emailFound := false
 	for _, entry := range sr.Entries {
 		for _, j := range entry.Attributes {
-			log.Debug("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
+			log.Info("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
 			if j.Name == s.config.LDAPEmailAttribute {
 				thisUser.Email = j.Values[0]
 				emailFound = true
@@ -213,6 +213,8 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
+	log.Error(username, password)
+
 	if s.config.GetAuthFromBAHeader {
 		username, password = ExtractBAUsernameAndPasswordFromRequest(r)
 	}
@@ -222,6 +224,8 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 		s.provideErrorRedirect(w, r)
 		return
 	}
+
+	log.Debug("DN: ", s.prepDN(username))
 
 	bindErr := s.connection.Bind(s.prepDN(username), password)
 
@@ -251,10 +255,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 
 	log.Debug(ADProviderLogTag + " Closing connection")
-	closeFail := s.connection.Close()
-	if closeFail != nil {
-		log.Error(ADProviderLogTag+" Closing failed! ", closeFail)
-	}
+	s.connection.Close()
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/lonelycode/tyk-auth-proxy/providers"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/tap/identity-handlers"
+	"github.com/TykTechnologies/tyk-identity-broker/providers"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
 	"net/http"
 )
 

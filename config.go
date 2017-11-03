@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"io/ioutil"
 )
 
