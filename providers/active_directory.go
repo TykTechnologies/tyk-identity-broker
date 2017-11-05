@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	//"github.com/lonelycode/go-ldap"
-	"github.com/go-ldap/ldap"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 	"net/http"
 	"strings"
@@ -35,6 +35,7 @@ type ADConfig struct {
 	LDAPFilter          string
 	LDAPEmailAttribute  string
 	LDAPAttributes      []string
+	LDAPSearchScope     int
 	FailureRedirect     string
 	DefaultDomain       string
 	GetAuthFromBAHeader bool
@@ -131,7 +132,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	}
 
 	if s.config.LDAPFilter == "" {
-        log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
+		log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
 
 		var attrs []string
 		attrs = s.config.LDAPAttributes
@@ -153,7 +154,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
 		DN,
-		ldap.ScopeSingleLevel,
+		s.config.LDAPSearchScope,
 		ldap.DerefAlways,
 		0,
 		0,
