@@ -235,6 +235,7 @@ The file is JSON object which is essentially a list of objects:
 		"LDAPAttributes": [],
 		"LDAPBaseDN": "cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com",
 		"LDAPEmailAttribute": "mail",
+		"LDAPSearchScope": 2,
 		"LDAPFilter": "((objectCategory=person)(objectClass=user)(cn=*USERNAME*))",
 		"LDAPPort": "389",
 		"LDAPServer": "localhost",
