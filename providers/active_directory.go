@@ -214,8 +214,6 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	log.Error(username, password)
-
 	if s.config.GetAuthFromBAHeader {
 		username, password = ExtractBAUsernameAndPasswordFromRequest(r)
 	}
