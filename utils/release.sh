@@ -13,21 +13,21 @@ cp LICENSE.md $RELEASEDIR/
 cp README.md $RELEASEDIR/
 
 ARCH=amd64
-cp tyk-auth-proxy_linux_$ARCH $RELEASEDIR/tib
+cp tyk-identity-broker_linux_$ARCH $RELEASEDIR/tib
 cd release/
 tar -pczf ./tib-linux-$ARCH-$VERSION.tar.gz ./$FOLDERNAME
 cd ..
 
 ARCH=386
-cp tyk-auth-proxy_linux_$ARCH $RELEASEDIR/tib
+cp tyk-identity-broker_linux_$ARCH $RELEASEDIR/tib
 cd release/
 tar -pczf ./tib-linux-$ARCH-$VERSION.tar.gz ./$FOLDERNAME
 cd ..
 
 ARCH=arm
-cp tyk-auth-proxy_linux_$ARCH $RELEASEDIR/tib
+cp tyk-identity-broker_linux_$ARCH $RELEASEDIR/tib
 cd release/
 tar -pczf ./tib-linux-$ARCH-$VERSION.tar.gz ./$FOLDERNAME
 cd ..
 
-rm tyk-auth-proxy_linux_*
+rm tyk-identity-broker_linux_*
