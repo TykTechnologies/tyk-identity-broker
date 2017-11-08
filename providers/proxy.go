@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jeffail/gabs"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/markbates/goth"
 	"io/ioutil"
 	"net/http"

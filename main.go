@@ -4,10 +4,10 @@ import (
 	"flag"
 	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/lonelycode/tyk-auth-proxy/backends"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
-	"github.com/lonelycode/tyk-auth-proxy/tothic"
-	"github.com/lonelycode/tyk-auth-proxy/tyk-api"
+	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"net/http"
 	"path"
 	"strconv"
@@ -44,7 +44,9 @@ func initBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 }
 
 func init() {
-	log.Info("Tyk Identity Broker v0.1")
+	log.Level = logrus.DebugLevel
+
+	log.Info("Tyk Identity Broker v0.1-DEV")
 	log.Info("Copyright Martin Buhr 2016\n")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")

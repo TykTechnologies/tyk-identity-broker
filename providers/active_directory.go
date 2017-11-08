@@ -4,9 +4,12 @@ package providers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/lonelycode/go-ldap"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	//"github.com/lonelycode/go-ldap"
+	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 	"net/http"
 	"strings"
@@ -32,6 +35,7 @@ type ADConfig struct {
 	LDAPFilter          string
 	LDAPEmailAttribute  string
 	LDAPAttributes      []string
+	LDAPSearchScope     int
 	FailureRedirect     string
 	DefaultDomain       string
 	GetAuthFromBAHeader bool
@@ -116,7 +120,7 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string) (goth.User, error) {
-	log.Debug(ADProviderLogTag + " Search: starting...")
+	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
 		uname = Slug(username)
@@ -126,72 +130,103 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		UserID:   uname,
 		Provider: "ADProvider",
 	}
-	var attrs []string
-	attrs = s.config.LDAPAttributes
-	attrs = append(attrs, s.config.LDAPEmailAttribute)
 
+	if s.config.LDAPFilter == "" {
+		log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
+
+		var attrs []string
+		attrs = s.config.LDAPAttributes
+		attrs = append(attrs, s.config.LDAPEmailAttribute)
+
+		thisUser.Email = tap.GenerateSSOKey(thisUser)
+		log.Info(ADProviderLogTag+" User Data:", thisUser)
+
+		return thisUser, nil
+	}
+
+	DN := s.config.LDAPBaseDN
+	if DN == "" {
+		DN = s.prepDN(username)
+	}
+
+	log.Info(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
+	search_request := ldap.NewSearchRequest(
+		DN,
+		s.config.LDAPSearchScope,
+		ldap.DerefAlways,
+		0,
+		0,
+		false,
+		s.prepFilter(username),
+		s.config.LDAPAttributes,
+		nil)
 
-	// search_request := ldap.NewSearchRequest(
-	// 	s.config.LDAPBaseDN,
-	// 	ldap.ScopeSingleLevel,
-	// 	ldap.DerefAlways,
-	// 	0,
-	// 	0,
-	// 	false,
-	// 	s.prepFilter(username),
-	// 	s.config.LDAPAttributes,
-	// 	nil)
+	sr, err := s.connection.Search(search_request)
+	if err != nil {
+		log.Error(ADProviderLogTag+" Failure in search: ", err)
+		return thisUser, err
+	}
 
-	// sr, err := s.connection.Search(search_request)
-	// if err != nil {
-	// 	log.Error(ADProviderLogTag+" Failure in search: ", err)
-	// 	return thisUser, err
-	// }
+	if len(sr.Entries) == 0 {
+		return thisUser, errors.New("No users match given filter: " + s.prepFilter(username))
+	}
 
-	// emailFound := false
-	// for _, entry := range sr.Entries {
-	// 	for _, j := range entry.Attributes {
-	// 		log.Debug("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
-	// 		if j.Name == s.config.LDAPEmailAttribute {
-	// 			thisUser.Email = j.Values[0]
-	// 			emailFound = true
-	// 			break
-	// 		}
-	// 	}
-	// 	if emailFound {
-	// 		break
-	// 	}
-	// }
+	if len(sr.Entries) > 1 {
+		return thisUser, errors.New("Filter matched multiple users")
+	}
 
-	// if !emailFound {
-	// 	log.Warning("User email not found, generating from username")
-	// 	if strings.Contains(username, "@") {
-	// 		thisUser.Email = username
-	// 	} else {
-	// 		thisUser.Email = username + "@" + s.profile.OrgID + "-" + "ADProvider.com"
-	// 	}
-	// }
+	emailFound := false
+	for _, entry := range sr.Entries {
+		for _, j := range entry.Attributes {
+			log.Info("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
+			if j.Name == s.config.LDAPEmailAttribute {
+				thisUser.Email = j.Values[0]
+				emailFound = true
+				break
+			}
+		}
+		if emailFound {
+			break
+		}
+	}
 
-	thisUser.Email = tap.GenerateSSOKey(thisUser)
+	if !emailFound {
+		log.Warning("User email not found, generating from username")
+		if strings.Contains(username, "@") {
+			thisUser.Email = username
+		} else {
+			thisUser.Email = username + "@" + s.profile.OrgID + "-" + "ADProvider.com"
+		}
+	}
 
-	log.Debug(ADProviderLogTag+" User Data:", thisUser)
-	//log.Debug(ADProviderLogTag+" Search:", search_request.Filter, "-> num of entries = ", len(sr.Entries))
 	return thisUser, nil
 }
 
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
 func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
+	log.Level = logrus.DebugLevel
+
 	s.connect()
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
+	log.Error(username, password)
+
 	if s.config.GetAuthFromBAHeader {
 		username, password = ExtractBAUsernameAndPasswordFromRequest(r)
 	}
+
+	if username == "" || password == "" {
+		log.Error(ADProviderLogTag + "Login attempt with empty username or password")
+		s.provideErrorRedirect(w, r)
+		return
+	}
+
+	log.Debug("DN: ", s.prepDN(username))
 
 	bindErr := s.connection.Bind(s.prepDN(username), password)
 
@@ -221,10 +256,7 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 
 	log.Debug(ADProviderLogTag + " Closing connection")
-	closeFail := s.connection.Close()
-	if closeFail != nil {
-		log.Error(ADProviderLogTag+" Closing failed! ", closeFail)
-	}
+	s.connection.Close()
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {

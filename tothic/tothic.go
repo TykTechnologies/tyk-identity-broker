@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/lonelycode/tyk-auth-proxy/toth"
+	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/markbates/goth"
 	"net/http"
 	"os"
