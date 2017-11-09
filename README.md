@@ -1,4 +1,4 @@
-Tyk Identity Broker (TIB) v0.1
+Tyk Identity Broker (TIB) v0.2
 ==============================
 
 ## What is Tyk Identity Broker?
