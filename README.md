@@ -233,6 +233,7 @@ The file is JSON object which is essentially a list of objects:
 	"ProviderConfig": {
 		"FailureRedirect": "http://yourdomain.com/failure-url",
 		"LDAPAttributes": [],
+		"LDAPUseSsl": false,
 		"LDAPBaseDN": "cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com",
 		"LDAPEmailAttribute": "mail",
 		"LDAPSearchScope": 2,
@@ -468,6 +469,7 @@ The LDAP Identity Provider is experimental currently and provides limited functi
 	"ID": "4",
 	"OrgID": "{YOUR-ORG-ID}",
 	"ProviderConfig": {
+	    "LDAPUseSSL": false,
 		"FailureRedirect": "http://http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
 		"LDAPAttributes": [],
 		"LDAPPort": "389",
@@ -510,6 +512,7 @@ LDAP requires little configuration, we can use the same provider config above, w
 	"ProviderConfig": {
 		"FailureRedirect": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/login/",
 		"LDAPAttributes": [],
+		"LDAPUseSSL": false,
 		"LDAPPort": "389",
 		"LDAPServer": "localhost",
 		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io"
@@ -549,6 +552,7 @@ The configuration below will take a request that is posted to TIB, authenticate 
 	"ProviderConfig": {
 		"FailureRedirect": "http://{APP-DOMAIN}:{PORT}/failure",
 		"LDAPAttributes": [],
+		"LDAPUseSSL": false,
 		"LDAPPort": "389",
 		"LDAPServer": "localhost",
 		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=ldap,dc=tyk-ldap-test,dc=com"
@@ -694,6 +698,7 @@ Authorization: test-secret
 			"ProviderConfig": {
 				"FailureRedirect": "http://{APP-DOMAIN}:{PORT}/failure",
 				"LDAPAttributes": [],
+				"LDAPUseSSL": false,
 				"LDAPPort": "389",
 				"LDAPServer": "localhost",
 				"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=ldap,dc=tyk-ldap-test,dc=com"

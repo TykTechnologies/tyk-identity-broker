@@ -3,6 +3,7 @@ extending TAP to use more providers, add them to this section */
 package providers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,6 +29,7 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
+	LDAPUseSSL          bool
 	LDAPServer          string
 	LDAPPort            string
 	LDAPUserDN          string
@@ -64,7 +66,15 @@ func (s *ADProvider) connect() {
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
 	log.Debug(ADProviderLogTag+" --> To: ", sName)
-	s.connection, err = ldap.Dial("tcp", sName)
+	if s.config.LDAPUseSSL {
+		tlsconfig := &tls.Config{
+			ServerName: s.config.LDAPServer,
+		}
+		s.connection, err = ldap.DialTLS("tcp", sName, tlsconfig)
+	} else {
+		s.connection, err = ldap.Dial("tcp", sName)
+	}
+
 	if err != nil {
 		log.Error(ADProviderLogTag+" Failed to dial: ", err)
 		return
