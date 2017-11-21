@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"crypto/tls"
 	//"github.com/lonelycode/go-ldap"
 	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -28,6 +29,7 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
+	LDAPUseSsl 	    bool
 	LDAPServer          string
 	LDAPPort            string
 	LDAPUserDN          string
@@ -64,7 +66,15 @@ func (s *ADProvider) connect() {
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
 	log.Debug(ADProviderLogTag+" --> To: ", sName)
-	s.connection, err = ldap.Dial("tcp", sName)
+	if s.config.LDAPUseSsl {
+		tlsconfig := &tls.Config{
+			ServerName:         s.config.LDAPServer,
+		}
+		s.connection, err = ldap.DialTLS("tcp", sName, tlsconfig)
+	} else {
+		s.connection, err = ldap.Dial("tcp", sName)
+	}
+
 	if err != nil {
 		log.Error(ADProviderLogTag+" Failed to dial: ", err)
 		return
