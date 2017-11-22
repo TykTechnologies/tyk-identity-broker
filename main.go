@@ -89,8 +89,8 @@ func main() {
 	}
 
 	if config.HttpServerOptions.UseSSL {
-		log.Info("[MAIN] Broker Listening on :", listenPort)
-		err := http.ListenAndServeTLS(listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
+		log.Info("[MAIN] Broker Listening on SSL:", listenPort)
+		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
 		if err != nil {
 			log.Fatal("ListenAndServe: ", err)
 		}
