@@ -3,13 +3,14 @@ extending TAP to use more providers, add them to this section */
 package providers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	//"github.com/lonelycode/go-ldap"
-	"github.com/go-ldap/ldap"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 	"net/http"
 	"strings"
@@ -28,6 +29,7 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
+	LDAPUseSSL          bool
 	LDAPServer          string
 	LDAPPort            string
 	LDAPUserDN          string
@@ -35,6 +37,7 @@ type ADConfig struct {
 	LDAPFilter          string
 	LDAPEmailAttribute  string
 	LDAPAttributes      []string
+	LDAPSearchScope     int
 	FailureRedirect     string
 	DefaultDomain       string
 	GetAuthFromBAHeader bool
@@ -63,7 +66,15 @@ func (s *ADProvider) connect() {
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
 	log.Debug(ADProviderLogTag+" --> To: ", sName)
-	s.connection, err = ldap.Dial("tcp", sName)
+	if s.config.LDAPUseSSL {
+		tlsconfig := &tls.Config{
+			ServerName: s.config.LDAPServer,
+		}
+		s.connection, err = ldap.DialTLS("tcp", sName, tlsconfig)
+	} else {
+		s.connection, err = ldap.Dial("tcp", sName)
+	}
+
 	if err != nil {
 		log.Error(ADProviderLogTag+" Failed to dial: ", err)
 		return
@@ -131,7 +142,8 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	}
 
 	if s.config.LDAPFilter == "" {
-        log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
+
+		log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
 
 		var attrs []string
 		attrs = s.config.LDAPAttributes
@@ -153,7 +165,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
 		DN,
-		ldap.ScopeSingleLevel,
+		s.config.LDAPSearchScope,
 		ldap.DerefAlways,
 		0,
 		0,

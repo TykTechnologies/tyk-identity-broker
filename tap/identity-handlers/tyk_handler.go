@@ -134,11 +134,14 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
-	asMapString := returnVal.(map[string]interface{})
+
 	if retErr != nil {
 		log.Error(TykAPILogTag+" API Response error: ", retErr)
 		return "", retErr
 	}
+
+	asMapString := returnVal.(map[string]interface{})
+
 	return asMapString["Meta"].(string), nil
 }
 

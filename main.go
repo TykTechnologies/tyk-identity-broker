@@ -46,7 +46,7 @@ func initBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 func init() {
 	log.Level = logrus.DebugLevel
 
-	log.Info("Tyk Identity Broker v0.1-DEV")
+	log.Info("Tyk Identity Broker v0.2")
 	log.Info("Copyright Martin Buhr 2016\n")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
@@ -89,8 +89,8 @@ func main() {
 	}
 
 	if config.HttpServerOptions.UseSSL {
-		log.Info("[MAIN] Broker Listening on :443")
-		err := http.ListenAndServeTLS(":443", config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
+		log.Info("[MAIN] Broker Listening on SSL:", listenPort)
+		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
 		if err != nil {
 			log.Fatal("ListenAndServe: ", err)
 		}
