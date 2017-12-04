@@ -18,6 +18,7 @@ import (
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
 	"github.com/markbates/goth/providers/twitter"
+	"github.com/TykTechnologies/tyk-identity-broker/providers/social/auth0"
 	"net/http"
 	"strings"
 )
@@ -103,6 +104,10 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "auth0":
+			gothProviders = append(gothProviders, auth0.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
 		}
 	}
 

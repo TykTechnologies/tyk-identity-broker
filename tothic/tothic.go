@@ -136,12 +136,15 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 		return goth.User{}, err
 	}
 
+	fmt.Println("AUTHORIZING")
+
 	_, err = sess.Authorize(provider, req.URL.Query())
 
 	if err != nil {
 		return goth.User{}, err
 	}
 
+	fmt.Println("FETCHING USER")
 	return provider.FetchUser(sess)
 }
 
