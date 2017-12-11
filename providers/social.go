@@ -18,6 +18,8 @@ import (
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
 	"github.com/markbates/goth/providers/twitter"
+	"github.com/markbates/goth/providers/openidConnect"
+//	"github.com/TykTechnologies/tyk-identity-broker/providers/okta"
 	"net/http"
 	"strings"
 )
@@ -38,9 +40,10 @@ type Social struct {
 
 // GothProviderConfig the configurations required for the individual goth providers
 type GothProviderConfig struct {
-	Name   string
-	Key    string
-	Secret string
+	Name  		string
+	Key    		string
+	Secret 		string
+	DiscoverURL	string
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -50,7 +53,7 @@ type GothConfig struct {
 	FailureRedirect string
 }
 
-// Name returns the name of the provder
+// Name returns the name of the provider
 func (s *Social) Name() string {
 	return "SocialProvider"
 }
@@ -103,6 +106,12 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "okta":
+			//todo - handle error
+			provider, _ := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL )
+			gothProviders = append(gothProviders, provider)
+
 		}
 	}
 
