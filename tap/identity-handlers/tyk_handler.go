@@ -195,13 +195,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	// If not, create user
 	if createUser {
 		if thisUser.Email == "" {
-			thisUser.Email = sso_key
+			thisUser.Email = i.(goth.User).Email
 		}
 
 		log.Info(TykAPILogTag + " Creating user")
 		newUser := tyk.PortalDeveloper{
 			Email:         thisUser.Email,
-			Password:      "",
+			Password:      sso_key,
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
 			ApiKeys:       map[string]string{},
@@ -219,6 +219,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	} else {
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
+		thisUser.Email = i.(goth.User).Email
+		thisUser.Password = sso_key
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
 			log.Error("Failed to update user! ", updateErr)
