@@ -17,5 +17,5 @@ type IdentityHandler interface {
 
 // GenerateSSOKey is a utility function that creates a temporary ID to identity a user from a delegated provider
 func GenerateSSOKey(user goth.User) string {
-	return user.UserID + "@" + user.Provider
+	return user.UserID + "@" + user.Provider + ".com"
 }

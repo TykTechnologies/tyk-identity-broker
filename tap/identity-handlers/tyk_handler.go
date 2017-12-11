@@ -11,6 +11,7 @@ import (
 	"github.com/markbates/goth"
 	"net/http"
 	"time"
+	"github.com/satori/go.uuid"
 )
 
 var TykAPILogTag string = "[TYK ID HANDLER]" // log tag
@@ -201,7 +202,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		log.Info(TykAPILogTag + " Creating user")
 		newUser := tyk.PortalDeveloper{
 			Email:         thisUser.Email,
-			Password:      sso_key,
+			Password:      uuid.NewV4().String(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
 			ApiKeys:       map[string]string{},
@@ -220,7 +221,9 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
 		thisUser.Email = i.(goth.User).Email
-		thisUser.Password = sso_key
+		if thisUser.Password == "" {
+			thisUser.Password = uuid.NewV4().String()
+		}
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
 			log.Error("Failed to update user! ", updateErr)
