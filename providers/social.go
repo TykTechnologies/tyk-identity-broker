@@ -107,7 +107,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
-		case "okta":
+		case "oidc":
 			//todo - handle error
 			provider, _ := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL )
 			gothProviders = append(gothProviders, provider)
