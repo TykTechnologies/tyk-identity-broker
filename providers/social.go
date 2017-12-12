@@ -6,10 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/toth"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -17,11 +15,17 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
-	"github.com/markbates/goth/providers/twitter"
 	"github.com/markbates/goth/providers/openidConnect"
-//	"github.com/TykTechnologies/tyk-identity-broker/providers/okta"
+	"github.com/markbates/goth/providers/twitter"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/toth"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+	//	"github.com/TykTechnologies/tyk-identity-broker/providers/okta"
 	"net/http"
 	"strings"
+
+	"golang.org/x/oauth2"
 )
 
 var log = logrus.New()
@@ -40,10 +44,11 @@ type Social struct {
 
 // GothProviderConfig the configurations required for the individual goth providers
 type GothProviderConfig struct {
-	Name  		string
-	Key    		string
-	Secret 		string
-	DiscoverURL	string
+	Name           string
+	Key            string
+	Secret         string
+	DiscoverURL    string
+	BustedProvider string
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -107,10 +112,16 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
-		case "oidc":
-			//todo - handle error
-			provider, _ := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL )
-			gothProviders = append(gothProviders, provider)
+		case "openid-connect":
+			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
+			if err != nil {
+				return err
+			}
+
+			if provider.BustedProvider != "" {
+				oauth2.RegisterBrokenAuthHeaderProvider(provider.BustedProvider)
+			}
+			gothProviders = append(gothProviders, gProv)
 
 		}
 	}

@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
-	"github.com/markbates/goth"
 	"net/http"
 	"time"
+
+	"github.com/markbates/goth"
 	"github.com/satori/go.uuid"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 var TykAPILogTag string = "[TYK ID HANDLER]" // log tag
@@ -196,7 +198,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	// If not, create user
 	if createUser {
 		if thisUser.Email == "" {
-			thisUser.Email = i.(goth.User).Email
+			thisUser.Email = sso_key
 		}
 
 		log.Info(TykAPILogTag + " Creating user")
@@ -220,7 +222,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	} else {
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
-		thisUser.Email = i.(goth.User).Email
+		thisUser.Email = sso_key
 		if thisUser.Password == "" {
 			thisUser.Password = uuid.NewV4().String()
 		}
