@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+    "net/url"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
@@ -21,9 +24,6 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
-	//	"github.com/TykTechnologies/tyk-identity-broker/providers/okta"
-	"net/http"
-	"strings"
 
 	"golang.org/x/oauth2"
 )
@@ -48,7 +48,7 @@ type GothProviderConfig struct {
 	Key            string
 	Secret         string
 	DiscoverURL    string
-	BustedProvider string
+	DisableAuthHeader bool
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -113,16 +113,23 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
 		case "openid-connect":
+            discoverURL, err := url.Parse(provider.DiscoverURL)
+            if err != nil {
+                return err
+            }
+
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
 				return err
 			}
 
-			if provider.BustedProvider != "" {
-				oauth2.RegisterBrokenAuthHeaderProvider(provider.BustedProvider)
+            // See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
+			if provider.DisableAuthHeader {
+                cleanDomain := strings.Replace(provider.DiscoverURL, discoverURL.RequestURI(), "", -1)
+				oauth2.RegisterBrokenAuthHeaderProvider(cleanDomain)
 			}
-			gothProviders = append(gothProviders, gProv)
 
+			gothProviders = append(gothProviders, gProv)
 		}
 	}
 
