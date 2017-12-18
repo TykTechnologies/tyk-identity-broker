@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/lonelycode/tyk-auth-proxy/tap"
 )
 
 var APILogTag string = "[API]"
