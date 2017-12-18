@@ -44,7 +44,7 @@ Tyk Identity Broker provides a simple API, which traffic can be sent *through*, 
 
 Identity providers can be anything, so long as they implement the `tap.TAProvider` interface. Bundled with TIB at the moment you have three providers:
 
-1. Social - Provides OAuth handlers for many popular social logins (such as Google, Github and Bitbucket)
+1. Social - Provides OAuth handlers for many popular social logins (such as Google, Github and Bitbucket), as well as general OpenID Connect support
 2. LDAP - A simple LDAP protocol binder that can validate a username and password against an LDAP server (tested against OpenLDAP)
 3. Proxy - A generic proxy handler that will forward a request to a third party and provides multiple "validators" to identify whether a response is successful or not (e.g. status code, content match and regex)
 
@@ -277,6 +277,7 @@ The social provider is a thin wrapper around the excellent `goth` social auth li
 - Spotify
 - Twitch
 - Twitter
+- Any OpenID Connect provider
 
 The social provider is ideal for SSO-style logins for the dashboard or for the portal, for certain providers (mainly Google+), where email addresses are returned as part for the user data, a constraint can be added to validate the users domain. This is useful for Google For Business Apss users that want to grant access to their domain users for the dashboard.
 
@@ -387,6 +388,25 @@ Similarly to the above, if we have our callback URL and client IDs set up with G
 It is worth noting in the above configuration that the return URL's have changed for failure and return states.
 
 The login to the portal, much like the login to the dashboard, makes use of a one-time nonce to log the user in to the session. The nonce is only accessible for a few seconds. It is recommended that in production use, all of these transactions happen over secure SSL connections to avoid MITM snooping.
+
+#### OpenID Connect
+Similar Google or Twitter auth, you can configure TIB to work with any OpenID Connect provider, like Okta, Ping Federate, or anything else. Just in addition to Key and Secret you need to provide Discovery URL, which you should find in documentation of your OpenID provider. Below is example configuration of Okta integration:
+
+```
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://{TIB-HOST}:{TIB-PORT}",
+		"FailureRedirect": "http://{PORTAL-DOMAIN}:{PORTAL-PORT}/portal/login/",
+		"UseProviders": [{
+			"Name": "openid-connect",
+			"Key": "OKTA-CLIENT-KEY",
+			"Secret": "OKTA-CLIENT-SECRET",
+            "DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration"
+		}]
+	},
+
+```
+
+If you are getting 403 error, it can be that your OpenID provider require providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
 
 #### Create an OAuth token (with redirect) for users logging into your webapp or iOS app via Google:
 
