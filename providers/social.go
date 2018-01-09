@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-    "net/url"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -44,11 +43,11 @@ type Social struct {
 
 // GothProviderConfig the configurations required for the individual goth providers
 type GothProviderConfig struct {
-	Name           string
-	Key            string
-	Secret         string
-	DiscoverURL    string
-	DisableAuthHeader bool
+	Name                            string
+	Key                             string
+	Secret                          string
+	DiscoverURL                     string
+	DisableAuthHeaderProviderDomain string
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -113,20 +112,14 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
 		case "openid-connect":
-            discoverURL, err := url.Parse(provider.DiscoverURL)
-            if err != nil {
-                return err
-            }
-
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
 				return err
 			}
 
-            // See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
-			if provider.DisableAuthHeader {
-                cleanDomain := strings.Replace(provider.DiscoverURL, discoverURL.RequestURI(), "", -1)
-				oauth2.RegisterBrokenAuthHeaderProvider(cleanDomain)
+			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
+			if provider.DisableAuthHeaderProviderDomain != "" {
+				oauth2.RegisterBrokenAuthHeaderProvider(provider.DisableAuthHeaderProviderDomain)
 			}
 
 			gothProviders = append(gothProviders, gProv)
