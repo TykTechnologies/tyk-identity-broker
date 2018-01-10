@@ -4,6 +4,7 @@ package toth
 
 import (
 	"fmt"
+
 	"github.com/markbates/goth"
 )
 

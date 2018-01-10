@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/toth"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -17,9 +17,14 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
+	"github.com/markbates/goth/providers/openidConnect"
 	"github.com/markbates/goth/providers/twitter"
-	"net/http"
-	"strings"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/toth"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+
+	"golang.org/x/oauth2"
 )
 
 var log = logrus.New()
@@ -38,9 +43,11 @@ type Social struct {
 
 // GothProviderConfig the configurations required for the individual goth providers
 type GothProviderConfig struct {
-	Name   string
-	Key    string
-	Secret string
+	Name                            string
+	Key                             string
+	Secret                          string
+	DiscoverURL                     string
+	DisableAuthHeaderProviderDomain string
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -50,7 +57,7 @@ type GothConfig struct {
 	FailureRedirect string
 }
 
-// Name returns the name of the provder
+// Name returns the name of the provider
 func (s *Social) Name() string {
 	return "SocialProvider"
 }
@@ -103,6 +110,19 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "openid-connect":
+			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
+			if err != nil {
+				return err
+			}
+
+			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
+			if provider.DisableAuthHeaderProviderDomain != "" {
+				oauth2.RegisterBrokenAuthHeaderProvider(provider.DisableAuthHeaderProviderDomain)
+			}
+
+			gothProviders = append(gothProviders, gProv)
 		}
 	}
 

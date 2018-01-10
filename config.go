@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"io/ioutil"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 var failCount int

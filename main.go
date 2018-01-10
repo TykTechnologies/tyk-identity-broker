@@ -2,15 +2,16 @@ package main
 
 import (
 	"flag"
+	"net/http"
+	"path"
+	"strconv"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/gorilla/mux"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
-	"net/http"
-	"path"
-	"strconv"
+	"github.com/gorilla/mux"
 )
 
 // AuthConfigStore Is the back end we are storing our configuration files to

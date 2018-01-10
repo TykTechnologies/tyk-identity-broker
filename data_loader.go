@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"io/ioutil"
 	"path"
 	"strconv"
 	"time"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
 // DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store

@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
+	"net/http"
+
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
-	"net/http"
+	"github.com/gorilla/mux"
 )
 
 // APIErrorMessage is an object that defines when a generic error occurred
