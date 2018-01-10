@@ -18,8 +18,8 @@ TIB requires:
 Extract the tarball and run the binary:
 
 ```
-tar -xvzf tib-linux-amd64-v0.1.tar.gz
-cd tib-v0.1
+tar -xvzf tib-linux-amd64-v0.2.tar.gz
+cd tib-v0.2
 ./tib
 ```
 
@@ -29,9 +29,9 @@ No command line arguments are needed, but if you are running TIB from another di
 
 	Usage of ./tyk-auth-proxy:
 	  -c=string
-	        Path to the config file (default "tib.conf")
+			Path to the config file (default "tib.conf")
 	  -p#=string
-	        Path to the profiles file (default "profiles.json")
+			Path to the profiles file (default "profiles.json")
 
 ### How it works
 
@@ -73,37 +73,37 @@ Tyk Identity Broker is configured through two files: The configuration file (tib
 
 ```
 {
-    "Secret": "test-secret",
-    "HttpServerOptions": {
-        "UseSSL": true,      
-        "CertFile": "./certs/server.pem",
-        "KeyFile": "./certs/server.key"
-    },
+	"Secret": "test-secret",
+	"HttpServerOptions": {
+		"UseSSL": true,
+		"CertFile": "./certs/server.pem",
+		"KeyFile": "./certs/server.key"
+	},
 	"BackEnd": {
 		"Name": "in_memory",
 		"IdentityBackendSettings": {
-            "Hosts" : {
-                "localhost": "6379"
-            },
-            "Password": "",
-            "Database": 0,
-            "EnableCluster": false,
-            "MaxIdle": 1000,
-            "MaxActive": 2000
-        }
+			"Hosts" : {
+				"localhost": "6379"
+			},
+			"Password": "",
+			"Database": 0,
+			"EnableCluster": false,
+			"MaxIdle": 1000,
+			"MaxActive": 2000
+		}
 	},
 	"TykAPISettings": {
-        "GatewayConfig": {
-            "Endpoint": "http://{GATEWAY-DOMAIN}",
-            "Port": "80",
-            "AdminSecret": "352d20ee67be67f6340b4c0605b044b7"
-        },
-        "DashboardConfig": {
-            "Endpoint": "http://{DASHBOARD-DOMAIN}",
-            "Port": "3000",
-            "AdminSecret": "12345"
-        }
-    }
+		"GatewayConfig": {
+			"Endpoint": "http://{GATEWAY-DOMAIN}",
+			"Port": "80",
+			"AdminSecret": "{GATEWAY-SECRET}"
+		},
+		"DashboardConfig": {
+			"Endpoint": "http://{DASHBOARD-DOMAIN}",
+			"Port": "3000",
+			"AdminSecret": "{DASHBOARD-SECRET}"
+		}
+	}
 }
 ```
 
@@ -345,7 +345,7 @@ If your portal is configured under a different root (e.g. `/`, then replace the 
 
 Now, start TIB by entering:
 
-	./tyk-auth-proxy 
+	./tib
 
 And then point your browser at:
 
@@ -400,10 +400,9 @@ Similar Google or Twitter auth, you can configure TIB to work with any OpenID Co
 			"Name": "openid-connect",
 			"Key": "OKTA-CLIENT-KEY",
 			"Secret": "OKTA-CLIENT-SECRET",
-            "DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration"
+			"DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration"
 		}]
 	},
-
 ```
 
 If you are getting 403 error, it can be that your OpenID provider require providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
@@ -454,10 +453,6 @@ One quirk with the Tyk API is that requests for tokens go via the base APIs list
 			"Secret": "GOOGLE-OAUTH-CLIENT-SECRET"
 		}]
 	},
-	"ProviderConstraints": {
-		"Domain": "",
-		"Group": ""
-	},
 	"ProviderName": "SocialProvider",
 	"ReturnURL": "",
 	"Type": "redirect"
@@ -489,7 +484,7 @@ The LDAP Identity Provider is experimental currently and provides limited functi
 	"ID": "4",
 	"OrgID": "{YOUR-ORG-ID}",
 	"ProviderConfig": {
-	    "LDAPUseSSL": false,
+		"LDAPUseSSL": false,
 		"FailureRedirect": "http://http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
 		"LDAPAttributes": [],
 		"LDAPPort": "389",
@@ -668,37 +663,37 @@ GET /api/profiles/
 Authorization: test-secret
 
 {
-    "Status": "ok",
-    "ID": "",
-    "Data": [
-        {
-            "ActionType": "GenerateTemporaryAuthToken",
-            "ID": "11",
-            "IdentityHandlerConfig": {
-                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
-                "DisableOneTokenPerAPI": false,
-                "TokenAuth": {
-                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
-                }
-            },
-            "MatchedPolicyID": "5654566b30c55e3904000003",
-            "OrgID": "53ac07777cbb8c2d53000002",
-            "ProviderConfig": {
-                "ExrtactUserNameFromBasicAuthHeader": true,
-                "OKCode": 200,
-                "OKRegex": "origin",
-                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
-                "TargetHost": "http://sharrow.tyk.io/ba-1/"
-            },
-            "ProviderConstraints": {
-                "Domain": "",
-                "Group": ""
-            },
-            "ProviderName": "ProxyProvider",
-            "ReturnURL": "",
-            "Type": "passthrough"
-        },
-        {
+	"Status": "ok",
+	"ID": "",
+	"Data": [
+		{
+			"ActionType": "GenerateTemporaryAuthToken",
+			"ID": "11",
+			"IdentityHandlerConfig": {
+				"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+				"DisableOneTokenPerAPI": false,
+				"TokenAuth": {
+					"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+				}
+			},
+			"MatchedPolicyID": "5654566b30c55e3904000003",
+			"OrgID": "53ac07777cbb8c2d53000002",
+			"ProviderConfig": {
+				"ExrtactUserNameFromBasicAuthHeader": true,
+				"OKCode": 200,
+				"OKRegex": "origin",
+				"OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+				"TargetHost": "http://sharrow.tyk.io/ba-1/"
+			},
+			"ProviderConstraints": {
+				"Domain": "",
+				"Group": ""
+			},
+			"ProviderName": "ProxyProvider",
+			"ReturnURL": "",
+			"Type": "passthrough"
+		},
+		{
 			"ActionType": "GenerateOAuthTokenForClient",
 			"ID": "6",
 			"IdentityHandlerConfig": {
@@ -727,7 +722,7 @@ Authorization: test-secret
 			"ReturnURL": "",
 			"Type": "passthrough"
 		}
-    ]
+	]
 }
 ```
 
@@ -740,31 +735,31 @@ POST /api/profiles/{id}
 Authorization: test-secret
 
 {
-            "ActionType": "GenerateTemporaryAuthToken",
-            "ID": "11",
-            "IdentityHandlerConfig": {
-                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
-                "DisableOneTokenPerAPI": false,
-                "TokenAuth": {
-                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
-                }
-            },
-            "MatchedPolicyID": "5654566b30c55e3904000003",
-            "OrgID": "53ac07777cbb8c2d53000002",
-            "ProviderConfig": {
-                "ExrtactUserNameFromBasicAuthHeader": true,
-                "OKCode": 200,
-                "OKRegex": "origin",
-                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
-                "TargetHost": "http://sharrow.tyk.io/ba-1/"
-            },
-            "ProviderConstraints": {
-                "Domain": "",
-                "Group": ""
-            },
-            "ProviderName": "ProxyProvider",
-            "ReturnURL": "",
-            "Type": "passthrough"
+			"ActionType": "GenerateTemporaryAuthToken",
+			"ID": "11",
+			"IdentityHandlerConfig": {
+				"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+				"DisableOneTokenPerAPI": false,
+				"TokenAuth": {
+					"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+				}
+			},
+			"MatchedPolicyID": "5654566b30c55e3904000003",
+			"OrgID": "53ac07777cbb8c2d53000002",
+			"ProviderConfig": {
+				"ExrtactUserNameFromBasicAuthHeader": true,
+				"OKCode": 200,
+				"OKRegex": "origin",
+				"OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+				"TargetHost": "http://sharrow.tyk.io/ba-1/"
+			},
+			"ProviderConstraints": {
+				"Domain": "",
+				"Group": ""
+			},
+			"ProviderName": "ProxyProvider",
+			"ReturnURL": "",
+			"Type": "passthrough"
 }
 ```
 
@@ -772,35 +767,35 @@ Authorization: test-secret
 
 ```
 {
-    "Status": "ok",
-    "ID": "11",
-    "Data": {
-        "ID": "11",
-        "OrgID": "53ac07777cbb8c2d53000002",
-        "ActionType": "GenerateTemporaryAuthToken",
-        "MatchedPolicyID": "5654566b30c55e3904000003",
-        "Type": "passthrough",
-        "ProviderName": "ProxyProvider",
-        "ProviderConfig": {
-            "ExrtactUserNameFromBasicAuthHeader": true,
-            "OKCode": 200,
-            "OKRegex": "origin",
-            "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
-            "TargetHost": "http://sharrow.tyk.io/ba-1/"
-        },
-        "IdentityHandlerConfig": {
-            "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
-            "DisableOneTokenPerAPI": false,
-            "TokenAuth": {
-                "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
-            }
-        },
-        "ProviderConstraints": {
-            "Domain": "",
-            "Group": ""
-        },
-        "ReturnURL": ""
-    }
+	"Status": "ok",
+	"ID": "11",
+	"Data": {
+		"ID": "11",
+		"OrgID": "53ac07777cbb8c2d53000002",
+		"ActionType": "GenerateTemporaryAuthToken",
+		"MatchedPolicyID": "5654566b30c55e3904000003",
+		"Type": "passthrough",
+		"ProviderName": "ProxyProvider",
+		"ProviderConfig": {
+			"ExrtactUserNameFromBasicAuthHeader": true,
+			"OKCode": 200,
+			"OKRegex": "origin",
+			"OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+			"TargetHost": "http://sharrow.tyk.io/ba-1/"
+		},
+		"IdentityHandlerConfig": {
+			"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+			"DisableOneTokenPerAPI": false,
+			"TokenAuth": {
+				"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+			}
+		},
+		"ProviderConstraints": {
+			"Domain": "",
+			"Group": ""
+		},
+		"ReturnURL": ""
+	}
 }
 ```
 
@@ -813,31 +808,31 @@ PUT /api/profiles/{id}
 Authorization: test-secret
 
 {
-            "ActionType": "GenerateTemporaryAuthToken",
-            "ID": "11",
-            "IdentityHandlerConfig": {
-                "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
-                "DisableOneTokenPerAPI": false,
-                "TokenAuth": {
-                    "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
-                }
-            },
-            "MatchedPolicyID": "5654566b30c55e3904000003",
-            "OrgID": "53ac07777cbb8c2d53000002",
-            "ProviderConfig": {
-                "ExrtactUserNameFromBasicAuthHeader": true,
-                "OKCode": 200,
-                "OKRegex": "origin",
-                "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
-                "TargetHost": "http://sharrow.tyk.io/ba-1/"
-            },
-            "ProviderConstraints": {
-                "Domain": "",
-                "Group": ""
-            },
-            "ProviderName": "ProxyProvider",
-            "ReturnURL": "",
-            "Type": "passthrough"
+			"ActionType": "GenerateTemporaryAuthToken",
+			"ID": "11",
+			"IdentityHandlerConfig": {
+				"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+				"DisableOneTokenPerAPI": false,
+				"TokenAuth": {
+					"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+				}
+			},
+			"MatchedPolicyID": "5654566b30c55e3904000003",
+			"OrgID": "53ac07777cbb8c2d53000002",
+			"ProviderConfig": {
+				"ExrtactUserNameFromBasicAuthHeader": true,
+				"OKCode": 200,
+				"OKRegex": "origin",
+				"OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+				"TargetHost": "http://sharrow.tyk.io/ba-1/"
+			},
+			"ProviderConstraints": {
+				"Domain": "",
+				"Group": ""
+			},
+			"ProviderName": "ProxyProvider",
+			"ReturnURL": "",
+			"Type": "passthrough"
 }
 ```
 
@@ -845,35 +840,35 @@ Authorization: test-secret
 
 ```
 {
-    "Status": "ok",
-    "ID": "11",
-    "Data": {
-        "ID": "11",
-        "OrgID": "53ac07777cbb8c2d53000002",
-        "ActionType": "GenerateTemporaryAuthToken",
-        "MatchedPolicyID": "5654566b30c55e3904000003",
-        "Type": "passthrough",
-        "ProviderName": "ProxyProvider",
-        "ProviderConfig": {
-            "ExrtactUserNameFromBasicAuthHeader": true,
-            "OKCode": 200,
-            "OKRegex": "origin",
-            "OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
-            "TargetHost": "http://sharrow.tyk.io/ba-1/"
-        },
-        "IdentityHandlerConfig": {
-            "DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
-            "DisableOneTokenPerAPI": false,
-            "TokenAuth": {
-                "BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
-            }
-        },
-        "ProviderConstraints": {
-            "Domain": "",
-            "Group": ""
-        },
-        "ReturnURL": ""
-    }
+	"Status": "ok",
+	"ID": "11",
+	"Data": {
+		"ID": "11",
+		"OrgID": "53ac07777cbb8c2d53000002",
+		"ActionType": "GenerateTemporaryAuthToken",
+		"MatchedPolicyID": "5654566b30c55e3904000003",
+		"Type": "passthrough",
+		"ProviderName": "ProxyProvider",
+		"ProviderConfig": {
+			"ExrtactUserNameFromBasicAuthHeader": true,
+			"OKCode": 200,
+			"OKRegex": "origin",
+			"OKResponse": "ewogICJvcmlnaW4iOiAiNjIuMjMyLjExNC4yNTAsIDE3OC42Mi4xMS42MiwgMTc4LjYyLjExLjYyIgp9Cg==",
+			"TargetHost": "http://sharrow.tyk.io/ba-1/"
+		},
+		"IdentityHandlerConfig": {
+			"DashboardCredential": "822f2b1c75dc4a4a522944caa757976a",
+			"DisableOneTokenPerAPI": false,
+			"TokenAuth": {
+				"BaseAPIID": "e1d21f942ec746ed416ab97fe1bf07e8"
+			}
+		},
+		"ProviderConstraints": {
+			"Domain": "",
+			"Group": ""
+		},
+		"ReturnURL": ""
+	}
 }
 ```
 
@@ -893,9 +888,9 @@ Authorization: test-secret
 
 ```
 {
-    "Status": "ok",
-    "ID": "200",
-    "Data": {}
+	"Status": "ok",
+	"ID": "200",
+	"Data": {}
 }
 ```
 
@@ -912,9 +907,9 @@ POST /aAuthorization: test-secret
 
 ```
 {
-    "Status": "ok",
-    "ID": "",
-    "Data": {}
+	"Status": "ok",
+	"ID": "",
+	"Data": {}
 }
 ```
 
