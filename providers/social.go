@@ -112,11 +112,17 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
 		case "openid-connect":
+			// In OIDC there's a call to the https://{IDP-DOMAIN}/.well-know/openid-configuration
+			// We set the http client's Transport to do InsecureSkipVerify to avoid error in case the certificate
+			// was signed by unknown authority, trusting the user to set up his profile with the correct .well-know URL.
+			http.DefaultClient.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
 				log.Error(err)
 				return err
 			}
+			http.DefaultClient.Transport = nil
 
 			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
 			if provider.DisableAuthHeaderProviderDomain != "" {
