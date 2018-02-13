@@ -3,6 +3,7 @@ package goth
 import (
 	"fmt"
 	"net/http"
+	"crypto/tls"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -71,5 +72,16 @@ func HTTPClientWithFallBack(h *http.Client) *http.Client {
 	if h != nil {
 		return h
 	}
-	return http.DefaultClient
+	return PrepareClient(h)
+}
+
+func PrepareClient(hClient *http.Client) *http.Client {
+	if hClient == nil {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		hClient = &http.Client{Transport: transport}
+	}
+	return hClient
 }

@@ -114,6 +114,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 		case "openid-connect":
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
+				log.Error(err)
 				return err
 			}
 
