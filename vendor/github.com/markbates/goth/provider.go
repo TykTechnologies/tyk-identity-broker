@@ -3,7 +3,6 @@ package goth
 import (
 	"fmt"
 	"net/http"
-	"crypto/tls"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"

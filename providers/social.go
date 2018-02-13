@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
+	"crypto/tls"
+	"golang.org/x/oauth2"
+	
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
@@ -23,8 +25,6 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
-
-	"golang.org/x/oauth2"
 )
 
 var log = logrus.New()
