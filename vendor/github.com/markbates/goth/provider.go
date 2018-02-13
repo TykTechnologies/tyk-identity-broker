@@ -72,16 +72,5 @@ func HTTPClientWithFallBack(h *http.Client) *http.Client {
 	if h != nil {
 		return h
 	}
-	return PrepareClient(h)
-}
-
-func PrepareClient(hClient *http.Client) *http.Client {
-	if hClient == nil {
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-
-		hClient = &http.Client{Transport: transport}
-	}
-	return hClient
+	return http.DefaultClient
 }
