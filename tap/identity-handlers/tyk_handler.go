@@ -24,12 +24,14 @@ const (
 	// Enums to identify which target it being used, dashbaord or portal, they are distinct.
 	SSOForDashboard ModuleName = "dashboard"
 	SSOForPortal    ModuleName = "portal"
+	InvalidModule   ModuleName = ""
 )
 
 // SSOAccessData is the data type used for speaking to the SSO endpoint in the advanced API
 type SSOAccessData struct {
-	ForSection ModuleName
-	OrgID      string
+	ForSection   ModuleName
+	OrgID        string
+	EmailAddress string
 }
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
@@ -68,7 +70,7 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 	}
 
 	log.Error(TykAPILogTag+"Action: ", action)
-	return SSOForPortal, errors.New("Action does not exist")
+	return InvalidModule, errors.New("Action does not exist")
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
@@ -120,9 +122,9 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 }
 
 // CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
-// Identity is assumed to be a goth.User object as this is what we arestnadardiseing on.
+// Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
-	log.Info(TykAPILogTag+" Creating identity for: ", i)
+	log.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
 
 	thisModule, modErr := mapActionToModule(t.profile.ActionType)
 	if modErr != nil {
@@ -133,6 +135,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	accessRequest := SSOAccessData{
 		ForSection: thisModule,
 		OrgID:      t.profile.OrgID,
+		EmailAddress: "ssoSession@ssoSession.com",
 	}
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
@@ -161,13 +164,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	log.Debug(TykAPILogTag + " --> Running redirect...")
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
+		log.Infoln(TykAPILogTag + " --> redirecting to URL: " + newURL)
 		http.Redirect(w, r, newURL, 301)
 		return
 	}
 
-	log.Warning(TykAPILogTag + "No return URL found, redirect failed.")
-	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
-
+	log.Error(TykAPILogTag + "No return URL found, cannot redirect. (Check why no URL redirect on the profile) ")
+	fmt.Fprintf(w, "Check with your admin why there's no URI defined")
 }
 
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that

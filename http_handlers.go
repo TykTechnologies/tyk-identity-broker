@@ -108,7 +108,8 @@ func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, erro
 	foundProfileErr := AuthConfigStore.GetKey(thisId, &thisProfile)
 
 	if foundProfileErr != nil {
-		HandleError(HandlerLogTag, "Profile not found", foundProfileErr, 404, w, r)
+		errorMsg := "Profile " + thisId + " not found"
+		HandleError(HandlerLogTag, errorMsg, foundProfileErr, 404, w, r)
 		return nil, foundProfileErr
 	}
 
