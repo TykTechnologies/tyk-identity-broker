@@ -3,17 +3,18 @@ extending TAP to use more providers, add them to this section */
 package providers
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	//"github.com/lonelycode/go-ldap"
-	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/go-ldap/ldap"
-	"github.com/markbates/goth"
 	"net/http"
 	"strings"
+	"crypto/tls"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/go-ldap/ldap"
+	"github.com/markbates/goth"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
 // ADProviderLogTag is the log tag for the active directory provider

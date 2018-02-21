@@ -38,19 +38,7 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 	var thisIdentityHandler tap.IdentityHandler
 
 	switch name {
-	case tap.GenerateOrLoginDeveloperProfile:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
-			API:   &TykAPIHandler,
-			Store: IdentityKeyStore}
-	case tap.GenerateOrLoginUserProfile:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
-			API:   &TykAPIHandler,
-			Store: IdentityKeyStore}
-	case tap.GenerateOAuthTokenForClient:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
-			API:   &TykAPIHandler,
-			Store: IdentityKeyStore}
-	case tap.GenerateTemporaryAuthToken:
+	case tap.GenerateOrLoginDeveloperProfile, tap.GenerateOrLoginUserProfile, tap.GenerateOAuthTokenForClient, tap.GenerateTemporaryAuthToken:
 		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
 			API:   &TykAPIHandler,
 			Store: IdentityKeyStore}
@@ -70,7 +58,7 @@ func hackProviderConf(conf interface{}) []byte {
 }
 
 // return a provider based on the name of the provider type, add new providers here
-func getTAProvider(conf tap.Profile) tap.TAProvider {
+func getTAProvider(conf tap.Profile) (tap.TAProvider, error) {
 
 	var thisProvider tap.TAProvider
 
@@ -83,11 +71,11 @@ func getTAProvider(conf tap.Profile) tap.TAProvider {
 		thisProvider = &providers.ProxyProvider{}
 	}
 
-	var thisIdentityHandler tap.IdentityHandler = getIdentityHandler(conf.ActionType)
+	thisIdentityHandler := getIdentityHandler(conf.ActionType)
 	thisIdentityHandler.Init(conf)
-	thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
-	return thisProvider
+	err := thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
 
+	return thisProvider, err
 }
 
 // HandleError is a generic error handler
@@ -110,22 +98,26 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 
 func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, error) {
 	thisId, idErr := getId(r)
-
 	if idErr != nil {
 		HandleError(HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
 		return nil, idErr
 	}
 
 	thisProfile := tap.Profile{}
-	log.Debug(HandlerLogTag+" --> Looking up profile ID:", thisId)
+	log.Debug(HandlerLogTag+" --> Looking up profile ID: ", thisId)
 	foundProfileErr := AuthConfigStore.GetKey(thisId, &thisProfile)
 
 	if foundProfileErr != nil {
-		HandleError(HandlerLogTag, "Profile not found", foundProfileErr, 404, w, r)
+		errorMsg := "Profile " + thisId + " not found"
+		HandleError(HandlerLogTag, errorMsg, foundProfileErr, 404, w, r)
 		return nil, foundProfileErr
 	}
 
-	thisIdentityProvider := getTAProvider(thisProfile)
+	thisIdentityProvider, providerErr := getTAProvider(thisProfile)
+	if providerErr != nil {
+		HandleError(HandlerLogTag, "Could not initialise provider", providerErr, 400, w, r)
+		return nil, providerErr
+	}
 	return thisIdentityProvider, nil
 }
 

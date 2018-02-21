@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
+	"golang.org/x/oauth2"
+	
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
@@ -23,8 +24,6 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
-
-	"golang.org/x/oauth2"
 )
 
 var log = logrus.New()
@@ -112,8 +111,10 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
 		case "openid-connect":
+
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
+				log.Error(err)
 				return err
 			}
 
@@ -170,6 +171,8 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 		http.Redirect(w, r, s.config.FailureRedirect, 301)
 		return
 	}
+
+	//Todo set the user's email here, befotr going back to the handler
 
 	// Complete login and redirect
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)

@@ -24,6 +24,7 @@ type Configuration struct {
 		CertFile string
 		KeyFile  string
 	}
+	SSLInsecureSkipVerify bool
 }
 
 // loadConfig will load the config from a file
