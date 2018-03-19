@@ -5,9 +5,10 @@ package backends
 
 import (
 	"encoding/json"
-	"github.com/garyburd/redigo/redis"
-	"github.com/lonelycode/redigocluster/rediscluster"
 	"time"
+
+	"github.com/TykTechnologies/redigocluster/rediscluster"
+	"github.com/garyburd/redigo/redis"
 )
 
 var redisClusterSingleton *rediscluster.RedisCluster
@@ -20,12 +21,14 @@ type RedisBackend struct {
 }
 
 type RedisConfig struct {
-	MaxIdle       int
-	MaxActive     int
-	Database      int
-	Password      string
-	EnableCluster bool
-	Hosts         map[string]string
+	MaxIdle               int
+	MaxActive             int
+	Database              int
+	Password              string
+	EnableCluster         bool
+	Hosts                 map[string]string
+	UseSSL                bool
+	SSLInsecureSkipVerify bool
 }
 
 func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster.RedisCluster {
@@ -57,12 +60,14 @@ func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster
 	}
 
 	thisPoolConf := rediscluster.PoolConfig{
-		MaxIdle:     maxIdle,
-		MaxActive:   maxActive,
-		IdleTimeout: 240 * time.Second,
-		Database:    config.Database,
-		Password:    config.Password,
-		IsCluster:   config.EnableCluster,
+		MaxIdle:       maxIdle,
+		MaxActive:     maxActive,
+		IdleTimeout:   240 * time.Second,
+		Database:      config.Database,
+		Password:      config.Password,
+		IsCluster:     config.EnableCluster,
+		UseTLS:        config.UseSSL,
+		TLSSkipVerify: config.SSLInsecureSkipVerify,
 	}
 
 	seed_redii := []map[string]string{}
