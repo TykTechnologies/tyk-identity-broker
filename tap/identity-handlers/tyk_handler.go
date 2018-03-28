@@ -14,6 +14,8 @@ import (
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var TykAPILogTag string = "[TYK ID HANDLER]" // log tag
@@ -69,55 +71,123 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 		return SSOForPortal, nil
 	}
 
-	log.Error(TykAPILogTag+"Action: ", action)
+	log.Error(TykAPILogTag+" Action: ", action)
 	return InvalidModule, errors.New("Action does not exist")
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
 // up in main
 func (t *TykIdentityHandler) Init(conf interface{}) error {
-	t.profile = conf.(tap.Profile)
-	if conf.(tap.Profile).IdentityHandlerConfig != nil {
-		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})
-		if theseConfs["DashboardCredential"] != nil {
-			t.dashboardUserAPICred = theseConfs["DashboardCredential"].(string)
-		}
-
-		if theseConfs["DisableOneTokenPerAPI"] != nil {
-			t.disableOneTokenPerAPI = theseConfs["DisableOneTokenPerAPI"].(bool)
-		}
-
-		oauthSettings, ok := theseConfs["OAuth"]
-		if ok {
-			log.Debug(TykAPILogTag + "Found Oauth configuration, loading...")
-			t.oauth = OAuthSettings{}
-			t.oauth.APIListenPath = oauthSettings.(map[string]interface{})["APIListenPath"].(string)
-			t.oauth.RedirectURI = oauthSettings.(map[string]interface{})["RedirectURI"].(string)
-			t.oauth.ResponseType = oauthSettings.(map[string]interface{})["ResponseType"].(string)
-			t.oauth.ClientId = oauthSettings.(map[string]interface{})["ClientId"].(string)
-			t.oauth.Secret = oauthSettings.(map[string]interface{})["Secret"].(string)
-			t.oauth.BaseAPIID = oauthSettings.(map[string]interface{})["BaseAPIID"].(string)
-			t.oauth.NoRedirect = oauthSettings.(map[string]interface{})["NoRedirect"].(bool)
-		}
-
-		tokenSettings, tokenOk := theseConfs["TokenAuth"]
-		if tokenOk {
-			if tokenSettings.(map[string]interface{})["BaseAPIID"] == nil {
-				log.Error(TykAPILogTag + " Base API is empty!")
-				return errors.New("Base API cannot be empty")
-			}
-			t.token.BaseAPIID = tokenSettings.(map[string]interface{})["BaseAPIID"].(string)
-
-			if tokenSettings.(map[string]interface{})["Expires"] == nil {
-				log.Warning(TykAPILogTag + " No expiry found - defaulting to 3600 seconds")
-				t.token.Expires = 3600
-			} else {
-				t.token.Expires = int64(tokenSettings.(map[string]interface{})["Expires"].(float64))
-			}
-
-		}
+	log.Level = logrus.DebugLevel
+	var ok bool
+	if t.profile, ok = conf.(tap.Profile); !ok {
+		return errors.New("No profile found ")
 	}
 
+	if t.profile.IdentityHandlerConfig == nil {
+		return errors.New("No IdentityHandlerConfig found in profile.")
+	}
+
+	var theseConfs map[string]interface{}
+	if theseConfs, ok = t.profile.IdentityHandlerConfig.(map[string]interface{}); !ok {
+		msg := fmt.Sprintf("Profile '%s': `IdentityHandlerConfig` should be a map.", t.profile.ID)
+		return errors.New(msg)
+	}
+
+	if theseConfs["DashboardCredential"] != nil {
+		if dashboardUserAPICred, ok := theseConfs["DashboardCredential"].(string); ok {
+			t.dashboardUserAPICred = dashboardUserAPICred
+		} else {
+			msg := fmt.Sprintf("Profile '%s': `dashboardUserAPICred` should be bool.", t.profile.ID)
+			return errors.New(msg)
+		}
+	} else {
+		log.Warningf("%s Profile '%s': Not recommended for `DashboardCredential` to be nil",
+			TykAPILogTag, t.profile.ID)
+	}
+
+	if theseConfs["DisableOneTokenPerAPI"] != nil {
+		if disableOneTokenPerAPI, ok := theseConfs["DisableOneTokenPerAPI"].(bool); ok {
+			t.disableOneTokenPerAPI = disableOneTokenPerAPI
+		} else {
+			msg := fmt.Sprintf("Profile '%s': `DisableOneTokenPerAPI` should be boolean.", t.profile.ID)
+			return errors.New(msg)
+		}
+	} else {
+		log.Warningf("%s Profile '%s': Not recommended for `DisableOneTokenPerAPI` to be nil",
+			TykAPILogTag, t.profile.ID)
+	}
+
+	if err := t.getOauthSettings(theseConfs) ; err == nil {
+		return err
+	}
+
+	if err := t.getTokenAuthSettings(theseConfs) ; err == nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *TykIdentityHandler) getOauthSettings (theseConfs map[string]interface{}) error {
+	if oauthSettings, ok := theseConfs["OAuth"] ; ok {
+		log.Debug(TykAPILogTag + " Found Oauth configuration, loading...")
+
+		if oauthSettingsMap, ok := oauthSettings.(map[string]interface{}); ok {
+			t.oauth = OAuthSettings{}
+			//Todo: check all the 'ok's
+			t.oauth.APIListenPath, ok = oauthSettingsMap["APIListenPath"].(string)
+			t.oauth.RedirectURI, ok = oauthSettingsMap["RedirectURI"].(string)
+			t.oauth.ResponseType, ok = oauthSettingsMap["ResponseType"].(string)
+			t.oauth.ClientId, ok = oauthSettingsMap["ClientId"].(string)
+			t.oauth.Secret, ok = oauthSettingsMap["Secret"].(string)
+			t.oauth.BaseAPIID, ok = oauthSettingsMap["BaseAPIID"].(string)
+			t.oauth.NoRedirect, ok = oauthSettingsMap["NoRedirect"].(bool)
+
+			return nil
+		}
+		msg := fmt.Sprintf("Profile '%s': `OAuth` should be a map.", t.profile.ID)
+		log.Errorf("%s %s", TykAPILogTag, msg)
+		return errors.New(msg)
+	}
+	return nil
+}
+
+func (t *TykIdentityHandler) getTokenAuthSettings (theseConfs map[string]interface{}) error {
+	if theseConfs["TokenAuth"] == nil {
+		msg := fmt.Sprintf("Profile '%s': `TokenAuth` should not be nil.", t.profile.ID)
+		log.Debug(TykAPILogTag + msg)
+		return errors.New(msg)
+	}
+
+	var ok bool = false
+	var tokenSettingsMap map[string]interface{}
+	if tokenSettingsMap, ok = theseConfs["TokenAuth"].(map[string]interface{}); !ok {
+		msg := fmt.Sprintf("Profile '%s': `TokenAuth` should be a map.", t.profile.ID)
+		return errors.New(msg)
+	}
+
+	if tokenSettingsMap["BaseAPIID"] == nil {
+		log.Error(TykAPILogTag + " Base API is empty!")
+		return errors.New(" Base API cannot be empty")
+	}
+
+	if t.token.BaseAPIID, ok = tokenSettingsMap["BaseAPIID"].(string); !ok {
+			msg := fmt.Sprintf("Profile '%s': field `BaseAPIID` should be string .", t.profile.ID)
+			return errors.New(msg)
+	}
+
+	if tokenSettingsMap["Expires"] == nil {
+		log.Warningf( " %s Profile '%s': No 'Expires' field - defaulting to 3600 seconds", TykAPILogTag, t.profile.ID)
+		t.token.Expires = 3600
+	} else {
+		if expire, ok := tokenSettingsMap["Expires"].(float64); ok {
+			t.token.Expires = int64(expire)
+		} else {
+			msg := fmt.Sprintf("Profile '%s': `Expires` field should be float", t.profile.ID)
+			return errors.New(msg)
+		}
+	}
 	return nil
 }
 
