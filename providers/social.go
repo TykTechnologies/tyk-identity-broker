@@ -164,11 +164,11 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 	constraintErr := s.checkConstraints(user)
 	if constraintErr != nil {
 		if s.config.FailureRedirect == "" {
-			onError(SocialLogTag, "Constraint failed", constraintErr, 400, w, r)
+			onError(SocialLogTag, "Constraint failed", constraintErr, http.StatusBadRequest, w, r) //400
 			return
 		}
 
-		http.Redirect(w, r, s.config.FailureRedirect, 301)
+		http.Redirect(w, r, s.config.FailureRedirect, http.StatusMovedPermanently) //301
 		return
 	}
 

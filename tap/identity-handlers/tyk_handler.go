@@ -235,7 +235,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
 		log.Infoln(TykAPILogTag + " --> redirecting to URL: " + newURL)
-		http.Redirect(w, r, newURL, 301)
+		http.Redirect(w, r, newURL, http.StatusMovedPermanently) //301
 		return
 	}
 
@@ -257,14 +257,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	// Check if user exists
-	sso_key := tap.GenerateSSOKey(i.(goth.User))
+	sso_key := tap.GenerateSSOKey(i.(goth.User)) //Todo: set a real email
 	thisUser, retErr := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
-	log.Warning(TykAPILogTag+" Returned: ", thisUser)
 
 	createUser := false
 	if retErr != nil {
-		log.Warning(TykAPILogTag+" API Error: ", nErr)
-		log.Info(TykAPILogTag + " User not found, creating new record")
+		log.Warning(TykAPILogTag+" API Error: ", retErr)
+		log.Infof( "%s User '%s' not found, creating new record", TykAPILogTag, sso_key)
 		createUser = true
 	}
 
@@ -273,6 +272,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		if thisUser.Email == "" {
 			thisUser.Email = sso_key
 		}
+		log.Debugf("%s createUser '%s'", TykAPILogTag, sso_key)
 
 		log.Info(TykAPILogTag + " Creating user")
 		newUser := tyk.PortalDeveloper{
@@ -293,6 +293,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 			return
 		}
 	} else {
+		log.Debugf("%s Found user '%s'", TykAPILogTag, sso_key)
+
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
 		thisUser.Email = sso_key
@@ -312,7 +314,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
 		log.Info(TykAPILogTag+" --> URL With NONCE is: ", newURL)
-		http.Redirect(w, r, newURL, 301)
+		http.Redirect(w, r, newURL, http.StatusMovedPermanently) //301
 		return
 	}
 
@@ -390,7 +392,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	log.Info(TykAPILogTag + " --> Running oauth redirect...")
 	if resp.RedirectTo != "" {
 		log.Debug(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
-		http.Redirect(w, r, resp.RedirectTo, 301)
+		http.Redirect(w, r, resp.RedirectTo, http.StatusMovedPermanently) //301
 		return
 	}
 }
@@ -449,7 +451,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		log.Info(TykAPILogTag + " --> Running auth redirect...")
 		cleanURL := t.profile.ReturnURL + "#token=" + resp.KeyID
 		log.Debug(TykAPILogTag+" --> URL is: ", cleanURL)
-		http.Redirect(w, r, cleanURL, 301)
+		http.Redirect(w, r, cleanURL, http.StatusMovedPermanently) //301
 		return
 	}
 

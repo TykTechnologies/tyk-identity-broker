@@ -195,7 +195,9 @@ The file is JSON object which is essentially a list of objects:
 [{
 	"ActionType": "GenerateOrLoginUserProfile",
 	"ID": "1",
-	"IdentityHandlerConfig": {},
+	"IdentityHandlerConfig": {
+	    "DashboardCredential": "ADVANCED-API-USER-API-TOKEN",
+	},
 	"OrgID": "53ac07777cbb8c2d53000002",
 	"ProviderConfig": {
 		"CallbackBaseURL": "http://tib.domain.com:3010",

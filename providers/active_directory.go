@@ -100,7 +100,7 @@ func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, conf
 }
 
 func (s *ADProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, s.config.FailureRedirect, 301)
+	http.Redirect(w, r, s.config.FailureRedirect, http.StatusMovedPermanently) //301
 	return
 }
 

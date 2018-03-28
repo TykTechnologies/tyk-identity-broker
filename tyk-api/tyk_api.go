@@ -151,9 +151,8 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 		return []byte{}, bErr
 	}
 
-	log.Debug("GOT:", string(retBody))
-
 	if response.StatusCode > 201 {
+		log.Warningf("Sent to endpoint %s", target)
 		log.Warning("Response code was: ", response.StatusCode)
 		log.Warning("GOT:", string(retBody))
 		return retBody, errors.New("Response code was not 200!")
@@ -199,7 +198,7 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	}
 
 	if response.StatusCode > 201 {
-		log.Warning("Response code was: ", response.StatusCode)
+		log.Warning("DispatchDashboardSuper: Response code was: ", response.StatusCode)
 		log.Warning("Returned: ", string(retBody))
 		return retBody, errors.New("Response code was not 200!")
 	}
