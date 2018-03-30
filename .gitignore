@@ -5,3 +5,6 @@ certs/
 tyk-auth-proxy
 tyk-auth-proxy_linux_*
 release/
+build/
+build_tools/
+
