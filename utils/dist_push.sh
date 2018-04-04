@@ -6,7 +6,7 @@ echo "Set version number"
 
 
 TYK_IB_SRC_DIR=$ORGDIR/tyk-identity-broker
-RELEASE_DIR="$TYK_IB_SRC_DIR/releases"
+RELEASE_DIR="$TYK_IB_SRC_DIR/build"
 export PACKAGECLOUDREPO=$PC_TARGET
 
 cd $RELEASE_DIR/
