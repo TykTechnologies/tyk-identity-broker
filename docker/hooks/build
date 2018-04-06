@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+TYKVERSION=$(cat version.go | gawk 'match($0, /v([0-9]+\.[0-9]+\.[0-9]+)/, ary) {print ary[1];}')
+
+echo "Executing custom build hook for version $TYKVERSION"
+docker build --build-arg TYKVERSION=$TYKVERSION -f $DOCKERFILE_PATH -t $IMAGE_NAME .
