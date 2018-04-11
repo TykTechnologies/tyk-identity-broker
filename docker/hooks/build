@@ -2,9 +2,9 @@
 set -e
 
 echo "$PWD"
-echo "$DOCKERFILE_PATH"
 
-versionfile=$(cat version.go)
+repopath=$(dirname $PWD)
+versionfile=$(cat $repopath/version.go)
 regex="v([0-9]+\.[0-9]+\.[0-9]+)"
 if [[ $versionfile =~ $regex ]]; then
     TYKVERSION=${BASH_REMATCH[1]}
@@ -14,5 +14,5 @@ else
 fi
 
 echo "Executing custom build hook for version $TYKVERSION"
-docker build --build-arg TYKVERSION=$TYKVERSION -f $DOCKERFILE_PATH -t $IMAGE_NAME .
+docker build --build-arg TYKVERSION=$TYKVERSION -t $IMAGE_NAME $repopath
 
