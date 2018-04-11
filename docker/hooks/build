@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
+set -e
 
-TYKVERSION=$(cat version.go | gawk 'match($0, /v([0-9]+\.[0-9]+\.[0-9]+)/, ary) {print ary[1];}')
+echo "$PWD"
+echo "$DOCKERFILE_PATH"
+
+versionfile=$(cat version.go)
+regex="v([0-9]+\.[0-9]+\.[0-9]+)"
+if [[ $versionfile =~ $regex ]]; then
+    TYKVERSION=${BASH_REMATCH[1]}
+else
+    echo "No version found in the version file, terminating"
+    exit 1
+fi
 
 echo "Executing custom build hook for version $TYKVERSION"
 docker build --build-arg TYKVERSION=$TYKVERSION -f $DOCKERFILE_PATH -t $IMAGE_NAME .
+
