@@ -111,7 +111,7 @@ The various configuration options are outlined below:
 
 #### `Secret`
 
-The REST API secret to configure the TIB broker remotely.
+The REST API secret to configure the Tyk Identity Broker remotely.
 
 #### `HttpServerOptions.UseSSL`
 
@@ -135,7 +135,7 @@ Since profiles are unlikely to change often, profiles are kept in-memory, but ca
 
 #### `BackEnd.Hosts`
 
-Add your redis hosts here as a map of `hostname:port`. Since TIB uses the same cluster driver as Tyk, it is possible to have TIB interact with your existing redis cluster if you enable it.
+Add your Redis hosts here as a map of `hostname:port`. Since TIB uses the same cluster driver as Tyk, it is possible to have TIB interact with your existing Redis cluster if you enable it.
 
 #### `BackEnd.Password`
 
@@ -151,11 +151,11 @@ If you are using Redis cluster, enable it here to enable the slots mode
 
 #### `BackEnd.MaxIdle`
 
-Max idle connections to redis
+Max idle connections to Redis
 
 #### `BackEnd.MaxActive`
 
-Max active redis connections
+Max active Redis connections
 
 #### `TykAPISettings`
 
@@ -248,7 +248,7 @@ The file is JSON object which is essentially a list of objects:
 }]
 ```
 
-Each item in a policy list dictates how that component will behave with the underlying services it is trying to talk to. IN the above two examples, we have a social provider, that will allow Dashboard access to Google plus users that are part of the "tyk.io" domain. In the second example, we are generating an OAuth token for users that are validated via an LDAP server.
+Each item in a policy list dictates how that component will behave with the underlying services it is trying to talk to. In the above two examples, we have a social provider, that will allow Dashboard access to Google plus users that are part of the "tyk.io" domain. In the second example, we are generating an OAuth token for users that are validated via an LDAP server.
 
 In the following sections we outline multiple configurations you can use for Identity Provision and Handling
 
@@ -390,7 +390,7 @@ It is worth noting in the above configuration that the return URL's have changed
 The login to the portal, much like the login to the dashboard, makes use of a one-time nonce to log the user in to the session. The nonce is only accessible for a few seconds. It is recommended that in production use, all of these transactions happen over secure SSL connections to avoid MITM snooping.
 
 #### OpenID Connect
-Similar Google or Twitter auth, you can configure TIB to work with any OpenID Connect provider, like Okta, Ping Federate, or anything else. Just in addition to Key and Secret you need to provide Discovery URL, which you should find in documentation of your OpenID provider. Below is example configuration of Okta integration:
+Similar to Google or Twitter auth, you can configure TIB to work with any OpenID Connect provider, like Okta, Ping Federate, or anything else. Just in addition to Key and Secret you need to provide Discovery URL, which you should find in documentation of your OpenID provider. Below is example configuration of Okta integration:
 
 ```
 	"ProviderConfig": {
@@ -405,7 +405,7 @@ Similar Google or Twitter auth, you can configure TIB to work with any OpenID Co
 	},
 ```
 
-If you are getting 403 error, it can be that your OpenID provider require providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
+If you are getting 403 error, it can be that your OpenID provider requires providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
 
 #### Create an OAuth token (with redirect) for users logging into your webapp or iOS app via Google:
 
@@ -423,7 +423,7 @@ Assuming we hav created an client ID and secret in Google Apps to grant us acces
 
 TIB will use the OAuth credentials for GPlus to access and authenticate the user, it will then use another set of client credentials to make the request to Tyk to generate a token response and redirect the user, this means we need to create an OAuth client in Tyk Dashboard before we can proceed.
 
-One quirk with the Tyk API is that requests for tokens go via the base APIs listen path (`{listen_path}/toauth/authorize`), so we will need to know the listen path and ID of this APi so TIB can make the correct API calls on your behalf.
+One quirk with the Tyk API is that requests for tokens go via the base APIs listen path (`{listen_path}/oauth/authorize`), so we will need to know the listen path and ID of this API so TIB can make the correct API calls on your behalf.
 
 
 ```
@@ -431,7 +431,7 @@ One quirk with the Tyk API is that requests for tokens go via the base APIs list
 	"ActionType": "GenerateOAuthTokenForClient",
 	"ID": "3",
 	"IdentityHandlerConfig": {
-		"DashboardCredential": "{DASHBAORD-API-ID}",
+		"DashboardCredential": "{DASHBOARD-API-ID}",
 		"DisableOneTokenPerAPI": false,
 		"OAuth": {
 			"APIListenPath": "{API-LISTEN-PATH}",
@@ -474,7 +474,7 @@ There is a simplified flow which does not require a corresponding OAuth client i
 
 ### LDAP
 
-The LDAP Identity Provider is experimental currently and provides limited functionality to bind z user to an LDAP server based on a username and password configuration. The LDAP provider currently does not extract user data from the server to populate a user object, but will provide enough defaults to work with all handlers.
+The LDAP Identity Provider is experimental currently and provides limited functionality to bind a user to an LDAP server based on a username and password configuration. The LDAP provider currently does not extract user data from the server to populate a user object, but will provide enough defaults to work with all handlers.
 
 #### Log into Tyk Dashboard using LDAP
 
@@ -580,7 +580,7 @@ The configuration below will take a request that is posted to TIB, authenticate 
 
 ### Proxy Identity Provider
 
-The proxy identity provider is a generic solution to more legacy problems, as well as a way to handle flows such as basic auth access with third party providers or OAUth password grants where the request can just be passed through to the providing endpoint to return a direct response.
+The proxy identity provider is a generic solution to more legacy problems, as well as a way to handle flows such as basic auth access with third party providers or OAuth password grants where the request can just be passed through to the providing endpoint to return a direct response.
 
 The proxy provider will take a request, proxy it to an upstream host, capture the response, and analyze it for triggers of "success", if the triggers come out as true, then the provider will treat the request as authenticated and hand over to the Identity Handler to perform whatever action is required with the user data.
 
@@ -880,7 +880,7 @@ Authorization: test-secret
 Delete /api/profiles/{id}
 Authorization: test-secret
 
-[emtpy body]
+[empty body]
 
 ```
 
@@ -899,8 +899,8 @@ Authorization: test-secret
 #### Request
 
 ```
-POST /aAuthorization: test-secret
-[emtpy body]pi/profiles/save
+POST /Authorization: test-secret
+[empty body]api/profiles/save
 ```
 
 #### Response
@@ -915,4 +915,4 @@ POST /aAuthorization: test-secret
 
 #### Outcome:
 
-The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new priofiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
+The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new profiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
