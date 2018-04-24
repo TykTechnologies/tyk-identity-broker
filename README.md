@@ -101,7 +101,7 @@ Tyk Identity Broker is configured through two files: The configuration file (tib
 		"DashboardConfig": {
 			"Endpoint": "http://{DASHBOARD-DOMAIN}",
 			"Port": "3000",
-			"AdminSecret": "{DASHBOARD-SECRET}"
+			"AdminSecret": "{ADMIN-DASHBOARD-SECRET}"
 		}
 	}
 }
@@ -183,7 +183,7 @@ The port of your Advanced API
 
 #### `TykAPISettings.DashboardConfig.AdminSecret`
 
-The high-level secret for the Advanced API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Advanced API to create one-time tokens for access.
+The high-level secret for the Advanced API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Advanced Admin API to create one-time tokens for access.
 
 ### The `profiles.conf` file
 
@@ -249,6 +249,8 @@ The file is JSON object which is essentially a list of objects:
 ```
 
 Each item in a policy list dictates how that component will behave with the underlying services it is trying to talk to. In the above two examples, we have a social provider, that will allow Dashboard access to Google plus users that are part of the "tyk.io" domain. In the second example, we are generating an OAuth token for users that are validated via an LDAP server.
+
+`DashboardCredential` - The credential of the dashboard user (that are used to login the UI or in the Dashboard API endpoints, not for the Admin Dashboard APIs)
 
 In the following sections we outline multiple configurations you can use for Identity Provision and Handling
 

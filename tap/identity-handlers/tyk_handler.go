@@ -70,7 +70,7 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 	}
 
 	log.Error(TykAPILogTag+"Action: ", action)
-	return InvalidModule, errors.New("Action does not exist")
+	return InvalidModule, errors.New("action does not exist")
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
@@ -124,7 +124,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 // CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
 // Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
-	log.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
+	log.WithField("user", i.(goth.User)).Debugf("%s Creating identity for user", TykAPILogTag)
 
 	thisModule, modErr := mapActionToModule(t.profile.ActionType)
 	if modErr != nil {
@@ -176,8 +176,9 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
 // user depnding on if they exist or not and validate the login using a one-time nonce.
 func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+	user := i.(goth.User)
 	// Create a nonce
-	log.Info(TykAPILogTag + " Creating nonce")
+	log.WithField("user", user.Email).Info(TykAPILogTag + " Creating nonce for user")
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
@@ -187,9 +188,9 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	// Check if user exists
-	sso_key := tap.GenerateSSOKey(i.(goth.User))
-	thisUser, retErr := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
-	log.Warning(TykAPILogTag+" Returned: ", thisUser)
+	sso_key := tap.GenerateSSOKey(user)
+	devPortalUser, retErr := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
+	log.Warning(TykAPILogTag+" Returned: ", devPortalUser)
 
 	createUser := false
 	if retErr != nil {
@@ -200,13 +201,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 	// If not, create user
 	if createUser {
-		if thisUser.Email == "" {
-			thisUser.Email = sso_key
+		if devPortalUser.Email == "" {
+			devPortalUser.Email = sso_key
 		}
 
 		log.Info(TykAPILogTag + " Creating user")
 		newUser := tyk.PortalDeveloper{
-			Email:         thisUser.Email,
+			Email:         devPortalUser.Email,
 			Password:      uuid.NewV4().String(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
@@ -224,12 +225,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		}
 	} else {
 		// Set nonce value in user profile
-		thisUser.Nonce = nonce
-		thisUser.Email = sso_key
-		if thisUser.Password == "" {
-			thisUser.Password = uuid.NewV4().String()
+		devPortalUser.Nonce = nonce
+		devPortalUser.Email = sso_key
+		if devPortalUser.Password == "" {
+			devPortalUser.Password = uuid.NewV4().String()
 		}
-		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
+		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, devPortalUser)
 		if updateErr != nil {
 			log.Error("Failed to update user! ", updateErr)
 			fmt.Fprintf(w, "Login failed")
