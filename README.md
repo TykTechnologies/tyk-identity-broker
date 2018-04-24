@@ -79,6 +79,7 @@ Tyk Identity Broker is configured through two files: The configuration file (tib
 		"CertFile": "./certs/server.pem",
 		"KeyFile": "./certs/server.key"
 	},
+	"SSLInsecureSkipVerify": true,
 	"BackEnd": {
 		"Name": "in_memory",
 		"IdentityBackendSettings": {
@@ -124,6 +125,11 @@ The path to the certificate file for this server, required for SSL
 #### `HttpServerOptions.KeyFile`
 
 The path to the key file for this server, required for SSL
+
+#### `SSLInsecureSkipVerify`
+ 
+If you run a local IDP, like Ping, with an untrusted SSL certificate, you can now turn off SSL verification by setting `SSLInsecureSkipVerify` to `true`.
+This is useful when using OpenID Connect (OIDC). During the authorization there are calls to the `https://{IDP-DOMAIN}/.well-know/openid-configuration` and other endpoints to avoid error in case the certificate was signed by unknown authority
 
 #### `BackEnd`
 
