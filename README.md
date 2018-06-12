@@ -1,4 +1,4 @@
-Tyk Identity Broker (TIB) v0.2
+Tyk Identity Broker (TIB)
 ==============================
 
 ## What is Tyk Identity Broker?
@@ -15,13 +15,9 @@ TIB requires:
 
 ### Installation
 
-Extract the tarball and run the binary:
+You can install via Docker https://hub.docker.com/r/tykio/tyk-identity-broker/
 
-```
-tar -xvzf tib-linux-amd64-v0.2.tar.gz
-cd tib-v0.2
-./tib
-```
+Of via packages (deb or rpm): https://packagecloud.io/tyk/tyk-identity-broker/install#bash-deb
 
 ### Usage
 
