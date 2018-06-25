@@ -132,10 +132,18 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		return "", modErr
 	}
 
+	gUser, ok := i.(goth.User)
+	email := "ssoSession@ssoSession.com"
+	if ok {
+		if gUser.Email != "" {
+			email = gUser.Email
+		}
+	}
+
 	accessRequest := SSOAccessData{
-		ForSection: thisModule,
-		OrgID:      t.profile.OrgID,
-		EmailAddress: "ssoSession@ssoSession.com",
+		ForSection:   thisModule,
+		OrgID:        t.profile.OrgID,
+		EmailAddress: email,
 	}
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
