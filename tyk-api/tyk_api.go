@@ -128,7 +128,7 @@ const (
 )
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
-func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, error) {
+func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
 	log.Debug("Calling: ", preparedEndpoint)
@@ -143,23 +143,22 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, reqErr
+		return []byte{}, response.StatusCode, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
 	if bErr != nil {
-		return []byte{}, bErr
+		return []byte{}, response.StatusCode, bErr
 	}
 
 	log.Debug("GOT:", string(retBody))
 
 	if response.StatusCode > 201 {
-		log.Warning("Response code was: ", response.StatusCode)
-		log.Warning("GOT:", string(retBody))
-		return retBody, errors.New("Response code was not 200!")
+		log.WithField("reponse_code", response.StatusCode).Warning("Got:", string(retBody))
+		return retBody, response.StatusCode, errors.New("Response code from dashboard was not 200!")
 	}
 
-	return retBody, nil
+	return retBody, response.StatusCode, nil
 }
 
 func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
@@ -175,7 +174,7 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 }
 
 // DispatchDashboardSuper will dispatch a request to the dashbaord super-user API (admin)
-func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, error) {
+func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, int, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
 	log.Debug("Calling: ", preparedEndpoint)
@@ -190,25 +189,25 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, reqErr
+		return []byte{}, response.StatusCode, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
 	if bErr != nil {
-		return []byte{}, bErr
+		return []byte{}, response.StatusCode, bErr
 	}
 
 	if response.StatusCode > 201 {
 		log.Warning("Response code was: ", response.StatusCode)
 		log.Warning("Returned: ", string(retBody))
-		return retBody, errors.New("Response code was not 200!")
+		return retBody, response.StatusCode, errors.New("Response code admin dashboard was not 200!")
 	}
 
-	return retBody, nil
+	return retBody, response.StatusCode, nil
 }
 
 // DispatchGateway will dispatch a request to the gateway API
-func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader, ctype string) ([]byte, error) {
+func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader, ctype string) ([]byte, int, error) {
 	preparedEndpoint := t.GatewayConfig.Endpoint + ":" + t.GatewayConfig.Port + string(target)
 
 	log.Debug("Calling: ", preparedEndpoint)
@@ -228,22 +227,22 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader,
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, reqErr
+		return []byte{}, response.StatusCode, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
 	if bErr != nil {
-		return []byte{}, bErr
+		return []byte{}, response.StatusCode, bErr
 	}
 
 	if response.StatusCode > 201 {
 		log.Warning("Response code was: ", response.StatusCode)
-		return retBody, errors.New("Response code was not 200!")
+		return retBody, response.StatusCode, errors.New("Response code from the gateway was not 200!")
 	}
 
 	log.Debug("API Response: ", string(retBody))
 
-	return retBody, nil
+	return retBody, response.StatusCode, nil
 }
 
 // Dcode will unmarshal a request body, a bit redundant tbh
@@ -253,27 +252,33 @@ func (t *TykAPI) Decode(raw []byte, retVal interface{}) error {
 }
 
 // DispatchAndDecode will select the API to target, dispatch the request, then decode ther esponse to return to the caller
-func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader, ctype string) error {
+func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader, ctype string) (error, bool) {
 	var retBytes []byte
 	var dispatchErr error
+	var retCode = 0
 
 	switch APIName {
 	case GATEWAY:
-		retBytes, dispatchErr = t.DispatchGateway(target, method, body, ctype)
+		retBytes, retCode, dispatchErr = t.DispatchGateway(target, method, body, ctype)
 	case DASH:
-		retBytes, dispatchErr = t.DispatchDashboard(target, method, creds, body)
+		retBytes, retCode, dispatchErr = t.DispatchDashboard(target, method, creds, body)
 	case DASH_SUPER:
-		retBytes, dispatchErr = t.DispatchDashboardSuper(target, method, body)
+		retBytes, retCode, dispatchErr = t.DispatchDashboardSuper(target, method, body)
 	default:
-		return errors.New("APIName must be one of GATEWAY, DASH or DASH_SUPER")
+		return errors.New("APIName must be one of GATEWAY, DASH or DASH_SUPER"), false
 	}
 
 	if dispatchErr != nil {
-		return dispatchErr
+		log.WithField("retCode", retCode).WithField("dispatchErr",dispatchErr).Info("error")
+		if retCode == 401 {
+			return dispatchErr, false
+		}
+		return dispatchErr, true
 	}
 
 	t.Decode(retBytes, retVal)
-	return nil
+
+	return nil, true
 }
 
 // CreateSSONonce will generate a single-signon nonce for the relevant part of the Tyk service (dashbaord or portal),
@@ -289,7 +294,7 @@ func (t *TykAPI) CreateSSONonce(target Endpoint, data interface{}) (interface{},
 
 	var returnVal interface{}
 	body := bytes.NewBuffer(SSODataJSON)
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body, "")
+	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body, "")
 
 	return returnVal, dErr
 }
@@ -301,21 +306,21 @@ func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDev
 
 	retUser := PortalDeveloper{}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
+	dErr, _ := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
 	return retUser, dErr
 }
 
 // GetDeveloperBySSOKey will retrieve a deverloper from the Advanced API using their SSO Key address
-func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, DeveloperEmail string) (PortalDeveloper, error) {
-	asStr := url.QueryEscape(DeveloperEmail)
-	target := strings.Join([]string{string(PORTAL_DEVS_SSO), asStr}, "/")
+func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, SsoKey string) (PortalDeveloper, error, bool) {
+	SsoKeyStr := url.QueryEscape(SsoKey)
+	target := strings.Join([]string{string(PORTAL_DEVS_SSO), SsoKeyStr}, "/")
 
 	retUser := PortalDeveloper{}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
+	err, isAuthorised := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
-	return retUser, dErr
+	return retUser, err, isAuthorised
 }
 
 // UpdateDeveloper will update a developer object using the advanced API
@@ -330,7 +335,7 @@ func (t *TykAPI) UpdateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body, "")
+	dErr, _ := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body, "")
 
 	return dErr
 }
@@ -347,7 +352,7 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
+	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
 	log.Debug("Returned: ", retData)
 
 	return dErr
@@ -426,12 +431,12 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 	log.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
+	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
 
 	log.Debug("Returned: ", response)
 
 	if dErr != nil {
-		return nil, err
+		return nil, dErr
 	}
 
 	return response, nil
@@ -471,24 +476,25 @@ func (t *TykAPI) RequestStandardToken(orgID, policyID, BaseAPIID, UserCred strin
 	log.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
-	dErr := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
+	dErr, isAuthorized := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
 
-	log.Debug("Returned: ", response)
+	log.WithField("is_authorized", isAuthorized).WithField("response", response).Debug("Returned from dispatch to the dashboard.")
 
 	if dErr != nil {
-		return nil, err
+		log.WithField("returned_error", dErr).Debug("Returned from dispatch to the dashboard.")
+		return nil, dErr
 	}
 
 	return response, nil
 }
 
-func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) error {
+func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) (error, bool) {
 	target := strings.Join([]string{string(TOKENS), token}, "/")
 	target = strings.Replace(target, "{APIID}", BaseAPI, 1)
 
 	log.Debug("Target is: ", target)
 	var reply interface{}
-	oErr := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
+	oErr, isAuthorised := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
 
-	return oErr
+	return oErr, isAuthorised
 }
