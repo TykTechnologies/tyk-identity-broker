@@ -143,3 +143,7 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 	thisIdentityProvider.HandleCallback(w, r, HandleError)
 	return
 }
+
+func HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}

@@ -91,6 +91,8 @@ func main() {
 
 	p.Handle("/api/profiles", IsAuthenticated(http.HandlerFunc(HandleGetProfileList))).Methods("GET")
 
+	p.Handle("/health", http.HandlerFunc(HandleHealthCheck)).Methods("GET")
+
 	listenPort := "3010"
 	if config.Port != 0 {
 		listenPort = strconv.Itoa(config.Port)
