@@ -19,6 +19,13 @@ You can install via Docker https://hub.docker.com/r/tykio/tyk-identity-broker/
 
 Of via packages (deb or rpm): https://packagecloud.io/tyk/tyk-identity-broker/install#bash-deb
 
+#### Run via docker
+To run the docker, you can use the following command (assuming that you run it from the directory which contains tib.conf and profiles.json files):
+
+```
+docker run tykio/tyk-identity-broker -p 3010:3010 -v $(pwd)/tib.conf:/opt/tyk-identity-broker/tib.conf -v $(pwd)/profiles.json:/opt/tyk-identity-broker/profiles.json
+```
+
 ### Usage
 
 No command line arguments are needed, but if you are running TIB from another dir or during startup, you will need to set the absolute paths to the profile and config files
