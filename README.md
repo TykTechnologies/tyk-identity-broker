@@ -128,7 +128,7 @@ The path to the key file for this server, required for SSL
 
 #### `SSLInsecureSkipVerify`
  
-If you run a local IDP, like Ping, with an untrusted SSL certificate, you can now turn off SSL verification by setting `SSLInsecureSkipVerify` to `true`.
+If you run a local IDP, like Ping, with an untrusted SSL certificate, you can now turn off the client SSL verification by setting `SSLInsecureSkipVerify` to `true`.
 This is useful when using OpenID Connect (OIDC). During the authorization there are calls to the `https://{IDP-DOMAIN}/.well-know/openid-configuration` and other endpoints to avoid error in case the certificate was signed by unknown authority
 
 #### `BackEnd`
