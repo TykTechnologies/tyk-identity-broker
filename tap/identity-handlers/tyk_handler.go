@@ -132,16 +132,25 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		return "", modErr
 	}
 
+	gUser, ok := i.(goth.User)
+	email := "ssoSession@ssoSession.com"
+	if ok {
+		if gUser.Email != "" {
+			email = gUser.Email
+		}
+	}
+
 	accessRequest := SSOAccessData{
-		ForSection: thisModule,
-		OrgID:      t.profile.OrgID,
-		EmailAddress: "ssoSession@ssoSession.com",
+		ForSection:   thisModule,
+		OrgID:        t.profile.OrgID,
+		EmailAddress: email,
 	}
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
 
+	log.WithField("return_value", returnVal).Debug("Returned from CreateSSONonce.")
 	if retErr != nil {
-		log.Error(TykAPILogTag+" API Response error: ", retErr)
+		log.WithField("return_value", returnVal).Error(TykAPILogTag+" API Response error: ", retErr)
 		return "", retErr
 	}
 
@@ -186,27 +195,24 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		return
 	}
 
+	user := i.(goth.User)
 	// Check if user exists
-	sso_key := tap.GenerateSSOKey(i.(goth.User))
-	thisUser, retErr := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
-	log.Warning(TykAPILogTag+" Returned: ", thisUser)
-
-	createUser := false
-	if retErr != nil {
-		log.Warning(TykAPILogTag+" API Error: ", nErr)
-		log.Info(TykAPILogTag + " User not found, creating new record")
-		createUser = true
+	sso_key := tap.GenerateSSOKey(user)
+	thisUser, retErr, isAuthorised := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
+	if !isAuthorised {
+		log.WithField("returned_error", retErr).Error(TykAPILogTag+" User is unauthorized.")
+		fmt.Fprintf(w, "Login failed")
+		return
 	}
+	if retErr != nil {
+		log.WithField("returned_error", retErr).Info(TykAPILogTag + " User not found, creating new record.")
 
-	// If not, create user
-	if createUser {
-		if thisUser.Email == "" {
-			thisUser.Email = sso_key
-		}
-
+		// If not, create user
 		log.Info(TykAPILogTag + " Creating user")
+		log.WithField("user_name", user.Email).Debug(TykAPILogTag)
+
 		newUser := tyk.PortalDeveloper{
-			Email:         thisUser.Email,
+			Email:         user.Email,
 			Password:      uuid.NewV4().String(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
@@ -223,9 +229,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 			return
 		}
 	} else {
+		log.Debug(TykAPILogTag+" Returned: ", thisUser)
+
+		if thisUser.Email == "" {
+			thisUser.Email = user.Email
+		}
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
-		thisUser.Email = sso_key
 		if thisUser.Password == "" {
 			thisUser.Password = uuid.NewV4().String()
 		}
@@ -267,9 +277,15 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		if fErr == nil {
 			// Key found
 			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
-			iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
+			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
 			if iErr != nil {
-				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag+" ----> Token Invalidation failed.")
+
+				//TODO: Should we return here??? the following call is against the gateway directly, so it's different credential.
+				//TODO: The other action to auth token is calling the dash. why they are not the same?
+				if !isAuthorized {
+					log.Error(TykAPILogTag+"Unauthorized user. Should exit.")
+				}
 			}
 		}
 	}
@@ -342,9 +358,19 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		if fErr == nil {
 			// Key found
 			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
-			iErr := t.API.InvalidateToken(t.dashboardUserAPICred, t.token.BaseAPIID, value)
+			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.token.BaseAPIID, value)
 			if iErr != nil {
 				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag+" ----> Token Invalidation failed.")
+
+				//TODO: Should we return here??? the following call is against the dashboard directly, so it will fail again.
+				//TODO: The other action to auth token is calling the gateway. why they are not the same?
+				if !isAuthorized {
+					log.Error(TykAPILogTag+"Unauthorized user. Should exit.")
+					fmt.Fprintf(w, "Auth token generation failed due to invalid user credentials.")
+					return
+				}
 			}
 		}
 	}

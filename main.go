@@ -1,11 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"net/http"
 	"path"
 	"strconv"
-	"crypto/tls"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
