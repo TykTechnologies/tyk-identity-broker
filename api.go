@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lonelycode/tyk-auth-proxy/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
 var APILogTag string = "[API]"
