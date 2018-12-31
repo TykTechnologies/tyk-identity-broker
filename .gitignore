@@ -9,3 +9,7 @@ build/
 build_tools/
 tyk-identity-broker
 
+# IDEA
+.idea
+*.iml
+
