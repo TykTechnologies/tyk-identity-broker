@@ -5,9 +5,21 @@ import (
 	"io/ioutil"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+	"github.com/kelseyhightower/envconfig"
 )
 
+const envPrefix = "TYK_IB"
+
 var failCount int
+
+type IdentityBackendSettings struct {
+	MaxIdle       int
+	MaxActive     int
+	Database      int
+	Password      string
+	EnableCluster bool
+	Hosts         map[string]string
+}
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
@@ -16,7 +28,7 @@ type Configuration struct {
 	ProfileDir string
 	BackEnd    struct {
 		ProfileBackendSettings  interface{}
-		IdentityBackendSettings interface{}
+		IdentityBackendSettings IdentityBackendSettings
 	}
 	TykAPISettings    tyk.TykAPI
 	HttpServerOptions struct {
@@ -46,4 +58,8 @@ func loadConfig(filePath string, configStruct *Configuration) {
 	}
 
 	log.Debug("[MAIN] Settings Struct: ", configStruct.TykAPISettings)
+
+	if err = envconfig.Process(envPrefix, configStruct); err != nil {
+		log.Errorf("Failed to process config env vars: %v", err)
+	}
 }
