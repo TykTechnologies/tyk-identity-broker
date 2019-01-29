@@ -561,14 +561,14 @@ The LDAP Identity Provider is experimental currently and provides limited functi
 	"OrgID": "{YOUR-ORG-ID}",
 	"ProviderConfig": {
 		"LDAPUseSSL": false,
-		"FailureRedirect": "http://http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
+		"FailureRedirect": "http://{DASH-DOMAIN}:{DASH-PORT}/?fail=true",
 		"LDAPAttributes": [],
 		"LDAPPort": "389",
 		"LDAPServer": "localhost",
 		"LDAPUserDN": "cn=*USERNAME*,cn=dashboard,ou=Group,dc=test-ldap,dc=tyk,dc=io"
 	},
 	"ProviderName": "ADProvider",
-	"ReturnURL": "http://http://{DASH-DOMAIN}:{DASH-PORT}/tap",
+	"ReturnURL": "http://{DASH-DOMAIN}:{DASH-PORT}/tap",
 	"Type": "passthrough"
 }
 ```
