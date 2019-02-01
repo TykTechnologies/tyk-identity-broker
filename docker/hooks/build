@@ -3,6 +3,11 @@ set -e
 
 echo "$PWD"
 
+echo "CACHE_TAG: $CACHE_TAG"
+echo "IMAGE_NAME: $IMAGE_NAME"
+echo "DOCKER_REPO: $DOCKER_REPO"
+echo "DOCKER_TAG: $DOCKER_TAG"
+
 dockerfilepath="$PWD/Dockerfile"
 repopath="$(dirname $PWD)"
 versionfile="$(cat $repopath/version.go)"
@@ -15,7 +20,8 @@ else
 fi
 
 REPOSITORY="tyk-identity-broker"
-if [[ $CACHE_TAG == "unstable" ]]; then
+imagetag=${IMAGE_NAME##*:}
+if [[ $imagetag == "unstable" ]]; then
     REPOSITORY="$REPOSITORY-unstable"
     TYKVERSION="*"  # Pick latest version from unstable repo
 fi
