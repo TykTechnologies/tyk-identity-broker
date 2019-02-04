@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/gorilla/mux"
 )
 
 var APILogTag string = "[API]"
