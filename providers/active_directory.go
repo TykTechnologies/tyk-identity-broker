@@ -143,23 +143,11 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		UserID:   uname,
 		Provider: "ADProvider",
 	}
-/*
-	if s.config.LDAPFilter == "" {
-		log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
 
-		var attrs []string
-		attrs = s.config.LDAPAttributes
-		attrs = append(attrs, s.config.LDAPEmailAttribute)
-
-		thisUser.Email = tap.GenerateSSOKey(thisUser)
-		log.Info(ADProviderLogTag+" User Data:", thisUser)
-
-		return thisUser, nil
-	}
-*/
     if s.config.LDAPFilter == "" {
         s.config.LDAPFilter = "(objectclass=*)"
     }
+
 	DN := s.config.LDAPBaseDN
 	if DN == "" {
 		DN = s.prepDN(username)
@@ -261,7 +249,11 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
     }
 
 	if bindErr != nil {
-		log.Error(ADProviderLogTag+" Bind failed for user: ", username)
+        if s.config.LDAPAdminUser != "" {
+		    log.Error(ADProviderLogTag+" Bind failed for user: ", s.config.LDAPAdminUser)
+        } else {
+		    log.Error(ADProviderLogTag+" Bind failed for user: ", username)
+        }
 		log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
 		s.provideErrorRedirect(w, r)
 		return
