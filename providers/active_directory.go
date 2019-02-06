@@ -37,6 +37,8 @@ type ADConfig struct {
 	LDAPBaseDN          string
 	LDAPFilter          string
 	LDAPEmailAttribute  string
+    LDAPAdminUser       string
+    LDAPAdminPassword   string
 	LDAPAttributes      []string
 	LDAPSearchScope     int
 	FailureRedirect     string
@@ -130,7 +132,7 @@ func (s *ADProvider) generateUsername(username string) string {
 	return uname
 }
 
-func (s *ADProvider) getUserData(username string) (goth.User, error) {
+func (s *ADProvider) getUserData(username string, password string) (goth.User, error) {
 	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
@@ -141,7 +143,7 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		UserID:   uname,
 		Provider: "ADProvider",
 	}
-
+/*
 	if s.config.LDAPFilter == "" {
 		log.Info(ADProviderLogTag + " LDAPFilter is blank, skipping")
 
@@ -154,7 +156,10 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 
 		return thisUser, nil
 	}
-
+*/
+    if s.config.LDAPFilter == "" {
+        s.config.LDAPFilter = "(objectclass=*)"
+    }
 	DN := s.config.LDAPBaseDN
 	if DN == "" {
 		DN = s.prepDN(username)
@@ -188,20 +193,30 @@ func (s *ADProvider) getUserData(username string) (goth.User, error) {
 		return thisUser, errors.New("Filter matched multiple users")
 	}
 
+    entry := sr.Entries[0]
+
+    if s.config.LDAPEmailAttribute == "" {
+        s.config.LDAPEmailAttribute = "mail"
+    }
+
+    if s.config.LDAPAdminUser != "" {
+        bindErr := s.connection.Bind(entry.DN, password)
+        if bindErr != nil {
+            log.Error(ADProviderLogTag+" Bind failed for user: ", username)
+            log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
+            return thisUser, errors.New("Password not matched")
+        }
+        log.Info(ADProviderLogTag+" User bind successful: ", username)
+    }
+
 	emailFound := false
-	for _, entry := range sr.Entries {
-		for _, j := range entry.Attributes {
-			log.Info("Checking ", j.Name, "with ", s.config.LDAPEmailAttribute)
-			if j.Name == s.config.LDAPEmailAttribute {
-				thisUser.Email = j.Values[0]
-				emailFound = true
-				break
-			}
-		}
-		if emailFound {
-			break
-		}
-	}
+    for _, j := range entry.Attributes {
+        if j.Name == s.config.LDAPEmailAttribute {
+            thisUser.Email = j.Values[0]
+            emailFound = true
+            break
+        }
+    }
 
 	if !emailFound {
 		log.Warning("User email not found, generating from username")
@@ -237,7 +252,13 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	log.Debug("DN: ", s.prepDN(username))
 
-	bindErr := s.connection.Bind(s.prepDN(username), password)
+    var bindErr error
+
+    if s.config.LDAPAdminUser != "" {
+	    bindErr = s.connection.Bind(s.config.LDAPAdminUser, s.config.LDAPAdminPassword)
+    } else {
+	    bindErr = s.connection.Bind(s.prepDN(username), password)
+    }
 
 	if bindErr != nil {
 		log.Error(ADProviderLogTag+" Bind failed for user: ", username)
@@ -245,9 +266,12 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 		s.provideErrorRedirect(w, r)
 		return
 	}
-	log.Info(ADProviderLogTag+" User bind successful: ", username)
 
-	user, uErr := s.getUserData(username)
+    if s.config.LDAPAdminUser != "" {
+        log.Info(ADProviderLogTag+" User bind successful: ", username)
+    }
+
+	user, uErr := s.getUserData(username, password)
 	if uErr != nil {
 		log.Error(ADProviderLogTag+" Lookup failed for user: ", username)
 		log.Error(ADProviderLogTag+" --> Error was: ", uErr)
