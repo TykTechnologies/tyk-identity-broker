@@ -573,8 +573,6 @@ The LDAP Identity Provider is experimental currently and provides limited functi
 }
 ```
 
-**Step 1: Send a request to the LDAP URL**
-
 TIB can pull a username and password out of a request in two ways:
 
 1. Two form fields called "username" and "password"
@@ -582,7 +580,7 @@ TIB can pull a username and password out of a request in two ways:
 
 By default, TIB will look for the two form fields. To enable Basic Auth header extraction, add `"GetAuthFromBAHeader": true` to the `ProviderConfig` section.
 
-The request should be a `POST`.
+The request should be a `POST`. Example curl command can look like: `curl -X POST localhost:3010/auth/4/callback -F username=bob -F password=secret`
 
 If you make this request with a valid user that can bind to the LDAP server, Tyk will redirect the user to the dashboard with a valid session. There's no more to it, this mechanism is pass-through and is transparent to the user, with TIB acting as a direct client to the LDAP provider.
 
@@ -651,6 +649,29 @@ The configuration below will take a request that is posted to TIB, authenticate 
 	"ProviderName": "ADProvider",
 	"ReturnURL": "",
 	"Type": "passthrough"
+}
+```
+
+#### Using two phase LDAP authentification
+
+In some cases only priviliged users are allowed perform LDAP search. In this case you can specify your admin user using `LDAPAdminUser` and `LDAPAdminPassword` options. TIB will perform initial bind as admin user, then will do ldap lookup based on specified DN template or `LDAPFilter`, and will do bind one more time, with user DN.
+
+```
+{
+    "ActionType": "GenerateOrLoginUserProfile",
+    "ID": "4",
+    "OrgID": "59fc80d9158519599ca23cfc",
+    "ProviderConfig": {
+        "FailureRedirect": "https://tyk-dashboard:3000/?fail=true",
+        "LDAPPort": "389",
+        "LDAPAdminUser": "admin",
+        "LDAPAdminPassword": "password",
+        "LDAPServer": "localhost",
+        "LDAPUserDN": "uid=*USERNAME*,dc=example,dc=org"
+    },
+    "ProviderName": "ADProvider",
+    "ReturnURL": "https://tyk-dashboard:3000/tap",
+    "Type": "passthrough"
 }
 ```
 
