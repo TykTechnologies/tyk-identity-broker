@@ -25,6 +25,7 @@ const (
 	SSOForDashboard ModuleName = "dashboard"
 	SSOForPortal    ModuleName = "portal"
 	InvalidModule   ModuleName = ""
+	DefaultSSOEmail string = "ssoSession@ssoSession.com"
 )
 
 // SSOAccessData is the data type used for speaking to the SSO endpoint in the advanced API
@@ -32,6 +33,7 @@ type SSOAccessData struct {
 	ForSection   ModuleName
 	OrgID        string
 	EmailAddress string
+	DisplayName  string
 }
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
@@ -124,6 +126,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 // CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
 // Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
+
 	log.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
 
 	thisModule, modErr := mapActionToModule(t.profile.ActionType)
@@ -133,10 +136,23 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	gUser, ok := i.(goth.User)
-	email := "ssoSession@ssoSession.com"
+	email := DefaultSSOEmail
+	displayName := email
 	if ok {
 		if gUser.Email != "" {
 			email = gUser.Email
+		}
+		if gUser.FirstName != "" {
+			displayName = gUser.FirstName
+		}
+		if gUser.LastName != "" {
+			if displayName != "" {  //i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
+				displayName += " "
+			}
+			displayName += gUser.LastName
+		}
+		if displayName == "" {
+			displayName = email
 		}
 	}
 
@@ -144,11 +160,12 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		ForSection:   thisModule,
 		OrgID:        t.profile.OrgID,
 		EmailAddress: email,
+		DisplayName:  displayName,
 	}
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
 
-	log.WithField("return_value", returnVal).Debug("Returned from CreateSSONonce.")
+	log.WithField("return_value", returnVal).Debug("Returned from /admin/sso endpoint.")
 	if retErr != nil {
 		log.WithField("return_value", returnVal).Error(TykAPILogTag+" API Response error: ", retErr)
 		return "", retErr
