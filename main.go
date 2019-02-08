@@ -48,7 +48,7 @@ func initBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 func init() {
 	log.Level = logrus.DebugLevel
 
-	log.Info("Tyk Identity Broker v0.3")
+	log.Info("Tyk Identity Broker ", VERSION)
 	log.Info("Copyright Martin Buhr 2016\n")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
