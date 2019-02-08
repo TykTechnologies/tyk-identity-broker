@@ -40,26 +40,26 @@ type Configuration struct {
 }
 
 // loadConfig will load the config from a file
-func loadConfig(filePath string, configStruct *Configuration) {
+func loadConfig(filePath string, conf *Configuration) {
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		log.Error("Couldn't load configuration file: ", err)
 		failCount += 1
 		if failCount < 3 {
-			loadConfig(filePath, configStruct)
+			loadConfig(filePath, conf)
 		} else {
 			log.Fatal("Could not open configuration, giving up.")
 		}
 	} else {
-		jsErr := json.Unmarshal(configuration, &configStruct)
+		jsErr := json.Unmarshal(configuration, conf)
 		if jsErr != nil {
 			log.Error("Couldn't unmarshal configuration: ", jsErr)
 		}
 	}
 
-	log.Debug("[MAIN] Settings Struct: ", configStruct.TykAPISettings)
-
-	if err = envconfig.Process(envPrefix, configStruct); err != nil {
+	if err = envconfig.Process(envPrefix, conf); err != nil {
 		log.Errorf("Failed to process config env vars: %v", err)
 	}
+
+	log.Debug("[MAIN] Settings Struct: ", conf.TykAPISettings)
 }
