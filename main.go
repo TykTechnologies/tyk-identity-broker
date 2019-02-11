@@ -49,7 +49,7 @@ func init() {
 	log.Level = logrus.DebugLevel
 
 	log.Info("Tyk Identity Broker ", VERSION)
-	log.Info("Copyright Martin Buhr 2016\n")
+	log.Info("Copyright Tyk Technologies Ltd 2019")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
