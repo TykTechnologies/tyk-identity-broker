@@ -139,7 +139,12 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	email := DefaultSSOEmail
 	displayName := email
 	if ok {
-		if gUser.Email != "" {
+		if t.profile.CustomEmailField != "" {
+			if gUser.RawData[t.profile.CustomEmailField] != nil {
+				email = gUser.RawData[t.profile.CustomEmailField].(string)
+			}
+		}
+		if email == "" && gUser.Email != "" {
 			email = gUser.Email
 		}
 		if gUser.FirstName != "" {
@@ -217,7 +222,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	sso_key := tap.GenerateSSOKey(user)
 	thisUser, retErr, isAuthorised := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
 	if !isAuthorised {
-		log.WithField("returned_error", retErr).Error(TykAPILogTag+" User is unauthorized.")
+		log.WithField("returned_error", retErr).Error(TykAPILogTag + " User is unauthorized.")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
@@ -296,12 +301,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
 			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
 			if iErr != nil {
-				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag+" ----> Token Invalidation failed.")
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
 
 				//TODO: Should we return here??? the following call is against the gateway directly, so it's different credential.
 				//TODO: The other action to auth token is calling the dash. why they are not the same?
 				if !isAuthorized {
-					log.Error(TykAPILogTag+"Unauthorized user. Should exit.")
+					log.Error(TykAPILogTag + "Unauthorized user. Should exit.")
 				}
 			}
 		}
@@ -379,12 +384,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 			if iErr != nil {
 				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
 
-				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag+" ----> Token Invalidation failed.")
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
 
 				//TODO: Should we return here??? the following call is against the dashboard directly, so it will fail again.
 				//TODO: The other action to auth token is calling the gateway. why they are not the same?
 				if !isAuthorized {
-					log.Error(TykAPILogTag+"Unauthorized user. Should exit.")
+					log.Error(TykAPILogTag + "Unauthorized user. Should exit.")
 					fmt.Fprintf(w, "Auth token generation failed due to invalid user credentials.")
 					return
 				}

@@ -12,6 +12,7 @@ type Profile struct {
 	MatchedPolicyID       string
 	Type                  ProviderType
 	ProviderName          string
+	CustomEmailField      string
 	ProviderConfig        interface{}
 	IdentityHandlerConfig interface{}
 	ProviderConstraints   ProfileConstraint
