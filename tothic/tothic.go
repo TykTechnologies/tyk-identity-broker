@@ -9,10 +9,10 @@ package tothic
 
 import (
 	"errors"
-	"fmt"
+	"github.com/TykTechnologies/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/markbates/goth"
 	"net/http"
 	"os"
@@ -21,17 +21,36 @@ import (
 // SessionName is the key used to access the session store.
 const SessionName = "_gothic_session"
 
+const EnvPrefix = "TYK_IB"
+
+var log = logrus.New()
+
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 
 // Store can/should be set by applications using gothic. The default is a cookie store.
 var Store sessions.Store
 
 func init() {
-	key := []byte(os.Getenv("SESSION_SECRET"))
-	if string(key) == "" {
-		fmt.Println("toth/tothic: no SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.")
-	}
+	key := KeyFromEnv()
 	Store = sessions.NewCookieStore([]byte(key))
+}
+
+func KeyFromEnv() (key string) {
+	// To handle deprecation
+	key = os.Getenv("SESSION_SECRET")
+	temp := os.Getenv(EnvPrefix + "_SESSION_SECRET")
+	if temp != "" {
+		if key != "" {
+			log.Warn("SESSION_SECRET is deprecated, TYK_IB_SESSION_SECRET overrides it when you set both.")
+		}
+		key = temp
+	}
+
+	if key == "" && temp == "" {
+		log.Warn("toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.")
+	}
+
+	return
 }
 
 /*
