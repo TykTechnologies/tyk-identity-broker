@@ -2,13 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"io/ioutil"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
 )
-
-const envPrefix = "TYK_IB"
 
 var failCount int
 
@@ -57,7 +56,7 @@ func loadConfig(filePath string, conf *Configuration) {
 		}
 	}
 
-	if err = envconfig.Process(envPrefix, conf); err != nil {
+	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		log.Errorf("Failed to process config env vars: %v", err)
 	}
 
