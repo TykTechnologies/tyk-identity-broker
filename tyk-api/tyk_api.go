@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"io"
 	"io/ioutil"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -140,6 +142,14 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 
 	newRequest.Header.Add("authorization", usercode)
 	c := &http.Client{}
+
+	// Save a copy of this request for debugging.
+	requestDump, err := httputil.DumpRequest(newRequest, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
+
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
@@ -353,7 +363,7 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 	}
 
 	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
-	log.Debug("Returned: ", retData)
+	log.Info("Returned: ", retData)
 
 	return dErr
 }

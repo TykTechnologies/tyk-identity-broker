@@ -125,9 +125,9 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 
 // CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
 // Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
-func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
+func (t *TykIdentityHandler) CreateIdentity(gUser *goth.User) (string, error) {
 
-	log.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
+	log.WithField("User", gUser).Debug("%s  Creating identity for user", TykAPILogTag)
 
 	thisModule, modErr := mapActionToModule(t.profile.ActionType)
 	if modErr != nil {
@@ -135,36 +135,38 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		return "", modErr
 	}
 
-	gUser, ok := i.(goth.User)
-	email := DefaultSSOEmail
-	displayName := email
-	if ok {
-		if t.profile.CustomEmailField != "" {
-			if gUser.RawData[t.profile.CustomEmailField] != nil {
-				email = gUser.RawData[t.profile.CustomEmailField].(string)
+	var displayName string
+
+		//Set the email
+		if t.profile.CustomEmailField != "" && gUser.RawData[t.profile.CustomEmailField] != nil {
+			gUser.Email = gUser.RawData[t.profile.CustomEmailField].(string)
+		} else if gUser.Email == "" {
+			if gUser.UserID != "" {
+				gUser.Email = tap.GenerateSSOKey(*gUser)
+			} else {
+				log.WithField("DefaultEmail", DefaultSSOEmail).Info("No Email or User Id, will set the user with Tyk's default email.")
+				gUser.Email = DefaultSSOEmail
 			}
 		}
-		if email == "" && gUser.Email != "" {
-			email = gUser.Email
-		}
+
+		//Set the First and Last name that are used also for dispay
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
-		}
-		if gUser.LastName != "" {
-			if displayName != "" {  //i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
-				displayName += " "
+			if gUser.LastName != "" {
+				//i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
+				displayName += " " + gUser.LastName
 			}
+		} else if gUser.LastName != "" {
 			displayName += gUser.LastName
+		} else {
+			gUser.LastName = gUser.Email
+			displayName = gUser.LastName
 		}
-		if displayName == "" {
-			displayName = email
-		}
-	}
 
 	accessRequest := SSOAccessData{
 		ForSection:   thisModule,
 		OrgID:        t.profile.OrgID,
-		EmailAddress: email,
+		EmailAddress: gUser.Email,
 		DisplayName:  displayName,
 	}
 
@@ -182,8 +184,10 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 }
 
 // CompleteIdentityActionForDashboard handles a dashboard identity. No ise is created, only an SSO login session
-func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	nonce, nErr := t.CreateIdentity(i)
+func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseWriter, r *http.Request, user goth.User, profile tap.Profile) {
+	log.WithField("User", user).Info(TykAPILogTag + " Creating nonce")
+
+	nonce, nErr := t.CreateIdentity(&user)
 
 	if nErr != nil {
 		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
@@ -206,10 +210,10 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
 // user depnding on if they exist or not and validate the login using a one-time nonce.
-func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, user goth.User, profile tap.Profile) {
 	// Create a nonce
 	log.Info(TykAPILogTag + " Creating nonce")
-	nonce, nErr := t.CreateIdentity(i)
+	nonce, nErr := t.CreateIdentity(&user)
 
 	if nErr != nil {
 		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
@@ -217,7 +221,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		return
 	}
 
-	user := i.(goth.User)
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
 	thisUser, retErr, isAuthorised := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
@@ -231,7 +234,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 		// If not, create user
 		log.Info(TykAPILogTag + " Creating user")
-		log.WithField("user_name", user.Email).Debug(TykAPILogTag)
+		log.WithField("user_name", user.Email).Info(TykAPILogTag)
 
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
@@ -445,11 +448,17 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 // CompleteIdentityAction will log a user into Tyk dashbaord or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+
+	var gUser goth.User
+	var ok bool
+	if gUser, ok = i.(goth.User); !ok {
+		return
+	}
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
-		t.CompleteIdentityActionForDashboard(w, r, i, profile)
+		t.CompleteIdentityActionForDashboard(w, r, gUser, profile)
 		return
 	} else if profile.ActionType == tap.GenerateOrLoginDeveloperProfile {
-		t.CompleteIdentityActionForPortal(w, r, i, profile)
+		t.CompleteIdentityActionForPortal(w, r, gUser, profile)
 		return
 	} else if profile.ActionType == tap.GenerateOAuthTokenForClient {
 		t.CompleteIdentityActionForOAuth(w, r, i, profile)
