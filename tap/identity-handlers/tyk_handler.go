@@ -136,8 +136,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	gUser, ok := i.(goth.User)
-	email := DefaultSSOEmail
-	displayName := email
+	email := ""
 	if ok {
 		if t.profile.CustomEmailField != "" {
 			if gUser.RawData[t.profile.CustomEmailField] != nil {
@@ -146,7 +145,11 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		}
 		if email == "" && gUser.Email != "" {
 			email = gUser.Email
+		} else {
+			email = DefaultSSOEmail
 		}
+
+		displayName := ""
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
 		}
