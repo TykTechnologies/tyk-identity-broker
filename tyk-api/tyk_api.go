@@ -6,9 +6,9 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
+	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/url"
 	"strings"
@@ -269,7 +269,7 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	}
 
 	if dispatchErr != nil {
-		log.WithField("retCode", retCode).WithField("dispatchErr",dispatchErr).Info("error")
+		log.WithField("retCode", retCode).WithField("dispatchErr", dispatchErr).Info("error")
 		if retCode == 401 {
 			return dispatchErr, false
 		}

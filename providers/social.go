@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
-	"golang.org/x/oauth2"
-	
+
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
