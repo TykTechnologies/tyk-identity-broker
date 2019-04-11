@@ -202,7 +202,14 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		if j.Name == s.config.LDAPEmailAttribute {
 			thisUser.Email = j.Values[0]
 			emailFound = true
-			break
+		}
+
+		if j.Name == "givenName" {
+			thisUser.FirstName = j.Values[0]
+		}
+
+		if j.Name == "sn" {
+			thisUser.LastName = j.Values[0]
 		}
 	}
 
