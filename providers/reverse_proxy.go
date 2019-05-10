@@ -190,7 +190,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		outreq.Header.Set("X-Forwarded-For", clientIP)
 	}
 
-	log.Info(outreq)
+	logger.Info(outreq)
 	res, err := transport.RoundTrip(outreq)
 	if err != nil {
 		p.logf("http: proxy error: %v", err)
@@ -246,7 +246,7 @@ func (p *ReverseProxy) copyResponse(dst io.Writer, src io.Reader) {
 }
 
 func (p *ReverseProxy) logf(format string, args ...interface{}) {
-	log.Printf(format, args...)
+	logger.Printf(format, args...)
 
 }
 

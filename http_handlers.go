@@ -51,7 +51,7 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 func hackProviderConf(conf interface{}) []byte {
 	thisConf, err := json.Marshal(conf)
 	if err != nil {
-		log.Warning("Failure in JSON conversion")
+		logger.Warning("Failure in JSON conversion")
 		return []byte{}
 	}
 	return thisConf
@@ -80,13 +80,13 @@ func getTAProvider(conf tap.Profile) (tap.TAProvider, error) {
 
 // HandleError is a generic error handler
 func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
-	log.Error(tag+" "+errorMsg+": ", rawErr)
+	logger.Error(tag+" "+errorMsg+": ", rawErr)
 
 	errorObj := APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)
 
 	if err != nil {
-		log.Error("[Error Handler] Couldn't marshal error stats: ", err)
+		logger.Error("[Error Handler] Couldn't marshal error stats: ", err)
 		fmt.Fprintf(w, "System Error")
 		return
 	}
@@ -104,7 +104,7 @@ func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, erro
 	}
 
 	thisProfile := tap.Profile{}
-	log.Debug(HandlerLogTag+" --> Looking up profile ID: ", thisId)
+	logger.Debug(HandlerLogTag+" --> Looking up profile ID: ", thisId)
 	foundProfileErr := AuthConfigStore.GetKey(thisId, &thisProfile)
 
 	if foundProfileErr != nil {

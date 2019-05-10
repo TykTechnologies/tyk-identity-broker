@@ -7,8 +7,8 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
@@ -29,7 +29,7 @@ var TykAPIHandler tyk.TykAPI
 
 var GlobalDataLoader DataLoader
 
-var log = logrus.New()
+var logger = log.Get()
 
 var ProfileFilename *string
 
@@ -39,17 +39,15 @@ func initBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 	AuthConfigStore = &backends.InMemoryBackend{}
 	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
 
-	log.Info("[MAIN] Initialising Profile Configuration Store")
+	logger.Info("[MAIN] Initialising Profile Configuration Store")
 	AuthConfigStore.Init(profileBackendConfiguration)
-	log.Info("[MAIN] Initialising Identity Cache")
+	logger.Info("[MAIN] Initialising Identity Cache")
 	IdentityKeyStore.Init(identityBackendConfiguration)
 }
 
 func init() {
-	log.Level = logrus.DebugLevel
-
-	log.Info("Tyk Identity Broker ", VERSION)
-	log.Info("Copyright Tyk Technologies Ltd 2019")
+	logger.Info("Tyk Identity Broker ", VERSION)
+	logger.Info("Copyright Tyk Technologies Ltd 2019")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
@@ -99,13 +97,13 @@ func main() {
 	}
 
 	if config.HttpServerOptions.UseSSL {
-		log.Info("[MAIN] Broker Listening on SSL:", listenPort)
+		logger.Info("[MAIN] Broker Listening on SSL:", listenPort)
 		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
 		if err != nil {
-			log.Fatal("ListenAndServe: ", err)
+			logger.Fatal("ListenAndServe: ", err)
 		}
 	} else {
-		log.Info("[MAIN] Broker Listening on :", listenPort)
+		logger.Info("[MAIN] Broker Listening on :", listenPort)
 		http.ListenAndServe(":"+listenPort, p)
 	}
 

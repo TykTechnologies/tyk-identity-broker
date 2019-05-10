@@ -38,12 +38,12 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	thisSet, err := ioutil.ReadFile(f.config.FileName)
 	profiles := []tap.Profile{}
 	if err != nil {
-		log.Error("[FILE LOADER] Load failure: ", err)
+		logger.Error("[FILE LOADER] Load failure: ", err)
 		return err
 	} else {
 		jsErr := json.Unmarshal(thisSet, &profiles)
 		if jsErr != nil {
-			log.Error("[FILE LOADER] Couldn't unmarshal profile set: ", jsErr)
+			logger.Error("[FILE LOADER] Couldn't unmarshal profile set: ", jsErr)
 			return err
 		}
 	}
@@ -52,20 +52,20 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	for _, profile := range profiles {
 		inputErr := AuthConfigStore.SetKey(profile.ID, profile)
 		if inputErr != nil {
-			log.Error("Couldn't encode configuration: ", inputErr)
+			logger.Error("Couldn't encode configuration: ", inputErr)
 		} else {
 			loaded += 1
 		}
 	}
 
-	log.Info("[FILE LOADER] Loaded: ", loaded, " profiles from ", f.config.FileName)
+	logger.Info("[FILE LOADER] Loaded: ", loaded, " profiles from ", f.config.FileName)
 	return nil
 }
 
 func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 	oldSet, err := ioutil.ReadFile(f.config.FileName)
 	if err != nil {
-		log.Error("[FILE LOADER] load failed! ", err)
+		logger.Error("[FILE LOADER] load failed! ", err)
 		return err
 	}
 
@@ -75,14 +75,14 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	wErr := ioutil.WriteFile(bkLocation, oldSet, 0644)
 	if wErr != nil {
-		log.Error("[FILE LOADER] backup failed! ", wErr)
+		logger.Error("[FILE LOADER] backup failed! ", wErr)
 		return wErr
 	}
 
 	newSet := store.GetAll()
 	asJson, encErr := json.Marshal(newSet)
 	if encErr != nil {
-		log.Error("[FILE LOADER] Encoding failed! ", encErr)
+		logger.Error("[FILE LOADER] Encoding failed! ", encErr)
 		return encErr
 	}
 
@@ -93,7 +93,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
 	if wErr != nil {
-		log.Error("[FILE LOADER] flush failed! ", w2Err)
+		logger.Error("[FILE LOADER] flush failed! ", w2Err)
 		return w2Err
 	}
 

@@ -6,11 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
-
-	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -21,13 +16,18 @@ import (
 	"github.com/markbates/goth/providers/openidConnect"
 	"github.com/markbates/goth/providers/salesforce"
 	"github.com/markbates/goth/providers/twitter"
+	"golang.org/x/oauth2"
+	"net/http"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+
+	"github.com/TykTechnologies/tyk-identity-broker/log"
 )
 
-var log = logrus.New()
+var logger = log.Get()
 
 // SocialLogTag is the log tag for the social provider
 var SocialLogTag = "[SOCIAL AUTH]"
@@ -118,7 +118,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
-				log.Error(err)
+				logger.Error(err)
 				return err
 			}
 
@@ -151,7 +151,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 	}
 
 	if s.profile.ProviderConstraints.Group != "" {
-		log.Warning("Social Auth does not support Group constraints")
+		logger.Warning("Social Auth does not support Group constraints")
 	}
 
 	return nil

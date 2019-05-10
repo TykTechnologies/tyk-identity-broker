@@ -6,10 +6,10 @@ package backends
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/log"
 )
 
-var log = logrus.New()
+var logger = log.Get()
 
 // InMemoryBackend implements tap.AuthRegisterBackend to store profile configs in memory
 type InMemoryBackend struct {
@@ -18,7 +18,7 @@ type InMemoryBackend struct {
 
 // Init will create the initial in-memory store structures
 func (m *InMemoryBackend) Init(config interface{}) {
-	log.Info("[IN-MEMORY STORE] Initialised")
+	logger.Info("[IN-MEMORY STORE] Initialised")
 	m.kv = make(map[string]interface{})
 }
 
@@ -65,7 +65,7 @@ func (m *InMemoryBackend) GetAll() []interface{} {
 		var thisVal interface{}
 		decErr := json.Unmarshal(v.([]byte), &thisVal)
 		if decErr != nil {
-			log.Error("[IN-MEMORY STORE] ", decErr)
+			logger.Error("[IN-MEMORY STORE] ", decErr)
 		} else {
 			target = append(target, thisVal)
 		}

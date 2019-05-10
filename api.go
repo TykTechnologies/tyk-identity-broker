@@ -29,7 +29,7 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 	responseMsg, err := json.Marshal(&okObj)
 
 	if err != nil {
-		log.Error("[OK Handler] Couldn't marshal message stats: ", err)
+		logger.Error("[OK Handler] Couldn't marshal message stats: ", err)
 		fmt.Fprintf(w, "System Error")
 		return
 	}
@@ -40,13 +40,13 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 }
 
 func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
-	log.Error(tag+" "+errorMsg+": ", rawErr)
+	logger.Error(tag+" "+errorMsg+": ", rawErr)
 
 	errorObj := APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)
 
 	if err != nil {
-		log.Error("[Error Handler] Couldn't marshal error stats: ", err)
+		logger.Error("[Error Handler] Couldn't marshal error stats: ", err)
 		fmt.Fprintf(w, "System Error")
 		return
 	}
