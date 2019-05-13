@@ -210,8 +210,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
 // user depnding on if they exist or not and validate the login using a one-time nonce.
 func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	logger.Debug("inside completeIdentityActionForportal")
-	fmt.Println("inside completeIdentityActionForportal")
 	// Create a nonce
 	logger.Info(TykAPILogTag + " Creating nonce")
 	nonce, nErr := t.CreateIdentity(i)
@@ -226,7 +224,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
 	logger.Debug("sso_key=", sso_key)
-	fmt.Println("sso_key =", sso_key)
+
 	thisUser, retErr, isAuthorised := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
 	if !isAuthorised {
 		logger.WithField("returned_error", retErr).Error(TykAPILogTag + " User is unauthorized.")
