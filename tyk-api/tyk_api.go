@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	log "github.com/Sirupsen/logrus"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/markbates/goth"
+	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 )
+
+var log = logger.Get()
 
 type Endpoint string   // A type for endpoints
 type TykAPIName string // A type for Tyk API names (e.g. dashboard, gateway)
@@ -269,7 +271,7 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	}
 
 	if dispatchErr != nil {
-		log.WithField("retCode", retCode).WithField("dispatchErr",dispatchErr).Info("error")
+		log.WithField("retCode", retCode).WithField("dispatchErr", dispatchErr).Info("error")
 		if retCode == 401 {
 			return dispatchErr, false
 		}

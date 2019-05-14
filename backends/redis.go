@@ -34,7 +34,7 @@ type RedisConfig struct {
 func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster.RedisCluster {
 	if !forceReconnect {
 		if redisClusterSingleton != nil {
-			logger.Debug("[REDIS STORE] Redis pool already INITIALISED")
+			log.Debug("[REDIS STORE] Redis pool already INITIALISED")
 			return redisClusterSingleton
 		}
 	} else {
@@ -43,7 +43,7 @@ func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster
 		}
 	}
 
-	logger.Debug("[REDIS STORE] Creating new Redis connection pool")
+	log.Debug("[REDIS STORE] Creating new Redis connection pool")
 
 	maxIdle := 100
 	if config.MaxIdle > 0 {
@@ -56,7 +56,7 @@ func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster
 	}
 
 	if config.EnableCluster {
-		logger.Info("[REDIS STORE] --> Using clustered mode")
+		log.Info("[REDIS STORE] --> Using clustered mode")
 	}
 
 	thisPoolConf := rediscluster.PoolConfig{
@@ -77,7 +77,7 @@ func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster
 			seed_redii = append(seed_redii, map[string]string{h: p})
 		}
 	} else {
-		logger.Fatal("[REDIS STORE] No Redis hosts set!")
+		log.Fatal("[REDIS STORE] No Redis hosts set!")
 	}
 
 	thisInstance := rediscluster.NewRedisCluster(seed_redii, thisPoolConf, false)
@@ -93,12 +93,12 @@ func (r *RedisBackend) fixKey(keyName string) string {
 
 func (r *RedisBackend) connect() {
 	if r.db == nil {
-		logger.Debug("[REDIS STORE] Connecting to redis")
+		log.Debug("[REDIS STORE] Connecting to redis")
 		r.db = newRedisClusterPool(false, r.config)
 	}
 
-	logger.Debug("[REDIS STORE] Storage Engine already initialised...")
-	logger.Debug("[REDIS STORE] Redis handles: ", len(r.db.Handles))
+	log.Debug("[REDIS STORE] Storage Engine already initialised...")
+	log.Debug("[REDIS STORE] Redis handles: ", len(r.db.Handles))
 
 	// Reset it just in case
 	r.db = redisClusterSingleton
@@ -111,16 +111,16 @@ func (r *RedisBackend) Init(config interface{}) {
 	json.Unmarshal(asJ, &fixedConf)
 	r.config = &fixedConf
 	r.connect()
-	logger.Info("[REDIS STORE] Initialised")
+	log.Info("[REDIS STORE] Initialised")
 }
 
 // SetKey will set the value of a key in the map
 func (r *RedisBackend) SetKey(key string, val interface{}) error {
-	logger.Debug("[REDIS STORE] SET Raw key is: ", key)
-	logger.Debug("[REDIS STORE] Setting key: ", r.fixKey(key))
+	log.Debug("[REDIS STORE] SET Raw key is: ", key)
+	log.Debug("[REDIS STORE] Setting key: ", r.fixKey(key))
 
 	if r.db == nil {
-		logger.Info("[REDIS STORE] Connection dropped, connecting..")
+		log.Info("[REDIS STORE] Connection dropped, connecting..")
 		r.connect()
 		return r.SetKey(key, val)
 	} else {
@@ -131,7 +131,7 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 
 		_, err := r.db.Do("SET", r.fixKey(key), string(asByte))
 		if err != nil {
-			logger.Error("[REDIS STORE] Error trying to set value: ", err)
+			log.Error("[REDIS STORE] Error trying to set value: ", err)
 			return err
 		}
 	}
@@ -142,16 +142,16 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 // SetKey will set the value of a key in the map
 func (r *RedisBackend) DeleteKey(key string) error {
 	if r.db == nil {
-		logger.Info("[REDIS STORE] Connection dropped, connecting..")
+		log.Info("[REDIS STORE] Connection dropped, connecting..")
 		r.connect()
 		return r.DeleteKey(key)
 	}
 
-	logger.Debug("[REDIS STORE] DEL Key was: ", key)
-	logger.Debug("[REDIS STORE] DEL Key became: ", r.fixKey(key))
+	log.Debug("[REDIS STORE] DEL Key was: ", key)
+	log.Debug("[REDIS STORE] DEL Key became: ", r.fixKey(key))
 	_, err := r.db.Do("DEL", r.fixKey(key))
 	if err != nil {
-		logger.Error("[REDIS STORE] Error trying to delete key:", err)
+		log.Error("[REDIS STORE] Error trying to delete key:", err)
 		return err
 	}
 
@@ -161,12 +161,12 @@ func (r *RedisBackend) DeleteKey(key string) error {
 // GetKey will retuyrn the value of a key as an interface
 func (r *RedisBackend) GetKey(key string, target interface{}) error {
 	if r.db == nil {
-		logger.Info("[REDIS STORE] Connection dropped, connecting..")
+		log.Info("[REDIS STORE] Connection dropped, connecting..")
 		r.connect()
 		return r.GetKey(key, target)
 	}
-	logger.Debug("[REDIS STORE] Getting WAS: ", key)
-	logger.Debug("[REDIS STORE] Getting: ", r.fixKey(key))
+	log.Debug("[REDIS STORE] Getting WAS: ", key)
+	log.Debug("[REDIS STORE] Getting: ", r.fixKey(key))
 	val, err := redis.String(r.db.Do("GET", r.fixKey(key)))
 
 	decErr := json.Unmarshal([]byte(val), target)
@@ -175,7 +175,7 @@ func (r *RedisBackend) GetKey(key string, target interface{}) error {
 	}
 
 	if err != nil {
-		logger.Debug("[REDIS STORE] Error trying to get value:", err)
+		log.Debug("[REDIS STORE] Error trying to get value:", err)
 		return err
 	}
 
@@ -184,6 +184,6 @@ func (r *RedisBackend) GetKey(key string, target interface{}) error {
 
 func (r *RedisBackend) GetAll() []interface{} {
 	target := make([]interface{}, 0)
-	logger.Warning("[REDIS STORE] GetAll(): Not implemented")
+	log.Warning("[REDIS STORE] GetAll(): Not implemented")
 	return target
 }

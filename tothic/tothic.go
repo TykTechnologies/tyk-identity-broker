@@ -9,7 +9,7 @@ package tothic
 
 import (
 	"errors"
-	"github.com/TykTechnologies/tyk-identity-broker/log"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -23,7 +23,7 @@ const SessionName = "_gothic_session"
 
 const EnvPrefix = "TYK_IB"
 
-var logger = log.Get()
+var log = logger.Get()
 
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 
@@ -41,13 +41,13 @@ func KeyFromEnv() (key string) {
 	temp := os.Getenv(EnvPrefix + "_SESSION_SECRET")
 	if temp != "" {
 		if key != "" {
-			logger.Warn("SESSION_SECRET is deprecated, TYK_IB_SESSION_SECRET overrides it when you set both.")
+			log.Warn("SESSION_SECRET is deprecated, TYK_IB_SESSION_SECRET overrides it when you set both.")
 		}
 		key = temp
 	}
 
 	if key == "" && temp == "" {
-		logger.Warn("toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.")
+		log.Warn("toth/tothic: no TYK_IB_SESSION_SECRET environment variable is set. The default cookie store is not available and any calls will fail. Ignore this warning if you are using a different store.")
 	}
 
 	return

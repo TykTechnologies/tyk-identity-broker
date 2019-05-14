@@ -71,7 +71,7 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 		return SSOForPortal, nil
 	}
 
-	logger.Error(TykAPILogTag+"Action: ", action)
+	log.Error(TykAPILogTag+"Action: ", action)
 	return InvalidModule, errors.New("Action does not exist")
 }
 
@@ -91,7 +91,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 
 		oauthSettings, ok := theseConfs["OAuth"]
 		if ok {
-			logger.Debug(TykAPILogTag + "Found Oauth configuration, loading...")
+			log.Debug(TykAPILogTag + "Found Oauth configuration, loading...")
 			t.oauth = OAuthSettings{}
 			t.oauth.APIListenPath = oauthSettings.(map[string]interface{})["APIListenPath"].(string)
 			t.oauth.RedirectURI = oauthSettings.(map[string]interface{})["RedirectURI"].(string)
@@ -105,13 +105,13 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 		tokenSettings, tokenOk := theseConfs["TokenAuth"]
 		if tokenOk {
 			if tokenSettings.(map[string]interface{})["BaseAPIID"] == nil {
-				logger.Error(TykAPILogTag + " Base API is empty!")
+				log.Error(TykAPILogTag + " Base API is empty!")
 				return errors.New("Base API cannot be empty")
 			}
 			t.token.BaseAPIID = tokenSettings.(map[string]interface{})["BaseAPIID"].(string)
 
 			if tokenSettings.(map[string]interface{})["Expires"] == nil {
-				logger.Warning(TykAPILogTag + " No expiry found - defaulting to 3600 seconds")
+				log.Warning(TykAPILogTag + " No expiry found - defaulting to 3600 seconds")
 				t.token.Expires = 3600
 			} else {
 				t.token.Expires = int64(tokenSettings.(map[string]interface{})["Expires"].(float64))
@@ -127,11 +127,11 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 // Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
-	logger.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
+	log.Debugf("%s  Creating identity for user: %#v", TykAPILogTag, i.(goth.User))
 
 	thisModule, modErr := mapActionToModule(t.profile.ActionType)
 	if modErr != nil {
-		logger.Error(TykAPILogTag+" Failed to assign module: ", modErr)
+		log.Error(TykAPILogTag+" Failed to assign module: ", modErr)
 		return "", modErr
 	}
 
@@ -173,9 +173,9 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
 
-	logger.WithField("return_value", returnVal).Debug("Returned from /admin/sso endpoint.")
+	log.WithField("return_value", returnVal).Debug("Returned from /admin/sso endpoint.")
 	if retErr != nil {
-		logger.WithField("return_value", returnVal).Error(TykAPILogTag+" API Response error: ", retErr)
+		log.WithField("return_value", returnVal).Error(TykAPILogTag+" API Response error: ", retErr)
 		return "", retErr
 	}
 
@@ -189,21 +189,21 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
-		logger.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
+		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
 
 	// After login, we need to redirect this user
-	logger.Debug(TykAPILogTag + " --> Running redirect...")
+	log.Debug(TykAPILogTag + " --> Running redirect...")
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
-		logger.Infoln(TykAPILogTag + " --> redirecting to URL: " + newURL)
+		log.Infoln(TykAPILogTag + " --> redirecting to URL: " + newURL)
 		http.Redirect(w, r, newURL, 301)
 		return
 	}
 
-	logger.Error(TykAPILogTag + "No return URL found, cannot redirect. (Check why no URL redirect on the profile) ")
+	log.Error(TykAPILogTag + "No return URL found, cannot redirect. (Check why no URL redirect on the profile) ")
 	fmt.Fprintf(w, "Check with your admin why there's no URI defined")
 }
 
@@ -211,11 +211,11 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 // user depnding on if they exist or not and validate the login using a one-time nonce.
 func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	// Create a nonce
-	logger.Info(TykAPILogTag + " Creating nonce")
+	log.Info(TykAPILogTag + " Creating nonce")
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
-		logger.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
+		log.Error(TykAPILogTag+" Nonce creation failed: ", nErr)
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
@@ -223,20 +223,20 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	user := i.(goth.User)
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
-	logger.Debug("sso_key=", sso_key)
+	log.Debug("sso_key=", sso_key)
 
 	thisUser, retErr, isAuthorised := t.API.GetDeveloperBySSOKey(t.dashboardUserAPICred, sso_key)
 	if !isAuthorised {
-		logger.WithField("returned_error", retErr).Error(TykAPILogTag + " User is unauthorized.")
+		log.WithField("returned_error", retErr).Error(TykAPILogTag + " User is unauthorized.")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
 	if retErr != nil {
-		logger.WithField("returned_error", retErr).Info(TykAPILogTag + " User not found, creating new record.")
+		log.WithField("returned_error", retErr).Info(TykAPILogTag + " User not found, creating new record.")
 
 		// If not, create user
-		logger.Info(TykAPILogTag + " Creating user")
-		logger.WithField("user_name", user.Email).Debug(TykAPILogTag)
+		log.Info(TykAPILogTag + " Creating user")
+		log.WithField("user_name", user.Email).Debug(TykAPILogTag)
 
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
@@ -251,12 +251,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		}
 		createErr := t.API.CreateDeveloper(t.dashboardUserAPICred, newUser)
 		if createErr != nil {
-			logger.Error(TykAPILogTag+" failed to create user! ", createErr)
+			log.Error(TykAPILogTag+" failed to create user! ", createErr)
 			fmt.Fprintf(w, "Login failed")
 			return
 		}
 	} else {
-		logger.Debug(TykAPILogTag+" Returned: ", thisUser)
+		log.Debug(TykAPILogTag+" Returned: ", thisUser)
 
 		if thisUser.Email == "" {
 			thisUser.Email = user.Email
@@ -268,27 +268,27 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		}
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
-			logger.Error("Failed to update user! ", updateErr)
+			log.Error("Failed to update user! ", updateErr)
 			fmt.Fprintf(w, "Login failed")
 			return
 		}
 	}
 
 	// After login, we need to redirect this user
-	logger.Info(TykAPILogTag + " --> Running redirect...")
+	log.Info(TykAPILogTag + " --> Running redirect...")
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
-		logger.Info(TykAPILogTag+" --> URL With NONCE is: ", newURL)
+		log.Info(TykAPILogTag+" --> URL With NONCE is: ", newURL)
 		http.Redirect(w, r, newURL, 301)
 		return
 	}
 
-	logger.Warning(TykAPILogTag + "No return URL found, redirect failed.")
+	log.Warning(TykAPILogTag + "No return URL found, redirect failed.")
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }
 
 func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	logger.Info(TykAPILogTag + " Starting OAuth Flow...")
+	log.Info(TykAPILogTag + " Starting OAuth Flow...")
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -296,22 +296,22 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	// Check if key already exists
 
 	value := ""
-	logger.Debug("Store is: ", t.Store)
-	logger.Debug("ID IS: ", id_with_profile)
+	log.Debug("Store is: ", t.Store)
+	log.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
 		fErr := t.Store.GetKey(id_with_profile, &value)
 		if fErr == nil {
 			// Key found
-			logger.Warning(TykAPILogTag + " --> Token exists, invalidating")
+			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
 			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)
 			if iErr != nil {
-				logger.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
 
 				//TODO: Should we return here??? the following call is against the gateway directly, so it's different credential.
 				//TODO: The other action to auth token is calling the dash. why they are not the same?
 				if !isAuthorized {
-					logger.Error(TykAPILogTag + "Unauthorized user. Should exit.")
+					log.Error(TykAPILogTag + "Unauthorized user. Should exit.")
 				}
 			}
 		}
@@ -330,46 +330,46 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	// Redirect request
 	if oErr != nil {
-		logger.Error("Failed to generate OAuth token ", oErr)
+		log.Error("Failed to generate OAuth token ", oErr)
 		fmt.Fprintf(w, "OAuth token generation failed")
 		return
 	}
 
 	if resp == nil {
-		logger.Error(TykAPILogTag + " --> Login failure. Request not allowed")
+		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
 
 	if resp.AccessToken != "" {
-		logger.Warning(TykAPILogTag + " --> Storing token reference")
+		log.Warning(TykAPILogTag + " --> Storing token reference")
 		t.Store.SetKey(id_with_profile, resp.AccessToken)
 	}
 
 	if t.oauth.NoRedirect {
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
-			logger.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
+			log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
 			fmt.Fprintf(w, "Data Failure")
 		}
 
-		logger.Info(TykAPILogTag + " --> No redirect, returning token...")
+		log.Info(TykAPILogTag + " --> No redirect, returning token...")
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(asJson))
 		return
 	}
 
 	// After login, we need to redirect this user
-	logger.Info(TykAPILogTag + " --> Running oauth redirect...")
+	log.Info(TykAPILogTag + " --> Running oauth redirect...")
 	if resp.RedirectTo != "" {
-		logger.Debug(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
+		log.Debug(TykAPILogTag+" --> URL is: ", resp.RedirectTo)
 		http.Redirect(w, r, resp.RedirectTo, 301)
 		return
 	}
 }
 
 func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	logger.Info(TykAPILogTag + " Starting Token Flow...")
+	log.Info(TykAPILogTag + " Starting Token Flow...")
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -377,24 +377,24 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	// Check if key already exists
 
 	value := ""
-	logger.Debug("Store is: ", t.Store)
-	logger.Debug("ID IS: ", id_with_profile)
+	log.Debug("Store is: ", t.Store)
+	log.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
 		fErr := t.Store.GetKey(id_with_profile, &value)
 		if fErr == nil {
 			// Key found
-			logger.Warning(TykAPILogTag + " --> Token exists, invalidating")
+			log.Warning(TykAPILogTag + " --> Token exists, invalidating")
 			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.token.BaseAPIID, value)
 			if iErr != nil {
-				logger.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
+				log.Error(TykAPILogTag+" ----> Token Invalidation failed: ", iErr)
 
-				logger.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
+				log.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(TykAPILogTag + " ----> Token Invalidation failed.")
 
 				//TODO: Should we return here??? the following call is against the dashboard directly, so it will fail again.
 				//TODO: The other action to auth token is calling the gateway. why they are not the same?
 				if !isAuthorized {
-					logger.Error(TykAPILogTag + "Unauthorized user. Should exit.")
+					log.Error(TykAPILogTag + "Unauthorized user. Should exit.")
 					fmt.Fprintf(w, "Auth token generation failed due to invalid user credentials.")
 					return
 				}
@@ -411,38 +411,38 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		i)
 
 	if tErr != nil {
-		logger.Error("Failed to generate Auth token ", tErr)
+		log.Error("Failed to generate Auth token ", tErr)
 		fmt.Fprintf(w, "Auth token generation failed")
 		return
 	}
 
 	if resp == nil {
-		logger.Error(TykAPILogTag + " --> Login failure. Request not allowed")
+		log.Error(TykAPILogTag + " --> Login failure. Request not allowed")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
 
 	if resp.KeyID != "" {
-		logger.Warning(TykAPILogTag + " --> Storing token reference")
+		log.Warning(TykAPILogTag + " --> Storing token reference")
 		t.Store.SetKey(id_with_profile, resp.KeyID)
 	}
 
 	// After login, we need to redirect this user
 	if t.profile.ReturnURL != "" {
-		logger.Info(TykAPILogTag + " --> Running auth redirect...")
+		log.Info(TykAPILogTag + " --> Running auth redirect...")
 		cleanURL := t.profile.ReturnURL + "#token=" + resp.KeyID
-		logger.Debug(TykAPILogTag+" --> URL is: ", cleanURL)
+		log.Debug(TykAPILogTag+" --> URL is: ", cleanURL)
 		http.Redirect(w, r, cleanURL, 301)
 		return
 	}
 
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
-		logger.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
+		log.Error(TykAPILogTag+" --> Marshalling failure: ", jErr)
 		fmt.Fprintf(w, "Data Failure")
 	}
 
-	logger.Info(TykAPILogTag + " --> No redirect, returning token...")
+	log.Info(TykAPILogTag + " --> No redirect, returning token...")
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, string(asJson))
 	return

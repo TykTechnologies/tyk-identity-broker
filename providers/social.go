@@ -24,10 +24,10 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 
-	"github.com/TykTechnologies/tyk-identity-broker/log"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 )
 
-var logger = log.Get()
+var log = logger.Get()
 
 // SocialLogTag is the log tag for the social provider
 var SocialLogTag = "[SOCIAL AUTH]"
@@ -118,7 +118,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
-				logger.Error(err)
+				log.Error(err)
 				return err
 			}
 
@@ -151,7 +151,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 	}
 
 	if s.profile.ProviderConstraints.Group != "" {
-		logger.Warning("Social Auth does not support Group constraints")
+		log.Warning("Social Auth does not support Group constraints")
 	}
 
 	return nil

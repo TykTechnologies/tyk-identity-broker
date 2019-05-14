@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
-	"github.com/TykTechnologies/tyk-identity-broker/log"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
@@ -29,7 +29,7 @@ var TykAPIHandler tyk.TykAPI
 
 var GlobalDataLoader DataLoader
 
-var logger = log.Get()
+var log = logger.Get()
 
 var ProfileFilename *string
 
@@ -39,15 +39,15 @@ func initBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 	AuthConfigStore = &backends.InMemoryBackend{}
 	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
 
-	logger.Info("[MAIN] Initialising Profile Configuration Store")
+	log.Info("[MAIN] Initialising Profile Configuration Store")
 	AuthConfigStore.Init(profileBackendConfiguration)
-	logger.Info("[MAIN] Initialising Identity Cache")
+	log.Info("[MAIN] Initialising Identity Cache")
 	IdentityKeyStore.Init(identityBackendConfiguration)
 }
 
 func init() {
-	logger.Info("Tyk Identity Broker ", VERSION)
-	logger.Info("Copyright Tyk Technologies Ltd 2019")
+	log.Info("Tyk Identity Broker ", VERSION)
+	log.Info("Copyright Tyk Technologies Ltd 2019")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
@@ -97,13 +97,13 @@ func main() {
 	}
 
 	if config.HttpServerOptions.UseSSL {
-		logger.Info("[MAIN] Broker Listening on SSL:", listenPort)
+		log.Info("[MAIN] Broker Listening on SSL:", listenPort)
 		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
 		if err != nil {
-			logger.Fatal("ListenAndServe: ", err)
+			log.Fatal("ListenAndServe: ", err)
 		}
 	} else {
-		logger.Info("[MAIN] Broker Listening on :", listenPort)
+		log.Info("[MAIN] Broker Listening on :", listenPort)
 		http.ListenAndServe(":"+listenPort, p)
 	}
 

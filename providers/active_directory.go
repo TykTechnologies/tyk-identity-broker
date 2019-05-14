@@ -64,10 +64,10 @@ func (s *ADProvider) UseCallback() bool {
 }
 
 func (s *ADProvider) connect() {
-	logger.Debug(ADProviderLogTag + " Connect: starting...")
+	log.Debug(ADProviderLogTag + " Connect: starting...")
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
-	logger.Debug(ADProviderLogTag+" --> To: ", sName)
+	log.Debug(ADProviderLogTag+" --> To: ", sName)
 	if s.config.LDAPUseSSL {
 		tlsconfig := &tls.Config{
 			ServerName: s.config.LDAPServer,
@@ -78,10 +78,10 @@ func (s *ADProvider) connect() {
 	}
 
 	if err != nil {
-		logger.Error(ADProviderLogTag+" Failed to dial: ", err)
+		log.Error(ADProviderLogTag+" Failed to dial: ", err)
 		return
 	}
-	logger.Debug(ADProviderLogTag + " Connect: finished...")
+	log.Debug(ADProviderLogTag + " Connect: finished...")
 }
 
 // Init initialises the handler with it's IdentityHandler (the interface handling actual account SSO on the target)
@@ -132,7 +132,7 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string, password string) (goth.User, error) {
-	logger.Info(ADProviderLogTag + " Search: starting...")
+	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
 		uname = Slug(username)
@@ -152,7 +152,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		DN = s.prepDN(username)
 	}
 
-	logger.Info(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
+	log.Info(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
@@ -168,7 +168,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 	sr, err := s.connection.Search(search_request)
 	if err != nil {
-		logger.Error(ADProviderLogTag+" Failure in search: ", err)
+		log.Error(ADProviderLogTag+" Failure in search: ", err)
 		return thisUser, err
 	}
 
@@ -189,11 +189,11 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 	if s.config.LDAPAdminUser != "" {
 		bindErr := s.connection.Bind(entry.DN, password)
 		if bindErr != nil {
-			logger.Error(ADProviderLogTag+" Bind failed for user: ", username)
-			logger.Error(ADProviderLogTag+" --> Error was: ", bindErr)
+			log.Error(ADProviderLogTag+" Bind failed for user: ", username)
+			log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
 			return thisUser, errors.New("Password not matched")
 		}
-		logger.Info(ADProviderLogTag+" User bind successful: ", username)
+		log.Info(ADProviderLogTag+" User bind successful: ", username)
 	}
 
 	emailFound := false
@@ -206,7 +206,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 	}
 
 	if !emailFound {
-		logger.Warning("User email not found, generating from username")
+		log.Warning("User email not found, generating from username")
 		if strings.Contains(username, "@") {
 			thisUser.Email = username
 		} else {
@@ -230,12 +230,12 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if username == "" || password == "" {
-		logger.Error(ADProviderLogTag + "Login attempt with empty username or password")
+		log.Error(ADProviderLogTag + "Login attempt with empty username or password")
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
-	logger.Debug("DN: ", s.prepDN(username))
+	log.Debug("DN: ", s.prepDN(username))
 
 	var bindErr error
 
@@ -247,48 +247,48 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	if bindErr != nil {
 		if s.config.LDAPAdminUser != "" {
-			logger.Error(ADProviderLogTag+" Bind failed for user: ", s.config.LDAPAdminUser)
+			log.Error(ADProviderLogTag+" Bind failed for user: ", s.config.LDAPAdminUser)
 		} else {
-			logger.Error(ADProviderLogTag+" Bind failed for user: ", username)
+			log.Error(ADProviderLogTag+" Bind failed for user: ", username)
 		}
-		logger.Error(ADProviderLogTag+" --> Error was: ", bindErr)
+		log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	if s.config.LDAPAdminUser != "" {
-		logger.Info(ADProviderLogTag+" User bind successful: ", username)
+		log.Info(ADProviderLogTag+" User bind successful: ", username)
 	}
 
 	user, uErr := s.getUserData(username, password)
 	if uErr != nil {
-		logger.Error(ADProviderLogTag+" Lookup failed for user: ", username)
-		logger.Error(ADProviderLogTag+" --> Error was: ", uErr)
+		log.Error(ADProviderLogTag+" Lookup failed for user: ", username)
+		log.Error(ADProviderLogTag+" --> Error was: ", uErr)
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	constraintErr := s.checkConstraints(user)
 	if constraintErr != nil {
-		logger.Error(ADProviderLogTag+" Constraint failed: ", constraintErr)
+		log.Error(ADProviderLogTag+" Constraint failed: ", constraintErr)
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 
-	logger.Debug(ADProviderLogTag + " Closing connection")
+	log.Debug(ADProviderLogTag + " Closing connection")
 	s.connection.Close()
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {
-	logger.Debug(ADProviderLogTag + " Constraints for AD must be set in DN")
+	log.Debug(ADProviderLogTag + " Constraints for AD must be set in DN")
 	return nil
 }
 
 // HandleCallback is not used
 func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 
-	logger.Warning(ADProviderLogTag + " Callback not implemented for provider")
+	log.Warning(ADProviderLogTag + " Callback not implemented for provider")
 
 }
