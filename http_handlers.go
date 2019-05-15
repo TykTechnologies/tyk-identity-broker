@@ -52,7 +52,10 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 func hackProviderConf(conf interface{}) []byte {
 	thisConf, err := json.Marshal(conf)
 	if err != nil {
-		log.WithField("prefix", HandlerLogTag).Warning("Failure in JSON conversion")
+		log.WithFields(logrus.Fields{
+			"prefix": HandlerLogTag,
+			"error":  err,
+		}).Warning("Failure in JSON conversion")
 		return []byte{}
 	}
 	return thisConf

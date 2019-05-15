@@ -13,6 +13,7 @@ import (
 	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
@@ -66,7 +67,7 @@ func (s *ADProvider) connect() {
 	ADLogger.Debug("Connect: starting...")
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
-	ADLogger.Debug(" --> To: ", sName)
+	ADLogger.Debug("--> To: ", sName)
 	if s.config.LDAPUseSSL {
 		tlsconfig := &tls.Config{
 			ServerName: s.config.LDAPServer,
@@ -77,7 +78,10 @@ func (s *ADProvider) connect() {
 	}
 
 	if err != nil {
-		ADLogger.Error("Failed to dial: ", err)
+		ADLogger.WithFields(logrus.Fields{
+			"path":  sName,
+			"error": err,
+		}).Error("Failed to dial")
 		return
 	}
 	ADLogger.Debug("Connect: finished...")
@@ -151,7 +155,11 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		DN = s.prepDN(username)
 	}
 
-	ADLogger.Info("Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
+	ADLogger.WithFields(logrus.Fields{
+		"DN":    DN,
+		"Filer": s.prepFilter(username),
+	}).Info("Running LDAP search")
+
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
@@ -167,7 +175,9 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 	sr, err := s.connection.Search(search_request)
 	if err != nil {
-		ADLogger.Error("Failure in search: ", err)
+		ADLogger.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Failure in search")
 		return thisUser, err
 	}
 
@@ -188,11 +198,13 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 	if s.config.LDAPAdminUser != "" {
 		bindErr := s.connection.Bind(entry.DN, password)
 		if bindErr != nil {
-			ADLogger.Error("Bind failed for user: ", username)
-			ADLogger.Error("--> Error was: ", bindErr)
+			ADLogger.WithFields(logrus.Fields{
+				"username": username,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
 			return thisUser, errors.New("Password not matched")
 		}
-		ADLogger.Info("User bind successful: ", username)
+		ADLogger.WithField("username", username).Info("User bind successful")
 	}
 
 	emailFound := false
@@ -246,23 +258,30 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 
 	if bindErr != nil {
 		if s.config.LDAPAdminUser != "" {
-			ADLogger.Error("Bind failed for user: ", s.config.LDAPAdminUser)
+			ADLogger.WithFields(logrus.Fields{
+				"username": s.config.LDAPAdminUser,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
 		} else {
-			ADLogger.Error("Bind failed for user: ", username)
+			ADLogger.WithFields(logrus.Fields{
+				"username": username,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
 		}
-		ADLogger.Error("--> Error was: ", bindErr)
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	if s.config.LDAPAdminUser != "" {
-		ADLogger.Info("User bind successful: ", username)
+		ADLogger.WithField("username", username).Info("User bind successful")
 	}
 
 	user, uErr := s.getUserData(username, password)
 	if uErr != nil {
-		ADLogger.Error("Lookup failed for user: ", username)
-		ADLogger.Error("--> Error was: ", uErr)
+		ADLogger.WithFields(logrus.Fields{
+			"username": username,
+			"error":    uErr,
+		}).Error("Lookup failed for user")
 		s.provideErrorRedirect(w, r)
 		return
 	}

@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/jeffail/gabs"
 	"github.com/markbates/goth"
@@ -67,7 +68,9 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	// copy the request to a target
 	target, tErr := url.Parse(p.config.TargetHost)
 	if tErr != nil {
-		proxyLogger.Error("Failed to parse target URL: ", tErr)
+		proxyLogger.WithFields(logrus.Fields{
+			"error": tErr,
+		}).Error("Failed to parse target URL")
 		p.respondFailure(rw, r)
 		return
 	}
@@ -115,7 +118,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.OKRegex != "" {
 		thisRegex, rErr := regexp.Compile(p.config.OKRegex)
 		if rErr != nil {
-			proxyLogger.Error("Regex failure: ", rErr)
+			proxyLogger.WithField("error", err).Error("Regex failure")
 			p.respondFailure(rw, r)
 			return
 		}
@@ -141,7 +144,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.ResponseIsJson {
 		parsed, pErr := gabs.ParseJSON(thisBody)
 		if pErr != nil {
-			proxyLogger.Warning("Parsing for access token field failed: ")
+			proxyLogger.Warning("Parsing for access token field failed")
 		} else {
 			if p.config.AccessTokenField != "" {
 				tok, fT := parsed.Path(p.config.AccessTokenField).Data().(string)

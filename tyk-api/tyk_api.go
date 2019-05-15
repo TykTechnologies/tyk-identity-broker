@@ -137,8 +137,7 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		tykAPILogger.Error("Failed to create request")
-		tykAPILogger.Error(err)
+		tykAPILogger.WithField("error", err).Error("Failed to create request")
 	}
 
 	newRequest.Header.Add("authorization", usercode)

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/redigocluster/rediscluster"
 	"github.com/garyburd/redigo/redis"
 )
@@ -132,7 +133,7 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 
 		_, err := r.db.Do("SET", r.fixKey(key), string(asByte))
 		if err != nil {
-			redisLogger.Error("Error trying to set value: ", err)
+			redisLogger.WithField("error", err).Error("Error trying to set value")
 			return err
 		}
 	}
@@ -152,7 +153,10 @@ func (r *RedisBackend) DeleteKey(key string) error {
 	redisLogger.Debug("DEL Key became: ", r.fixKey(key))
 	_, err := r.db.Do("DEL", r.fixKey(key))
 	if err != nil {
-		redisLogger.Error("Error trying to delete key:", err)
+		redisLogger.WithFields(logrus.Fields{
+			"error": err,
+			"key":   r.fixKey(key),
+		}).Error("Error trying to delete key")
 		return err
 	}
 
@@ -176,7 +180,7 @@ func (r *RedisBackend) GetKey(key string, target interface{}) error {
 	}
 
 	if err != nil {
-		redisLogger.Debug("Error trying to get value:", err)
+		redisLogger.WithField("error", err).Debug("Error trying to get value")
 		return err
 	}
 
@@ -185,6 +189,6 @@ func (r *RedisBackend) GetKey(key string, target interface{}) error {
 
 func (r *RedisBackend) GetAll() []interface{} {
 	target := make([]interface{}, 0)
-	redisLogger.Warning("GetAll(): Not implemented")
+	redisLogger.Warning("GetAll() Not implemented")
 	return target
 }

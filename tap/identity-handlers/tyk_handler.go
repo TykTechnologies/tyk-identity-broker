@@ -175,7 +175,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 	tykHandlerLogger.WithField("return_value", returnVal).Debug("Returned from /admin/sso endpoint.")
 	if retErr != nil {
-		tykHandlerLogger.WithField("return_value", returnVal).Error(" API Response error: ", retErr)
+		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
 		return "", retErr
 	}
 
@@ -189,7 +189,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	nonce, nErr := t.CreateIdentity(i)
 
 	if nErr != nil {
-		tykHandlerLogger.Error("Nonce creation failed: ", nErr)
+		tykHandlerLogger.WithField("error", nErr).Error("Nonce creation failed")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
@@ -251,7 +251,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		}
 		createErr := t.API.CreateDeveloper(t.dashboardUserAPICred, newUser)
 		if createErr != nil {
-			tykHandlerLogger.Error("failed to create user! ", createErr)
+			tykHandlerLogger.WithField("error", createErr).Error("failed to create user!")
 			fmt.Fprintf(w, "Login failed")
 			return
 		}
@@ -268,7 +268,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		}
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
-			tykHandlerLogger.Error("Failed to update user! ", updateErr)
+			tykHandlerLogger.WithField("error", updateErr).Error("Failed to update user!")
 			fmt.Fprintf(w, "Login failed")
 			return
 		}
@@ -330,7 +330,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	// Redirect request
 	if oErr != nil {
-		tykHandlerLogger.Error("Failed to generate OAuth token ", oErr)
+		tykHandlerLogger.WithField("error", oErr).Error("Failed to generate OAuth token")
 		fmt.Fprintf(w, "OAuth token generation failed")
 		return
 	}
@@ -349,7 +349,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	if t.oauth.NoRedirect {
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
-			tykHandlerLogger.Error("--> Marshalling failure: ", jErr)
+			tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
 			fmt.Fprintf(w, "Data Failure")
 		}
 
@@ -387,8 +387,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
 			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.token.BaseAPIID, value)
 			if iErr != nil {
-				tykHandlerLogger.Error("----> Token Invalidation failed: ", iErr)
-
 				tykHandlerLogger.WithField("isAuthorized", isAuthorized).WithField("returned-error", iErr).Error(" ----> Token Invalidation failed.")
 
 				//TODO: Should we return here??? the following call is against the dashboard directly, so it will fail again.
@@ -411,7 +409,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 		i)
 
 	if tErr != nil {
-		tykHandlerLogger.Error("Failed to generate Auth token ", tErr)
+		tykHandlerLogger.WithField("error", tErr).Error("Failed to generate Auth token")
 		fmt.Fprintf(w, "Auth token generation failed")
 		return
 	}
@@ -438,7 +436,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
-		tykHandlerLogger.Error("--> Marshalling failure: ", jErr)
+		tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
 		fmt.Fprintf(w, "Data Failure")
 	}
 
