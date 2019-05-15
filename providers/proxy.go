@@ -15,7 +15,7 @@ import (
 	"regexp"
 )
 
-var ProxyLogTag = "[PROXY PROVIDER] "
+var proxyLogger = log.WithField("prefix", "PROXY PROVIDER")
 
 type ProxyHandlerConfig struct {
 	TargetHost                         string
@@ -67,7 +67,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	// copy the request to a target
 	target, tErr := url.Parse(p.config.TargetHost)
 	if tErr != nil {
-		log.Error(ProxyLogTag+"Failed to parse target URL: ", tErr)
+		proxyLogger.Error("Failed to parse target URL: ", tErr)
 		p.respondFailure(rw, r)
 		return
 	}
@@ -79,14 +79,14 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	thisProxy.ServeHTTP(recorder, r)
 
 	if recorder.Code >= 400 {
-		log.Error(ProxyLogTag+"Code was: ", recorder.Code)
+		proxyLogger.Error("Code was: ", recorder.Code)
 		p.respondFailure(rw, r)
 		return
 	}
 	// check against passing signal
 	if p.config.OKCode != 0 {
 		if recorder.Code != p.config.OKCode {
-			log.Error(ProxyLogTag+"Code was: ", recorder.Code, " expected: ", p.config.OKCode)
+			proxyLogger.Error("Code was: ", recorder.Code, " expected: ", p.config.OKCode)
 			p.respondFailure(rw, r)
 			return
 		}
@@ -96,7 +96,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.OKResponse != "" {
 		sEnc := b64.StdEncoding.EncodeToString(thisBody)
 		if err != nil {
-			log.Error(ProxyLogTag + "Could not read body.")
+			proxyLogger.Error("Could not read body.")
 			p.respondFailure(rw, r)
 			return
 		}
@@ -106,7 +106,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 			if len(sEnc) > 21 {
 				shortStr = sEnc[:20] + "..."
 			}
-			log.Error(ProxyLogTag+"Response was: '", shortStr, "' expected: '", p.config.OKResponse, "'")
+			proxyLogger.Error("Response was: '", shortStr, "' expected: '", p.config.OKResponse, "'")
 			p.respondFailure(rw, r)
 			return
 		}
@@ -115,7 +115,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.OKRegex != "" {
 		thisRegex, rErr := regexp.Compile(p.config.OKRegex)
 		if rErr != nil {
-			log.Error(ProxyLogTag+"Regex failure: ", rErr)
+			proxyLogger.Error("Regex failure: ", rErr)
 			p.respondFailure(rw, r)
 			return
 		}
@@ -123,7 +123,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		found := thisRegex.MatchString(string(thisBody))
 
 		if !found {
-			log.Error(ProxyLogTag + "Regex not found")
+			proxyLogger.Error("Regex not found")
 			p.respondFailure(rw, r)
 			return
 		}
@@ -141,7 +141,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 	if p.config.ResponseIsJson {
 		parsed, pErr := gabs.ParseJSON(thisBody)
 		if pErr != nil {
-			log.Warning(ProxyLogTag + "Parsing for access token field failed: ")
+			proxyLogger.Warning("Parsing for access token field failed: ")
 		} else {
 			if p.config.AccessTokenField != "" {
 				tok, fT := parsed.Path(p.config.AccessTokenField).Data().(string)
@@ -164,8 +164,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		AccessToken: AccessToken,
 	}
 
-	log.Debug("Username: ", thisUser.UserID)
-	log.Debug("Access token: ", thisUser.AccessToken)
+	proxyLogger.Debug("Username: ", thisUser.UserID)
+	proxyLogger.Debug("Access token: ", thisUser.AccessToken)
 
 	// Complete the identity action
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)

@@ -7,11 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/gorilla/mux"
 )
 
-var APILogTag string = "[API]"
+var APILogTag string = "API"
 
 type APIOKMessage struct {
 	Status string
@@ -40,7 +41,10 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 }
 
 func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
-	log.Error(tag+" "+errorMsg+": ", rawErr)
+	log.WithFields(logrus.Fields{
+		"prefix": tag,
+		"error":  errorMsg,
+	}).Error(rawErr)
 
 	errorObj := APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)

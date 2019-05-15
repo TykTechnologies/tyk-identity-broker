@@ -16,6 +16,7 @@ import (
 )
 
 var log = logger.Get()
+var tykAPILogger = log.WithField("prefix", "TYK_API")
 
 type Endpoint string   // A type for endpoints
 type TykAPIName string // A type for Tyk API names (e.g. dashboard, gateway)
@@ -133,11 +134,11 @@ const (
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
-	log.Debug("Calling: ", preparedEndpoint)
+	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		log.Error("Failed to create request")
-		log.Error(err)
+		tykAPILogger.Error("Failed to create request")
+		tykAPILogger.Error(err)
 	}
 
 	newRequest.Header.Add("authorization", usercode)
@@ -153,10 +154,10 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 		return []byte{}, response.StatusCode, bErr
 	}
 
-	log.Debug("GOT:", string(retBody))
+	tykAPILogger.Debug("GOT:", string(retBody))
 
 	if response.StatusCode > 201 {
-		log.WithField("reponse_code", response.StatusCode).Warning("Got:", string(retBody))
+		tykAPILogger.WithField("reponse_code", response.StatusCode).Warning("Got:", string(retBody))
 		return retBody, response.StatusCode, errors.New("Response code from dashboard was not 200!")
 	}
 
@@ -179,11 +180,11 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, int, error) {
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
-	log.Debug("Calling: ", preparedEndpoint)
+	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		log.Error("Failed to create request")
-		log.Error(err)
+		tykAPILogger.Error("Failed to create request")
+		tykAPILogger.Error(err)
 	}
 
 	newRequest.Header.Add("admin-auth", t.DashboardConfig.AdminSecret)
@@ -200,8 +201,8 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	}
 
 	if response.StatusCode > 201 {
-		log.Warning("Response code was: ", response.StatusCode)
-		log.Warning("Returned: ", string(retBody))
+		tykAPILogger.Warning("Response code was: ", response.StatusCode)
+		tykAPILogger.Warning("Returned: ", string(retBody))
 		return retBody, response.StatusCode, errors.New("Response code admin dashboard was not 200!")
 	}
 
@@ -212,11 +213,11 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader, ctype string) ([]byte, int, error) {
 	preparedEndpoint := t.GatewayConfig.Endpoint + ":" + t.GatewayConfig.Port + string(target)
 
-	log.Debug("Calling: ", preparedEndpoint)
+	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		log.Error("Failed to create request")
-		log.Error(err)
+		tykAPILogger.Error("Failed to create request")
+		tykAPILogger.Error(err)
 	}
 
 	if ctype == "" {
@@ -238,11 +239,11 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader,
 	}
 
 	if response.StatusCode > 201 {
-		log.Warning("Response code was: ", response.StatusCode)
+		tykAPILogger.Warning("Response code was: ", response.StatusCode)
 		return retBody, response.StatusCode, errors.New("Response code from the gateway was not 200!")
 	}
 
-	log.Debug("API Response: ", string(retBody))
+	tykAPILogger.Debug("API Response: ", string(retBody))
 
 	return retBody, response.StatusCode, nil
 }
@@ -271,7 +272,7 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	}
 
 	if dispatchErr != nil {
-		log.WithField("retCode", retCode).WithField("dispatchErr", dispatchErr).Info("error")
+		tykAPILogger.WithField("retCode", retCode).WithField("dispatchErr", dispatchErr).Info("error")
 		if retCode == 401 {
 			return dispatchErr, false
 		}
@@ -355,7 +356,7 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 	}
 
 	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
-	log.Debug("Returned: ", retData)
+	tykAPILogger.Debug("Returned: ", retData)
 
 	return dErr
 }
@@ -430,12 +431,12 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 	data += "&redirect_uri=" + redirect_uri
 	data += "&key_rules=" + url.QueryEscape(string(keyDataJSON))
 
-	log.Debug("Request data sent: ", data)
+	tykAPILogger.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
 	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
 
-	log.Debug("Returned: ", response)
+	tykAPILogger.Debug("Returned: ", response)
 
 	if dErr != nil {
 		return nil, dErr
@@ -475,15 +476,15 @@ func (t *TykAPI) RequestStandardToken(orgID, policyID, BaseAPIID, UserCred strin
 	target := strings.Join([]string{string(STANDARD_TOKENS)}, "/")
 	data := keyDataJSON
 
-	log.Debug("Request data sent: ", data)
+	tykAPILogger.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
 	dErr, isAuthorized := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
 
-	log.WithField("is_authorized", isAuthorized).WithField("response", response).Debug("Returned from dispatch to the dashboard.")
+	tykAPILogger.WithField("is_authorized", isAuthorized).WithField("response", response).Debug("Returned from dispatch to the dashboard.")
 
 	if dErr != nil {
-		log.WithField("returned_error", dErr).Debug("Returned from dispatch to the dashboard.")
+		tykAPILogger.WithField("returned_error", dErr).Debug("Returned from dispatch to the dashboard.")
 		return nil, dErr
 	}
 
@@ -494,7 +495,7 @@ func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) 
 	target := strings.Join([]string{string(TOKENS), token}, "/")
 	target = strings.Replace(target, "{APIID}", BaseAPI, 1)
 
-	log.Debug("Target is: ", target)
+	tykAPILogger.Debug("Target is: ", target)
 	var reply interface{}
 	oErr, isAuthorised := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
 

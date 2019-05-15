@@ -10,6 +10,7 @@ import (
 )
 
 var log = logger.Get()
+var inMemoryLogger = log.WithField("prefix", "IN-MEMORY STORE")
 
 // InMemoryBackend implements tap.AuthRegisterBackend to store profile configs in memory
 type InMemoryBackend struct {
@@ -18,7 +19,7 @@ type InMemoryBackend struct {
 
 // Init will create the initial in-memory store structures
 func (m *InMemoryBackend) Init(config interface{}) {
-	log.Info("[IN-MEMORY STORE] Initialised")
+	inMemoryLogger.Info("Initialised")
 	m.kv = make(map[string]interface{})
 }
 
@@ -65,7 +66,7 @@ func (m *InMemoryBackend) GetAll() []interface{} {
 		var thisVal interface{}
 		decErr := json.Unmarshal(v.([]byte), &thisVal)
 		if decErr != nil {
-			log.Error("[IN-MEMORY STORE] ", decErr)
+			inMemoryLogger.Error(decErr)
 		} else {
 			target = append(target, thisVal)
 		}
