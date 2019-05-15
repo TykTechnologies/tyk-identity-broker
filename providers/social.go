@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2"
 	"net/http"
 	"strings"
-	"golang.org/x/oauth2"
-	
+
 	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
@@ -19,6 +19,7 @@ import (
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
 	"github.com/markbates/goth/providers/openidConnect"
+	"github.com/markbates/goth/providers/salesforce"
 	"github.com/markbates/goth/providers/twitter"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -109,6 +110,9 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
+		case "salesforce":
+			gothProviders = append(gothProviders, salesforce.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
 		case "openid-connect":
 
