@@ -25,7 +25,7 @@ const (
 	SSOForDashboard ModuleName = "dashboard"
 	SSOForPortal    ModuleName = "portal"
 	InvalidModule   ModuleName = ""
-	DefaultSSOEmail string = "ssoSession@ssoSession.com"
+	DefaultSSOEmail string     = "ssoSession@ssoSession.com"
 )
 
 // SSOAccessData is the data type used for speaking to the SSO endpoint in the advanced API
@@ -137,6 +137,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 	gUser, ok := i.(goth.User)
 	email := ""
+	displayName := ""
 	if ok {
 		if t.profile.CustomEmailField != "" {
 			if gUser.RawData[t.profile.CustomEmailField] != nil {
@@ -149,12 +150,11 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			email = DefaultSSOEmail
 		}
 
-		displayName := ""
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
 		}
 		if gUser.LastName != "" {
-			if displayName != "" {  //i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
+			if displayName != "" { //i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
 				displayName += " "
 			}
 			displayName += gUser.LastName
