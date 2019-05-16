@@ -353,6 +353,7 @@ The social provider is a thin wrapper around the excellent `goth` social auth li
 - Spotify
 - Twitch
 - Twitter
+- SalesForce
 - Any OpenID Connect provider
 
 The social provider is ideal for SSO-style logins for the dashboard or for the portal, for certain providers (mainly Google+), where email addresses are returned as part for the user data, a constraint can be added to validate the users domain. This is useful for Google For Business Apss users that want to grant access to their domain users for the dashboard.
