@@ -30,21 +30,23 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
-	LDAPUseSSL          bool
-	LDAPServer          string
-	LDAPPort            string
-	LDAPUserDN          string
-	LDAPBaseDN          string
-	LDAPFilter          string
-	LDAPEmailAttribute  string
-	LDAPAdminUser       string
-	LDAPAdminPassword   string
-	LDAPAttributes      []string
-	LDAPSearchScope     int
-	FailureRedirect     string
-	DefaultDomain       string
-	GetAuthFromBAHeader bool
-	SlugifyUserName     bool
+	LDAPUseSSL             bool
+	LDAPServer             string
+	LDAPPort               string
+	LDAPUserDN             string
+	LDAPBaseDN             string
+	LDAPFilter             string
+	LDAPEmailAttribute     string
+	LDAPFirstNameAttribute string
+	LDAPLastNameAttribute  string
+	LDAPAdminUser          string
+	LDAPAdminPassword      string
+	LDAPAttributes         []string
+	LDAPSearchScope        int
+	FailureRedirect        string
+	DefaultDomain          string
+	GetAuthFromBAHeader    bool
+	SlugifyUserName        bool
 }
 
 // Name provides the name of the ID provider
@@ -133,6 +135,7 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string, password string) (goth.User, error) {
+	log.Level = logrus.DebugLevel
 	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
@@ -187,6 +190,14 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		s.config.LDAPEmailAttribute = "mail"
 	}
 
+	if s.config.LDAPFirstNameAttribute == "" {
+		s.config.LDAPFirstNameAttribute = "givenName"
+	}
+
+	if s.config.LDAPLastNameAttribute == "" {
+		s.config.LDAPLastNameAttribute = "sn"
+	}
+
 	if s.config.LDAPAdminUser != "" {
 		bindErr := s.connection.Bind(entry.DN, password)
 		if bindErr != nil {
@@ -204,11 +215,11 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 			emailFound = true
 		}
 
-		if j.Name == "givenName" {
+		if j.Name == s.config.LDAPFirstNameAttribute {
 			thisUser.FirstName = j.Values[0]
 		}
 
-		if j.Name == "sn" {
+		if j.Name == s.config.LDAPLastNameAttribute {
 			thisUser.LastName = j.Values[0]
 		}
 	}
