@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
@@ -19,7 +20,7 @@ type APIErrorMessage struct {
 }
 
 // HandlerLogTag is a tag we are uing to identify log messages from the handler
-var HandlerLogTag = "[AUTH HANDLERS]"
+var HandlerLogTag = "AUTH HANDLERS"
 
 // Returns a profile ID
 func getId(req *http.Request) (string, error) {
@@ -51,7 +52,10 @@ func getIdentityHandler(name tap.Action) tap.IdentityHandler {
 func hackProviderConf(conf interface{}) []byte {
 	thisConf, err := json.Marshal(conf)
 	if err != nil {
-		log.Warning("Failure in JSON conversion")
+		log.WithFields(logrus.Fields{
+			"prefix": HandlerLogTag,
+			"error":  err,
+		}).Warning("Failure in JSON conversion")
 		return []byte{}
 	}
 	return thisConf
@@ -80,13 +84,16 @@ func getTAProvider(conf tap.Profile) (tap.TAProvider, error) {
 
 // HandleError is a generic error handler
 func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
-	log.Error(tag+" "+errorMsg+": ", rawErr)
+	log.WithFields(logrus.Fields{
+		"prefix":   tag,
+		"errorMsg": errorMsg,
+	}).Error(rawErr)
 
 	errorObj := APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)
 
 	if err != nil {
-		log.Error("[Error Handler] Couldn't marshal error stats: ", err)
+		log.WithField("prefix", tag).Error("[Error Handler] Couldn't marshal error stats: ", err)
 		fmt.Fprintf(w, "System Error")
 		return
 	}
@@ -104,7 +111,7 @@ func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, erro
 	}
 
 	thisProfile := tap.Profile{}
-	log.Debug(HandlerLogTag+" --> Looking up profile ID: ", thisId)
+	log.WithField("prefix", HandlerLogTag).Debug("--> Looking up profile ID: ", thisId)
 	foundProfileErr := AuthConfigStore.GetKey(thisId, &thisProfile)
 
 	if foundProfileErr != nil {

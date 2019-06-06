@@ -3,22 +3,21 @@ extending TAP to use more providers, add them to this section */
 package providers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
-	"crypto/tls"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
-// ADProviderLogTag is the log tag for the active directory provider
-var ADProviderLogTag = "[AD AUTH]"
+var ADLogger = log.WithField("prefix", "AD AUTH")
 
 // ADProvider is an auth delegation provider for LDAP protocol
 type ADProvider struct {
@@ -37,8 +36,8 @@ type ADConfig struct {
 	LDAPBaseDN          string
 	LDAPFilter          string
 	LDAPEmailAttribute  string
-    LDAPAdminUser       string
-    LDAPAdminPassword   string
+	LDAPAdminUser       string
+	LDAPAdminPassword   string
 	LDAPAttributes      []string
 	LDAPSearchScope     int
 	FailureRedirect     string
@@ -65,10 +64,10 @@ func (s *ADProvider) UseCallback() bool {
 }
 
 func (s *ADProvider) connect() {
-	log.Debug(ADProviderLogTag + " Connect: starting...")
+	ADLogger.Debug("Connect: starting...")
 	var err error
 	sName := fmt.Sprintf("%s:%s", s.config.LDAPServer, s.config.LDAPPort)
-	log.Debug(ADProviderLogTag+" --> To: ", sName)
+	ADLogger.Debug("--> To: ", sName)
 	if s.config.LDAPUseSSL {
 		tlsconfig := &tls.Config{
 			ServerName: s.config.LDAPServer,
@@ -79,10 +78,13 @@ func (s *ADProvider) connect() {
 	}
 
 	if err != nil {
-		log.Error(ADProviderLogTag+" Failed to dial: ", err)
+		ADLogger.WithFields(logrus.Fields{
+			"path":  sName,
+			"error": err,
+		}).Error("Failed to dial")
 		return
 	}
-	log.Debug(ADProviderLogTag + " Connect: finished...")
+	ADLogger.Debug("Connect: finished...")
 }
 
 // Init initialises the handler with it's IdentityHandler (the interface handling actual account SSO on the target)
@@ -133,7 +135,7 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string, password string) (goth.User, error) {
-	log.Info(ADProviderLogTag + " Search: starting...")
+	ADLogger.Info("Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
 		uname = Slug(username)
@@ -144,16 +146,20 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		Provider: "ADProvider",
 	}
 
-    if s.config.LDAPFilter == "" {
-        s.config.LDAPFilter = "(objectclass=*)"
-    }
+	if s.config.LDAPFilter == "" {
+		s.config.LDAPFilter = "(objectclass=*)"
+	}
 
 	DN := s.config.LDAPBaseDN
 	if DN == "" {
 		DN = s.prepDN(username)
 	}
 
-	log.Info(ADProviderLogTag + " Running LDAP search with DN:" + DN + " and Filter: " + s.prepFilter(username))
+	ADLogger.WithFields(logrus.Fields{
+		"DN":    DN,
+		"Filer": s.prepFilter(username),
+	}).Info("Running LDAP search")
+
 	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
@@ -169,7 +175,9 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 	sr, err := s.connection.Search(search_request)
 	if err != nil {
-		log.Error(ADProviderLogTag+" Failure in search: ", err)
+		ADLogger.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("Failure in search")
 		return thisUser, err
 	}
 
@@ -181,33 +189,35 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		return thisUser, errors.New("Filter matched multiple users")
 	}
 
-    entry := sr.Entries[0]
+	entry := sr.Entries[0]
 
-    if s.config.LDAPEmailAttribute == "" {
-        s.config.LDAPEmailAttribute = "mail"
-    }
+	if s.config.LDAPEmailAttribute == "" {
+		s.config.LDAPEmailAttribute = "mail"
+	}
 
-    if s.config.LDAPAdminUser != "" {
-        bindErr := s.connection.Bind(entry.DN, password)
-        if bindErr != nil {
-            log.Error(ADProviderLogTag+" Bind failed for user: ", username)
-            log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
-            return thisUser, errors.New("Password not matched")
-        }
-        log.Info(ADProviderLogTag+" User bind successful: ", username)
-    }
+	if s.config.LDAPAdminUser != "" {
+		bindErr := s.connection.Bind(entry.DN, password)
+		if bindErr != nil {
+			ADLogger.WithFields(logrus.Fields{
+				"username": username,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
+			return thisUser, errors.New("Password not matched")
+		}
+		ADLogger.WithField("username", username).Info("User bind successful")
+	}
 
 	emailFound := false
-    for _, j := range entry.Attributes {
-        if j.Name == s.config.LDAPEmailAttribute {
-            thisUser.Email = j.Values[0]
-            emailFound = true
-            break
-        }
-    }
+	for _, j := range entry.Attributes {
+		if j.Name == s.config.LDAPEmailAttribute {
+			thisUser.Email = j.Values[0]
+			emailFound = true
+			break
+		}
+	}
 
 	if !emailFound {
-		log.Warning("User email not found, generating from username")
+		ADLogger.Warning("User email not found, generating from username")
 		if strings.Contains(username, "@") {
 			thisUser.Email = username
 		} else {
@@ -221,8 +231,6 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
 func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
-	log.Level = logrus.DebugLevel
-
 	s.connect()
 
 	username := r.FormValue("username")
@@ -233,65 +241,72 @@ func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if username == "" || password == "" {
-		log.Error(ADProviderLogTag + "Login attempt with empty username or password")
+		ADLogger.Error("Login attempt with empty username or password")
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
-	log.Debug("DN: ", s.prepDN(username))
+	ADLogger.Debug("DN: ", s.prepDN(username))
 
-    var bindErr error
+	var bindErr error
 
-    if s.config.LDAPAdminUser != "" {
-	    bindErr = s.connection.Bind(s.config.LDAPAdminUser, s.config.LDAPAdminPassword)
-    } else {
-	    bindErr = s.connection.Bind(s.prepDN(username), password)
-    }
+	if s.config.LDAPAdminUser != "" {
+		bindErr = s.connection.Bind(s.config.LDAPAdminUser, s.config.LDAPAdminPassword)
+	} else {
+		bindErr = s.connection.Bind(s.prepDN(username), password)
+	}
 
 	if bindErr != nil {
-        if s.config.LDAPAdminUser != "" {
-		    log.Error(ADProviderLogTag+" Bind failed for user: ", s.config.LDAPAdminUser)
-        } else {
-		    log.Error(ADProviderLogTag+" Bind failed for user: ", username)
-        }
-		log.Error(ADProviderLogTag+" --> Error was: ", bindErr)
+		if s.config.LDAPAdminUser != "" {
+			ADLogger.WithFields(logrus.Fields{
+				"username": s.config.LDAPAdminUser,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
+		} else {
+			ADLogger.WithFields(logrus.Fields{
+				"username": username,
+				"error":    bindErr,
+			}).Error("Bind failed for user")
+		}
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
-    if s.config.LDAPAdminUser != "" {
-        log.Info(ADProviderLogTag+" User bind successful: ", username)
-    }
+	if s.config.LDAPAdminUser != "" {
+		ADLogger.WithField("username", username).Info("User bind successful")
+	}
 
 	user, uErr := s.getUserData(username, password)
 	if uErr != nil {
-		log.Error(ADProviderLogTag+" Lookup failed for user: ", username)
-		log.Error(ADProviderLogTag+" --> Error was: ", uErr)
+		ADLogger.WithFields(logrus.Fields{
+			"username": username,
+			"error":    uErr,
+		}).Error("Lookup failed for user")
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	constraintErr := s.checkConstraints(user)
 	if constraintErr != nil {
-		log.Error(ADProviderLogTag+" Constraint failed: ", constraintErr)
+		ADLogger.Error("Constraint failed: ", constraintErr)
 		s.provideErrorRedirect(w, r)
 		return
 	}
 
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 
-	log.Debug(ADProviderLogTag + " Closing connection")
+	ADLogger.Debug("Closing connection")
 	s.connection.Close()
 }
 
 func (s *ADProvider) checkConstraints(user interface{}) error {
-	log.Debug(ADProviderLogTag + " Constraints for AD must be set in DN")
+	ADLogger.Debug("Constraints for AD must be set in DN")
 	return nil
 }
 
 // HandleCallback is not used
 func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 
-	log.Warning(ADProviderLogTag + " Callback not implemented for provider")
+	ADLogger.Warning("Callback not implemented for provider")
 
 }

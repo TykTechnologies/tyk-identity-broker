@@ -9,7 +9,7 @@ package tothic
 
 import (
 	"errors"
-	"github.com/TykTechnologies/logrus"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -23,7 +23,7 @@ const SessionName = "_gothic_session"
 
 const EnvPrefix = "TYK_IB"
 
-var log = logrus.New()
+var log = logger.Get()
 
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 

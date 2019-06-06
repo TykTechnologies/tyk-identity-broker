@@ -4,13 +4,14 @@ package identityHandlers
 
 import (
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"net/http"
 )
 
-var log = logrus.New()
+var log = logger.Get()
 var DummyLogTag string = "[DUMMY ID HANDLER]"
+var dummyLogger = log.WithField("prefix", "DUMMY ID HANDLER")
 
 // DummyIdentityHandler is a dummy hndler, use for testing
 type DummyIdentityHandler struct{}
@@ -22,13 +23,13 @@ func (d DummyIdentityHandler) Init(conf interface{}) error {
 
 // Dummy method
 func (d DummyIdentityHandler) CreateIdentity(i interface{}) (string, error) {
-	log.Info("[DUMMY-ID-HANDLER]  Creating identity for: ", i)
+	dummyLogger.Info("Creating identity for: ", i)
 	return "", nil
 }
 
 // Dummy method
 func (d DummyIdentityHandler) LoginIdentity(user string, pass string) (string, error) {
-	log.Info("[DUMMY-ID-HANDLER]  Logging in identity: ", user)
+	dummyLogger.Info("Logging in identity: ", user)
 	return "12345", nil
 }
 
@@ -39,13 +40,13 @@ func (d DummyIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *h
 	nonce, _ := d.LoginIdentity("DUMMY", "DUMMY")
 
 	// After login, we need to redirect this user
-	log.Debug(DummyLogTag + " --> Running redirect...")
+	dummyLogger.Debug("--> Running redirect...")
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
 		http.Redirect(w, r, newURL, 301)
 		return
 	}
 
-	log.Warning(DummyLogTag + " No return URL found, redirect failed.")
+	dummyLogger.Warning("No return URL found, redirect failed.")
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }

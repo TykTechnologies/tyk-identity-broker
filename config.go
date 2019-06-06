@@ -42,23 +42,23 @@ type Configuration struct {
 func loadConfig(filePath string, conf *Configuration) {
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		log.Error("Couldn't load configuration file: ", err)
+		mainLogger.Error("Couldn't load configuration file: ", err)
 		failCount += 1
 		if failCount < 3 {
 			loadConfig(filePath, conf)
 		} else {
-			log.Fatal("Could not open configuration, giving up.")
+			mainLogger.Fatal("Could not open configuration, giving up.")
 		}
 	} else {
 		jsErr := json.Unmarshal(configuration, conf)
 		if jsErr != nil {
-			log.Error("Couldn't unmarshal configuration: ", jsErr)
+			mainLogger.Error("Couldn't unmarshal configuration: ", jsErr)
 		}
 	}
 
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
-		log.Errorf("Failed to process config env vars: %v", err)
+		mainLogger.Errorf("Failed to process config env vars: %v", err)
 	}
 
-	log.Debug("[MAIN] Settings Struct: ", conf.TykAPISettings)
+	mainLogger.Debug("Settings Struct: ", conf.TykAPISettings)
 }
