@@ -135,7 +135,6 @@ func (s *ADProvider) generateUsername(username string) string {
 }
 
 func (s *ADProvider) getUserData(username string, password string) (goth.User, error) {
-	log.Level = logrus.DebugLevel
 	log.Info(ADProviderLogTag + " Search: starting...")
 	uname := username
 	if s.config.SlugifyUserName {
