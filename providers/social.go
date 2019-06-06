@@ -6,11 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -19,17 +15,24 @@ import (
 	"github.com/markbates/goth/providers/gplus"
 	"github.com/markbates/goth/providers/linkedin"
 	"github.com/markbates/goth/providers/openidConnect"
+	"github.com/markbates/goth/providers/salesforce"
 	"github.com/markbates/goth/providers/twitter"
+	"golang.org/x/oauth2"
+	"net/http"
+	"strings"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 )
 
-var log = logrus.New()
+var log = logger.Get()
 
 // SocialLogTag is the log tag for the social provider
-var SocialLogTag = "[SOCIAL AUTH]"
+var SocialLogTag = "SOCIAL AUTH"
+var socialLogger = log.WithField("prefix", "SOCIAL AUTH")
 
 // Social is the identity handler for all social auth, it is a wrapper around Goth, and makes use of it's pluggable
 // providers to provide a raft of social OAuth providers as SSO or Login delegates.
@@ -110,11 +113,14 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 		case "bitbucket":
 			gothProviders = append(gothProviders, bitbucket.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
 
+		case "salesforce":
+			gothProviders = append(gothProviders, salesforce.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name)))
+
 		case "openid-connect":
 
 			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
 			if err != nil {
-				log.Error(err)
+				socialLogger.Error(err)
 				return err
 			}
 
@@ -147,7 +153,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 	}
 
 	if s.profile.ProviderConstraints.Group != "" {
-		log.Warning("Social Auth does not support Group constraints")
+		socialLogger.Warning("Social Auth does not support Group constraints")
 	}
 
 	return nil

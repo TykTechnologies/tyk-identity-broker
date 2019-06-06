@@ -7,8 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
+
+var dataLogger = log.WithField("prefix", "FILE LOADER")
 
 // DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
 type DataLoader interface {
@@ -35,15 +38,19 @@ func (f *FileLoader) Init(conf interface{}) error {
 
 // LoadIntoStore will load, unmarshal and copy profiles into a an AuthRegisterBackend
 func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
-	thisSet, err := ioutil.ReadFile(f.config.FileName)
 	profiles := []tap.Profile{}
+
+	thisSet, err := ioutil.ReadFile(f.config.FileName)
 	if err != nil {
-		log.Error("[FILE LOADER] Load failure: ", err)
+		dataLogger.WithFields(logrus.Fields{
+			"filename": f.config.FileName,
+			"error":    err,
+		}).Error("Load failure")
 		return err
 	} else {
 		jsErr := json.Unmarshal(thisSet, &profiles)
 		if jsErr != nil {
-			log.Error("[FILE LOADER] Couldn't unmarshal profile set: ", jsErr)
+			dataLogger.WithField("error", jsErr).Error("Couldn't unmarshal profile set")
 			return err
 		}
 	}
@@ -52,20 +59,23 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	for _, profile := range profiles {
 		inputErr := AuthConfigStore.SetKey(profile.ID, profile)
 		if inputErr != nil {
-			log.Error("Couldn't encode configuration: ", inputErr)
+			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		} else {
 			loaded += 1
 		}
 	}
 
-	log.Info("[FILE LOADER] Loaded: ", loaded, " profiles from ", f.config.FileName)
+	dataLogger.WithField("filename", f.config.FileName).Infof("Loaded %d profiles", loaded)
 	return nil
 }
 
 func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 	oldSet, err := ioutil.ReadFile(f.config.FileName)
 	if err != nil {
-		log.Error("[FILE LOADER] load failed! ", err)
+		dataLogger.WithFields(logrus.Fields{
+			"filename": f.config.FileName,
+			"error":    err,
+		}).Error("load failed!")
 		return err
 	}
 
@@ -75,14 +85,17 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	wErr := ioutil.WriteFile(bkLocation, oldSet, 0644)
 	if wErr != nil {
-		log.Error("[FILE LOADER] backup failed! ", wErr)
+		dataLogger.WithFields(logrus.Fields{
+			"bk_filename": bkFilename,
+			"error":       err,
+		}).Error("backup failed! ", wErr)
 		return wErr
 	}
 
 	newSet := store.GetAll()
 	asJson, encErr := json.Marshal(newSet)
 	if encErr != nil {
-		log.Error("[FILE LOADER] Encoding failed! ", encErr)
+		dataLogger.WithField("error", encErr).Error("Encoding failed!")
 		return encErr
 	}
 
@@ -93,7 +106,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
 	if wErr != nil {
-		log.Error("[FILE LOADER] flush failed! ", w2Err)
+		dataLogger.WithField("error", w2Err).Error("flush failed!")
 		return w2Err
 	}
 
