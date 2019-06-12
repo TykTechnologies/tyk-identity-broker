@@ -144,6 +144,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 				email = gUser.RawData[t.profile.CustomEmailField].(string)
 			}
 		}
+
 		if email == "" && gUser.Email != "" {
 			email = gUser.Email
 		} else {
@@ -221,6 +222,11 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	user := i.(goth.User)
+	if t.profile.CustomUserIDField != "" {
+		if user.RawData[t.profile.CustomUserIDField] != nil {
+			user.UserID = user.RawData[t.profile.CustomUserIDField].(string)
+		}
+	}
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
 	tykHandlerLogger.Debug("sso_key = ", sso_key)
