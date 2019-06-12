@@ -38,6 +38,7 @@ Table of Contents
                * [What did we just do?](#what-did-we-just-do)
             * [Authenticate a user for the dashboard using Google and a constraint:](#authenticate-a-user-for-the-dashboard-using-google-and-a-constraint)
             * [OpenID Connect](#openid-connect)
+            * [Salesforce](#salesforce)
             * [Create an OAuth token (with redirect) for users logging into your webapp or iOS app via Google:](#create-an-oauth-token-with-redirect-for-users-logging-into-your-webapp-or-ios-app-via-google)
          * [LDAP](#ldap)
             * [Log into Tyk Dashboard using LDAP](#log-into-tyk-dashboard-using-ldap)
@@ -271,6 +272,7 @@ The file is JSON object which is essentially a list of objects:
 	"ID": "1",
 	"IdentityHandlerConfig": {},
 	"OrgID": "53ac07777cbb8c2d53000002",
+	"CustomUserIDField": "FIELD-NAME",
 	"ProviderConfig": {
 		"CallbackBaseURL": "http://tib.domain.com:3010",
 		"FailureRedirect": "http://tib.domain.com:3000/?fail=true",
@@ -353,6 +355,7 @@ The social provider is a thin wrapper around the excellent `goth` social auth li
 - Spotify
 - Twitch
 - Twitter
+- SalesForce
 - Any OpenID Connect provider
 
 The social provider is ideal for SSO-style logins for the dashboard or for the portal, for certain providers (mainly Google+), where email addresses are returned as part for the user data, a constraint can be added to validate the users domain. This is useful for Google For Business Apss users that want to grant access to their domain users for the dashboard.
@@ -481,7 +484,46 @@ Similar to Google or Twitter auth, you can configure TIB to work with any OpenID
 	},
 ```
 
+By default, TIB uses value of subject field, returned by UserInfo Endpoint, to generate userId. 
+Please ensure that your Identity Provider is not returning `URL` in subject field. If that's the case you should specify another field which uniquely identifies the user. You can specify the field name by setting `CustomUserIDField` in profile.json file.
+
 If you are getting 403 error, it can be that your OpenID provider requires providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
+
+#### Salesforce
+
+Similar to other social accounts, you can add support of Salesforce by specifying Provider Name as `salesforce`. 
+
+```
+{
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://tib.domain.com:3010",
+		"FailureRedirect": "http://tib.domain.com:3000/?fail=true",
+		"UseProviders": [{
+			"Name": "salesforce",
+			"Key": "SF-CLIENT-KEY",
+			"Secret": "SF-CLIENT-SECRET",
+		}]
+	},
+}
+```
+
+SSO for Salesforce Community is handled differently. Instead of using `salesforce` provider type, you should use `openid-connect` and set `user_id` in `CustomUserIDField` field. Here is sample profile.json file for community
+
+```
+{
+	"CustomUserIDField": "user_id",
+	"ProviderConfig": {
+		"CallbackBaseURL": "http://tib.domain.com:3010",
+		"FailureRedirect": "http://tib.domain.com:3000/?fail=true",
+		"UseProviders": [{
+			"Name": "openid-connect",
+			"Key": "SF-CLIENT-KEY",
+			"Secret": "SF-CLIENT-SECRET",
+			"DiscoverURL": "https://community_url/.well-known/openid-configuration"
+		}]
+	},
+}
+```
 
 #### Create an OAuth token (with redirect) for users logging into your webapp or iOS app via Google:
 
