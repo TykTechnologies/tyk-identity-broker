@@ -13,6 +13,7 @@ type Profile struct {
 	Type                  ProviderType
 	ProviderName          string
 	CustomEmailField      string
+	CustomUserIDField     string
 	ProviderConfig        interface{}
 	IdentityHandlerConfig interface{}
 	ProviderConstraints   ProfileConstraint
