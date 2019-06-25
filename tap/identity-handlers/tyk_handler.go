@@ -199,7 +199,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 	tykHandlerLogger.Debug("--> Running redirect...")
 	if profile.ReturnURL != "" {
 		newURL := profile.ReturnURL + "?nonce=" + nonce
-		tykHandlerLogger.Infoln("--> redirecting to URL: " + newURL)
+		tykHandlerLogger.Debugln("--> redirecting to URL: " + newURL)
 		http.Redirect(w, r, newURL, 301)
 		return
 	}
