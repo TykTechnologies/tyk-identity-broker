@@ -12,4 +12,5 @@ tyk-identity-broker
 # IDEA
 .idea
 *.iml
-
+*.swp
+*~
