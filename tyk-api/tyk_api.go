@@ -145,7 +145,7 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, response.StatusCode, reqErr
+		return []byte{}, http.StatusInternalServerError, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
@@ -191,7 +191,7 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, response.StatusCode, reqErr
+		return []byte{}, http.StatusInternalServerError, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
@@ -229,7 +229,7 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader,
 	response, reqErr := c.Do(newRequest)
 
 	if reqErr != nil {
-		return []byte{}, response.StatusCode, reqErr
+		return []byte{}, http.StatusInternalServerError, reqErr
 	}
 
 	retBody, bErr := t.readBody(response)
