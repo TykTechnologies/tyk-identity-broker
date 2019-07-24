@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/markbates/goth"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+	tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 var tykHandlerLogger = log.WithField("prefix", "TYK ID HANDLER")
@@ -172,9 +172,9 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		DisplayName:  displayName,
 	}
 
-	returnVal, retErr := t.API.CreateSSONonce(tyk.SSO, accessRequest)
+	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
 
-	tykHandlerLogger.WithField("return_value", returnVal).Debug("Returned from /admin/sso endpoint.")
+	tykHandlerLogger.WithField("return_value", returnVal).Debugf("Returned from %s endpoint", ssoEndpoint)
 	if retErr != nil {
 		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
 		return "", retErr

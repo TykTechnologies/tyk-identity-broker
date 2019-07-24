@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/markbates/goth"
-	"gopkg.in/mgo.v2/bson"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/markbates/goth"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var log = logger.Get()
@@ -116,7 +117,8 @@ const (
 	PORTAL_DEVS     Endpoint = "/api/portal/developers/email"
 	PORTAL_DEVS_SSO Endpoint = "/api/portal/developers/ssokey"
 	PORTAL_DEV      Endpoint = "/api/portal/developers"
-	SSO             Endpoint = "/admin/sso"
+	SSO_ADMIN       Endpoint = "/admin/sso"
+	SSO_REGULAR     Endpoint = "/api/sso"
 	OAUTH_AUTHORIZE Endpoint = "tyk/oauth/authorize-client/"
 	TOKENS          Endpoint = "/api/apis/{APIID}/keys"
 	STANDARD_TOKENS Endpoint = "/api/keys"
@@ -254,7 +256,7 @@ func (t *TykAPI) Decode(raw []byte, retVal interface{}) error {
 }
 
 // DispatchAndDecode will select the API to target, dispatch the request, then decode ther esponse to return to the caller
-func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader, ctype string) (error, bool) {
+func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAPIName, retVal interface{}, creds string, body io.Reader, ctype string) (error, int, bool) {
 	var retBytes []byte
 	var dispatchErr error
 	var retCode = 0
@@ -267,38 +269,52 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	case DASH_SUPER:
 		retBytes, retCode, dispatchErr = t.DispatchDashboardSuper(target, method, body)
 	default:
-		return errors.New("APIName must be one of GATEWAY, DASH or DASH_SUPER"), false
+		return errors.New("APIName must be one of GATEWAY, DASH or DASH_SUPER"), retCode, false
 	}
 
 	if dispatchErr != nil {
 		tykAPILogger.WithField("retCode", retCode).WithField("dispatchErr", dispatchErr).Info("error")
 		if retCode == 401 {
-			return dispatchErr, false
+			return dispatchErr, retCode, false
 		}
-		return dispatchErr, true
+		return dispatchErr, retCode, true
 	}
 
 	t.Decode(retBytes, retVal)
 
-	return nil, true
+	return nil, retCode, true
 }
 
 // CreateSSONonce will generate a single-signon nonce for the relevant part of the Tyk service (dashbaord or portal),
 // nonces are single-use and expire after 60 seconds to prevent hijacking, they are only available during successful
-// requests by redirecting the user. It is ecommended that SSL is used throughout
-func (t *TykAPI) CreateSSONonce(target Endpoint, data interface{}) (interface{}, error) {
-	target = Endpoint(strings.Join([]string{string(target)}, "/"))
+// requests by redirecting the user. It is recommended that SSL is used throughout
+func (t *TykAPI) CreateSSONonce(userAPICred string, data interface{}) (interface{}, Endpoint, error) {
 	SSODataJSON, err := json.Marshal(data)
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var returnVal interface{}
 	body := bytes.NewBuffer(SSODataJSON)
-	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH_SUPER, &returnVal, "", body, "")
 
-	return returnVal, dErr
+	endpoint := SSO_REGULAR
+	dErr, retCode, _ := t.DispatchAndDecode(SSO_REGULAR, "POST", DASH, &returnVal, userAPICred, body, "")
+	if retCode == http.StatusNotFound {
+		tykAPILogger.Warn("SSO regular dashboard API returned 404, trying with admin API, you need to upgrade your Tyk Dashboard")
+
+		// body is read in the previous trial, so refresh it
+		body = bytes.NewBuffer(SSODataJSON)
+
+		endpoint = SSO_ADMIN
+		dErr, retCode, _ = t.DispatchAndDecode(SSO_ADMIN, "POST", DASH_SUPER, &returnVal, "", body, "")
+	}
+
+	if dErr == nil && retCode == http.StatusOK {
+		tykAPILogger.Info("Single Sign-On nonce created successfully!")
+	}
+
+	return returnVal, endpoint, dErr
 }
 
 // GetDeveloper will retrieve a deverloper from the Advanced API using their Email address
@@ -308,7 +324,7 @@ func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDev
 
 	retUser := PortalDeveloper{}
 
-	dErr, _ := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
+	dErr, _, _ := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
 	return retUser, dErr
 }
@@ -320,7 +336,7 @@ func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, SsoKey string) (PortalDev
 
 	retUser := PortalDeveloper{}
 
-	err, isAuthorised := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
+	err, _, isAuthorised := t.DispatchAndDecode(Endpoint(target), "GET", DASH, &retUser, UserCred, nil, "")
 
 	return retUser, err, isAuthorised
 }
@@ -337,7 +353,7 @@ func (t *TykAPI) UpdateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr, _ := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body, "")
+	dErr, _, _ := t.DispatchAndDecode(Endpoint(target), "PUT", DASH, &retData, UserCred, body, "")
 
 	return dErr
 }
@@ -354,7 +370,7 @@ func (t *TykAPI) CreateDeveloper(UserCred string, dev PortalDeveloper) error {
 		return err
 	}
 
-	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
+	dErr, _, _ := t.DispatchAndDecode(Endpoint(target), "POST", DASH, &retData, UserCred, body, "")
 	tykAPILogger.Debug("Returned: ", retData)
 
 	return dErr
@@ -433,7 +449,7 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 	tykAPILogger.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
-	dErr, _ := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
+	dErr, _, _ := t.DispatchAndDecode(Endpoint(target), "POST", GATEWAY, response, "", body, "application/x-www-form-urlencoded")
 
 	tykAPILogger.Debug("Returned: ", response)
 
@@ -478,7 +494,7 @@ func (t *TykAPI) RequestStandardToken(orgID, policyID, BaseAPIID, UserCred strin
 	tykAPILogger.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
-	dErr, isAuthorized := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
+	dErr, _, isAuthorized := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
 
 	tykAPILogger.WithField("is_authorized", isAuthorized).WithField("response", response).Debug("Returned from dispatch to the dashboard.")
 
@@ -496,7 +512,7 @@ func (t *TykAPI) InvalidateToken(UserCred string, BaseAPI string, token string) 
 
 	tykAPILogger.Debug("Target is: ", target)
 	var reply interface{}
-	oErr, isAuthorised := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
+	oErr, _, isAuthorised := t.DispatchAndDecode(Endpoint(target), "DELETE", DASH, &reply, UserCred, nil, "")
 
 	return oErr, isAuthorised
 }
