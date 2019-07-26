@@ -309,7 +309,7 @@ The file is JSON object which is essentially a list of objects:
 	"ProviderConfig": {
 		"FailureRedirect": "http://yourdomain.com/failure-url",
 		"LDAPAttributes": [],
-		"LDAPUseSsl": false,
+		"LDAPUseSsl": true,
 		"LDAPBaseDN": "cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com",
 		"LDAPEmailAttribute": "mail",
 		"LDAPSearchScope": 2,
