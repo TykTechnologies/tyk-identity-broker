@@ -309,7 +309,7 @@ The file is JSON object which is essentially a list of objects:
 	"ProviderConfig": {
 		"FailureRedirect": "http://yourdomain.com/failure-url",
 		"LDAPAttributes": [],
-		"LDAPUseSsl": true,
+		"LDAPUseSsl": false,
 		"LDAPBaseDN": "cn=dashboard,ou=Group,dc=ldap,dc=tyk-test,dc=com",
 		"LDAPEmailAttribute": "mail",
 		"LDAPSearchScope": 2,
@@ -624,6 +624,8 @@ By default, TIB will look for the two form fields. To enable Basic Auth header e
 
 The request should be a `POST`. Example curl command can look like: `curl -X POST localhost:3010/auth/4/callback -F username=bob -F password=secret`
 
+Set `LDAPUseSSL` to `true` if you want to use LDAPS (LDAP over SSL).
+
 If you make this request with a valid user that can bind to the LDAP server, Tyk will redirect the user to the dashboard with a valid session. There's no more to it, this mechanism is pass-through and is transparent to the user, with TIB acting as a direct client to the LDAP provider.
 
 **Note** The `LDAPUserDN` field MUST contain the special `*USERNAME*` marker in order to construct the users OU properly.
@@ -694,9 +696,9 @@ The configuration below will take a request that is posted to TIB, authenticate 
 }
 ```
 
-#### Using two phase LDAP authentification
+#### Using two phase LDAP authentication
 
-In some cases only priviliged users are allowed perform LDAP search. In this case you can specify your admin user using `LDAPAdminUser` and `LDAPAdminPassword` options. TIB will perform initial bind as admin user, then will do ldap lookup based on specified DN template or `LDAPFilter`, and will do bind one more time, with user DN.
+In some cases only privileged users are allowed perform LDAP search. In this case you can specify your admin user using `LDAPAdminUser` and `LDAPAdminPassword` options. TIB will perform initial bind as admin user, then will perform a LDAP lookup based on specified DN template or `LDAPFilter`, and will do bind one more time, with user DN.
 
 ```
 {
