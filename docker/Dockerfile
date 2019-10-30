@@ -1,4 +1,4 @@
-FROM debian:jessie-slim
+FROM debian:buster-slim
 
 ARG TYKVERSION
 ARG REPOSITORY
@@ -7,8 +7,9 @@ LABEL Description="Tyk Identity Broker docker image" Vendor="Tyk" Version=$TYKVE
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
-            curl ca-certificates apt-transport-https debian-archive-keyring \
+            curl ca-certificates apt-transport-https debian-archive-keyring gnupg \
  && curl -L https://packagecloud.io/tyk/$REPOSITORY/gpgkey | apt-key add - \
+ && apt-get purge -y gnupg \
  && apt-get autoremove -y \
  && rm -rf /root/.cache
 
