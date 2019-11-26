@@ -50,6 +50,7 @@ type GothProviderConfig struct {
 	Secret                          string
 	DiscoverURL                     string
 	DisableAuthHeaderProviderDomain string
+	Scopes                          []string
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -118,7 +119,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 		case "openid-connect":
 
-			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL)
+			gProv, err := openidConnect.New(provider.Key, provider.Secret, s.getCallBackURL(provider.Name), provider.DiscoverURL, provider.Scopes...)
 			if err != nil {
 				socialLogger.Error(err)
 				return err
