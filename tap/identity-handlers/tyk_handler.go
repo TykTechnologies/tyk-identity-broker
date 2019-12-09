@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/markbates/goth"
@@ -34,6 +35,7 @@ type SSOAccessData struct {
 	OrgID        string
 	EmailAddress string
 	DisplayName  string
+	GroupID      string
 }
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
@@ -138,6 +140,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	gUser, ok := i.(goth.User)
 	email := ""
 	displayName := ""
+	groupID := ""
 	if ok {
 		if t.profile.CustomEmailField != "" {
 			if gUser.RawData[t.profile.CustomEmailField] != nil {
@@ -163,6 +166,21 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		if displayName == "" {
 			displayName = email
 		}
+
+		groupID = t.profile.DefaultUserGroupID
+
+		if t.profile.CustomUserGroupField != "" {
+			groups := ""
+			if gUser.RawData[t.profile.CustomUserGroupField] != nil {
+				groups = gUser.RawData[t.profile.CustomUserGroupField].(string)
+			}
+
+			for _, group := range strings.Split(groups, " ") {
+				if gid, ok := t.profile.UserGroupMapping[group]; ok {
+					groupID = gid
+				}
+			}
+		}
 	}
 
 	accessRequest := SSOAccessData{
@@ -170,6 +188,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		OrgID:        t.profile.OrgID,
 		EmailAddress: email,
 		DisplayName:  displayName,
+		GroupID:      groupID,
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
