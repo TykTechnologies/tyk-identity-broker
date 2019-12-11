@@ -1,28 +1,19 @@
-package main
+package data_loader
 
 import (
 	"encoding/json"
+	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"io/ioutil"
 	"path"
 	"strconv"
 	"time"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
-
-var dataLogger = log.WithField("prefix", "FILE LOADER")
-
-// DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
-type DataLoader interface {
-	Init(conf interface{}) error
-	LoadIntoStore(tap.AuthRegisterBackend) error
-	Flush(tap.AuthRegisterBackend) error
-}
 
 // FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
 type FileLoaderConf struct {
 	FileName string
+	ProfileDir string
 }
 
 // FileLoader implements DataLoader and will load TAP Profiles from a file
@@ -57,7 +48,7 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 
 	var loaded int
 	for _, profile := range profiles {
-		inputErr := AuthConfigStore.SetKey(profile.ID, profile)
+		inputErr := store.SetKey(profile.ID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		} else {
@@ -81,7 +72,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	ts := strconv.Itoa(int(time.Now().Unix()))
 	bkFilename := "profiles_backup_" + ts + ".json"
-	bkLocation := path.Join(config.ProfileDir, bkFilename)
+	bkLocation := path.Join(f.config.ProfileDir, bkFilename)
 
 	wErr := ioutil.WriteFile(bkLocation, oldSet, 0644)
 	if wErr != nil {
@@ -99,10 +90,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 		return encErr
 	}
 
-	savePath := path.Join(config.ProfileDir, f.config.FileName)
-	if ProfileFilename != nil {
-		savePath = path.Join(config.ProfileDir, *ProfileFilename)
-	}
+	savePath := path.Join(f.config.ProfileDir, f.config.FileName)
 
 	w2Err := ioutil.WriteFile(savePath, asJson, 0644)
 	if wErr != nil {

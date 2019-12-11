@@ -3,8 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"net/http"
-	"path"
 	"strconv"
 
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
@@ -27,7 +27,7 @@ var config Configuration
 // TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
 var TykAPIHandler tyk.TykAPI
 
-var GlobalDataLoader DataLoader
+var GlobalDataLoader data_loader.DataLoader
 
 var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
@@ -64,12 +64,13 @@ func init() {
 	http.DefaultClient.Transport =
 		&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.SSLInsecureSkipVerify}}
 
-	pDir := path.Join(config.ProfileDir, *ProfileFilename)
-	loaderConf := FileLoaderConf{
-		FileName: pDir,
+	//pDir := path.Join(config.ProfileDir, *ProfileFilename)
+	loaderConf := data_loader.FileLoaderConf{
+		FileName: *ProfileFilename,
+		ProfileDir:config.ProfileDir,
 	}
 
-	GlobalDataLoader = &FileLoader{}
+	GlobalDataLoader := &data_loader.FileLoader{}
 	GlobalDataLoader.Init(loaderConf)
 	GlobalDataLoader.LoadIntoStore(AuthConfigStore)
 

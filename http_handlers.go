@@ -76,6 +76,7 @@ func getTAProvider(conf tap.Profile) (tap.TAProvider, error) {
 	}
 
 	thisIdentityHandler := getIdentityHandler(conf.ActionType)
+	fmt.Printf("%+v", thisIdentityHandler)
 	thisIdentityHandler.Init(conf)
 	err := thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
 
