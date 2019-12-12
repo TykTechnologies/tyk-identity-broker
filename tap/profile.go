@@ -6,18 +6,18 @@ package tap
 // combines an Action (what to do with the identity once confirmed, this is
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
-	ID                    string
-	OrgID                 string
-	ActionType            Action
-	MatchedPolicyID       string
-	Type                  ProviderType
-	ProviderName          string
-	CustomEmailField      string
-	CustomUserIDField     string
-	ProviderConfig        interface{}
-	IdentityHandlerConfig interface{}
-	ProviderConstraints   ProfileConstraint
-	ReturnURL             string
+	ID                    string `bson:"ID" json:"id"`
+	OrgID                 string `bson:"OrgID" json:"OrgID"`
+	ActionType            Action `bson:"ActionType" json:"ActionType"`
+	MatchedPolicyID       string `bson:"MatchedPolicyID" json:"MatchedPolicyID"`
+	Type                  ProviderType `bson:"Type" json:"Type"`
+	ProviderName          string `bson:"ProviderName" json:"ProviderName"`
+	CustomEmailField      string `bson:"CustomEmailField" json:"CustomEmailField"`
+	CustomUserIDField     string `bson:"CustomUserIDField" json:"CustomUserIDField"`
+	ProviderConfig        interface{} `bson:"ProviderConfig" json:"ProviderConfig"`
+	IdentityHandlerConfig interface{} `bson:"IdentityHandlerConfig" json:"IdentityHandlerConfig"`
+	ProviderConstraints   ProfileConstraint `bson:"ProviderConstraints" json:"ProviderConstraints"`
+	ReturnURL             string `bson:"ReturnURL" json:"ReturnURL"`
 }
 
 // Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit

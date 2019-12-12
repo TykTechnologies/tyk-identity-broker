@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"net/http"
 	"strconv"
@@ -22,7 +23,7 @@ var AuthConfigStore tap.AuthRegisterBackend
 var IdentityKeyStore tap.AuthRegisterBackend
 
 //  config is the system-wide configuration
-var config Configuration
+var config configuration.Configuration
 
 // TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
 var TykAPIHandler tyk.TykAPI
@@ -53,7 +54,7 @@ func init() {
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
 	flag.Parse()
 
-	loadConfig(*confFile, &config)
+	configuration.LoadConfig(*confFile, &config)
 	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
@@ -64,15 +65,16 @@ func init() {
 	http.DefaultClient.Transport =
 		&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.SSLInsecureSkipVerify}}
 
-	//pDir := path.Join(config.ProfileDir, *ProfileFilename)
-	loaderConf := data_loader.FileLoaderConf{
-		FileName: *ProfileFilename,
-		ProfileDir:config.ProfileDir,
+	var err error
+	GlobalDataLoader, err = data_loader.CreateDataLoader(config, ProfileFilename)
+	if err != nil {
+		return
 	}
-
-	GlobalDataLoader := &data_loader.FileLoader{}
-	GlobalDataLoader.Init(loaderConf)
-	GlobalDataLoader.LoadIntoStore(AuthConfigStore)
+	err = GlobalDataLoader.LoadIntoStore(AuthConfigStore)
+	if err != nil {
+		mainLogger.Errorf("loading into store ",err)
+		return
+	}
 
 	tothic.TothErrorHandler = HandleError
 }
