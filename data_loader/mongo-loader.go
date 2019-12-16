@@ -6,7 +6,6 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"gopkg.in/mgo.v2"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -22,6 +21,11 @@ type MongoLoaderConf struct {
 type MongoLoader struct {
 	config MongoLoaderConf
 	session *mgo.Session
+}
+
+type ProfilesBackup struct {
+	Timestamp int  `bson:"timestamp" json:"timestamp"`
+	Profiles []tap.Profile `bson:"profiles" json:"profiles"`
 }
 
 // Init initialises the mongo loader
@@ -67,6 +71,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 	//read all
 
+	bkCollectionName := "profiles_backup"
 	oldSet := []tap.Profile{}
 	database := m.config.DialInfo.Database
 
@@ -75,25 +80,20 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 		return err
 	}
 
-	//create collection with the next name:
-	ts := strconv.Itoa(int(time.Now().Unix()))
-	bkCollectionName := "profiles_backup_" + ts
-
-	err = m.session.DB(database).C(bkCollectionName).Create(&mgo.CollectionInfo{})
-	if err != nil {
-		return err
+	ts := int(time.Now().Unix())
+	backup := ProfilesBackup{
+		Timestamp: ts,
+		Profiles:  oldSet,
 	}
 
 	//put all the data there
 	collection := m.session.DB(database).C(bkCollectionName)
-	for _, profile := range oldSet{
-		err = collection.Insert(profile)
-		if err != nil {
-			return err
-		}
+	err = collection.Insert(backup)
+	if err != nil {
+		return err
 	}
 
-	//save this in the current collection, so empty and store
+	//save this in the main profiles collection, so empty and store
 	newSet := store.GetAll()
 	profilesCollection := m.session.DB(database).C(profilesCollectionName)
 

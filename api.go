@@ -133,6 +133,12 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//flush changes to save in storage
+	fErr := Flush()
+	if fErr != nil {
+		HandleAPIError(APILogTag, "flush failed", fErr, 400, w, r)
+		return
+	}
 	HandleAPIOK(thisProfile, key, 201, w, r)
 }
 
@@ -189,16 +195,22 @@ func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//flush changes to save in storage
+	fErr := Flush()
+	if fErr != nil {
+		HandleAPIError(APILogTag, "flush failed", fErr, 400, w, r)
+		return
+	}
+
 	data := make(map[string]string)
 	HandleAPIOK(data, key, 200, w, r)
 }
 
-func HandleFlushProfileList(w http.ResponseWriter, r *http.Request) {
+func Flush() error{
 	fErr := GlobalDataLoader.Flush(AuthConfigStore)
 	if fErr != nil {
-		HandleAPIError(APILogTag, "Flush failed", fErr, 400, w, r)
-		return
+		return fErr
 	}
-	data := make(map[string]string)
-	HandleAPIOK(data, "", 200, w, r)
+
+	return nil
 }
