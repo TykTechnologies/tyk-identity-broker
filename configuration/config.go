@@ -44,15 +44,17 @@ type Storage struct {
 	MongoConf   *MongoConf `json:"mongo" mapstructure:"mongo"`
 }
 
+type Backend struct {
+	ProfileBackendSettings  interface{}
+	IdentityBackendSettings IdentityBackendSettings
+}
+
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
 	Secret     string
 	Port       int
 	ProfileDir string
-	BackEnd    struct {
-		ProfileBackendSettings  interface{}
-		IdentityBackendSettings IdentityBackendSettings
-	}
+	BackEnd    Backend
 	TykAPISettings    tyk.TykAPI
 	HttpServerOptions struct {
 		UseSSL   bool

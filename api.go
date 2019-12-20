@@ -120,25 +120,12 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr == nil {
-		HandleAPIError(APILogTag, "Object ID already exists", keyErr, 400, w, r)
+	httpErr := tap.AddProfile(thisProfile,AuthConfigStore, GlobalDataLoader.Flush)
+	if httpErr == nil {
+		HandleAPIError(APILogTag,httpErr.Message, httpErr.Error, httpErr.Code, w, r)
 		return
 	}
 
-	saveErr := AuthConfigStore.SetKey(key, &thisProfile)
-	if saveErr != nil {
-		HandleAPIError(APILogTag, "Update failed", saveErr, 500, w, r)
-		return
-	}
-
-	//flush changes to save in storage
-	fErr := Flush()
-	if fErr != nil {
-		HandleAPIError(APILogTag, "flush failed", fErr, 400, w, r)
-		return
-	}
 	HandleAPIOK(thisProfile, key, 201, w, r)
 }
 
@@ -158,21 +145,9 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if thisProfile.ID != key {
-		HandleAPIError(APILogTag, "Object ID and URI resource ID do not match", errors.New("ID Mismatch"), 400, w, r)
-		return
-	}
-
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr != nil {
-		HandleAPIError(APILogTag, "Object ID does not exist, operation not permnitted", keyErr, 400, w, r)
-		return
-	}
-
-	saveErr := AuthConfigStore.SetKey(key, &thisProfile)
-	if saveErr != nil {
-		HandleAPIError(APILogTag, "Update failed", saveErr, 500, w, r)
+	updateErr := tap.UpdateProfile(key, thisProfile, AuthConfigStore, GlobalDataLoader.Flush)
+	if updateErr != nil {
+		HandleAPIError(APILogTag,updateErr.Message,updateErr.Error, updateErr.Code,w,r)
 		return
 	}
 
@@ -181,36 +156,12 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
-
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr != nil {
-		HandleAPIError(APILogTag, "Object ID does not exist", keyErr, 400, w, r)
-		return
-	}
-
-	delErr := AuthConfigStore.DeleteKey(key)
-	if delErr != nil {
-		HandleAPIError(APILogTag, "Delete failed", delErr, 500, w, r)
-		return
-	}
-
-	//flush changes to save in storage
-	fErr := Flush()
-	if fErr != nil {
-		HandleAPIError(APILogTag, "flush failed", fErr, 400, w, r)
+	err := tap.DeleteProfile(key,AuthConfigStore, GlobalDataLoader.Flush)
+	if err != nil {
+		HandleAPIError(APILogTag, err.Message, err.Error, err.Code, w, r)
 		return
 	}
 
 	data := make(map[string]string)
 	HandleAPIOK(data, key, 200, w, r)
-}
-
-func Flush() error{
-	fErr := GlobalDataLoader.Flush(AuthConfigStore)
-	if fErr != nil {
-		return fErr
-	}
-
-	return nil
 }

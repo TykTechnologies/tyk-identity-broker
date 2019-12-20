@@ -26,3 +26,4 @@ type ProfileConstraint struct {
 	Domain string
 	Group  string
 }
+

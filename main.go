@@ -3,12 +3,12 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/TykTechnologies/tyk-identity-broker/Initializer"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"net/http"
 	"strconv"
 
-	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
@@ -34,17 +34,6 @@ var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename *string
 
-// Get our bak end to use, new beack-ends must be registered here
-func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
-
-	AuthConfigStore = &backends.InMemoryBackend{}
-	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
-
-	mainLogger.Info("Initialising Profile Configuration Store")
-	AuthConfigStore.Init(profileBackendConfiguration)
-	mainLogger.Info("Initialising Identity Cache")
-	IdentityKeyStore.Init(identityBackendConfiguration)
-}
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", VERSION)
@@ -55,7 +44,7 @@ func init() {
 	flag.Parse()
 
 	configuration.LoadConfig(*confFile, &config)
-	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
+	AuthConfigStore, IdentityKeyStore = Initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
 
