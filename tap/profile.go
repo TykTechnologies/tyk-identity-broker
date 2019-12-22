@@ -18,6 +18,9 @@ type Profile struct {
 	IdentityHandlerConfig interface{}
 	ProviderConstraints   ProfileConstraint
 	ReturnURL             string
+	DefaultUserGroupID    string
+	CustomUserGroupField  string
+	UserGroupMapping      map[string]string
 }
 
 // Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit

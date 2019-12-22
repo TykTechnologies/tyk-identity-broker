@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"io/ioutil"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
@@ -12,12 +13,14 @@ import (
 var failCount int
 
 type IdentityBackendSettings struct {
-	MaxIdle       int
-	MaxActive     int
-	Database      int
-	Password      string
-	EnableCluster bool
-	Hosts         map[string]string
+	MaxIdle               int
+	MaxActive             int
+	Database              int
+	Password              string
+	EnableCluster         bool
+	Hosts                 map[string]string
+	UseSSL                bool
+	SSLInsecureSkipVerify bool
 }
 
 // Configuration holds all configuration settings for TAP
