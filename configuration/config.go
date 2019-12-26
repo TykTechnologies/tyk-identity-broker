@@ -3,9 +3,8 @@ package configuration
 import (
 	"encoding/json"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"io/ioutil"
-
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -20,12 +19,14 @@ const (
 )
 
 type IdentityBackendSettings struct {
-	MaxIdle       int
-	MaxActive     int
-	Database      int
-	Password      string
-	EnableCluster bool
-	Hosts         map[string]string
+	MaxIdle               int
+	MaxActive             int
+	Database              int
+	Password              string
+	EnableCluster         bool
+	Hosts                 map[string]string
+	UseSSL                bool
+	SSLInsecureSkipVerify bool
 }
 
 type MongoConf struct {

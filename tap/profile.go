@@ -18,6 +18,9 @@ type Profile struct {
 	IdentityHandlerConfig interface{} `bson:"IdentityHandlerConfig" json:"IdentityHandlerConfig"`
 	ProviderConstraints   ProfileConstraint `bson:"ProviderConstraints" json:"ProviderConstraints"`
 	ReturnURL             string `bson:"ReturnURL" json:"ReturnURL"`
+	DefaultUserGroupID    string `bson:"DefaultUserGroupID" json:"DefaultUserGroupID"`
+	CustomUserGroupField  string `bson:"CustomUserGroupField" json:"CustomUserGroupField"`
+	UserGroupMapping      map[string]string `bson:"UserGroupMapping" json:"UserGroupMapping"`
 }
 
 // Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
