@@ -8,7 +8,6 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	identityHandlers "github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
-	"net/http"
 )
 
 // return a provider based on the name of the provider type, add new providers here
@@ -48,7 +47,7 @@ func getIdentityHandler(name tap.Action,handler tyk.TykAPI, identityKeyStore tap
 	return thisIdentityHandler
 }
 
-func GetTapProfile(w http.ResponseWriter, r *http.Request, AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string,tykHandler tyk.TykAPI) (tap.TAProvider, *tap.HttpError) {
+func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string,tykHandler tyk.TykAPI) (tap.TAProvider, *tap.HttpError) {
 
 	thisProfile := tap.Profile{}
 	log.WithField("prefix", constants.HandlerLogTag).Debug("--> Looking up profile ID: ", id)

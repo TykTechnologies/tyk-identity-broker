@@ -62,7 +62,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile(w, r, AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile(w, r, AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
