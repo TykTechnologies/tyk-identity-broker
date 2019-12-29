@@ -42,6 +42,13 @@ type MongoConf struct {
 type Storage struct {
 	StorageType string     `json:"storage_type" mapstructure:"storage_type"`
 	MongoConf   *MongoConf `json:"mongo" mapstructure:"mongo"`
+	FileConf    *FileLoaderConf `json:"file" mapstructure:"file"`
+}
+
+// FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
+type FileLoaderConf struct {
+	FileName string
+	ProfileDir string
 }
 
 type Backend struct {

@@ -8,7 +8,7 @@ import (
 
 var dataLogger = log.WithField("prefix", "DATA LOADER")
 
-// DataLoader is an interface that defines how data is loded from a source into a AuthRegisterBackend interface store
+// DataLoader is an interface that defines how data is loaded from a source into a AuthRegisterBackend interface store
 type DataLoader interface {
 	Init(conf interface{}) error
 	LoadIntoStore(tap.AuthRegisterBackend) error
@@ -42,7 +42,7 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename *strin
 			//default: FILE
 			dataLoader = &FileLoader{}
 			//pDir := path.Join(config.ProfileDir, *ProfileFilename)
-			loaderConf = FileLoaderConf{
+			loaderConf = configuration.FileLoaderConf{
 				FileName:   *ProfileFilename,
 				ProfileDir: config.ProfileDir,
 			}

@@ -3,6 +3,7 @@ package data_loader
 import (
 	"encoding/json"
 	"github.com/Sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"io/ioutil"
 	"path"
@@ -10,20 +11,16 @@ import (
 	"time"
 )
 
-// FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
-type FileLoaderConf struct {
-	FileName string
-	ProfileDir string
-}
+
 
 // FileLoader implements DataLoader and will load TAP Profiles from a file
 type FileLoader struct {
-	config FileLoaderConf
+	config configuration.FileLoaderConf
 }
 
 // Init initialises the file loader
 func (f *FileLoader) Init(conf interface{}) error {
-	f.config = conf.(FileLoaderConf)
+	f.config = conf.(configuration.FileLoaderConf)
 	return nil
 }
 

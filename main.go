@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
@@ -65,7 +66,7 @@ func init() {
 		return
 	}
 
-	tothic.TothErrorHandler = HandleError
+	tothic.TothErrorHandler = errors.HandleError
 }
 
 func main() {

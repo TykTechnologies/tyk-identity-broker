@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
 	"io/ioutil"
 	"net/http"
 
@@ -49,7 +50,7 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 		"error":  errorMsg,
 	}).Error(rawErr)
 
-	errorObj := APIErrorMessage{"error", errorMsg}
+	errorObj := tykerror.APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)
 
 	if err != nil {
