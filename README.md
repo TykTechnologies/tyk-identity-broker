@@ -31,6 +31,10 @@ Table of Contents
             * [TykAPISettings.DashboardConfig.Endpoint](#tykapisettingsdashboardconfigendpoint)
             * [TykAPISettings.DashboardConfig.Port](#tykapisettingsdashboardconfigport)
             * [TykAPISettings.DashboardConfig.AdminSecret](#tykapisettingsdashboardconfigadminsecret)
+            * [Storage](#tykstorage)
+            * [Storage.StorageType](#tykstoragetype)
+            * [Storage.Mongo](#tykstoragemongo)
+            * [Storage.Mongo.MongoURL](#tykstoragemongourl)
          * [The profiles.conf file](#the-profilesconf-file)
       * [Using Identity Providers](#using-identity-providers)
          * [Social](#social)
@@ -59,10 +63,6 @@ Table of Contents
          * [Delete profile](#delete-profile)
             * [Request](#request-2)
             * [Response](#response-2)
-         * [Save profiles to disk](#save-profiles-to-disk)
-            * [Request](#request-3)
-            * [Response](#response-3)
-            * [Outcome:](#outcome)
 
 Tyk Identity Broker (TIB)
 ==============================
@@ -173,7 +173,13 @@ Tyk Identity Broker is configured through two files: The configuration file (tib
 			"Port": "3000",
 			"AdminSecret": "{ADMIN-DASHBOARD-SECRET}"
 		}
-	}
+	},
+    "Storage":{
+        "storage_type":"mongo",
+        "mongo":{
+           "mongo_url": "mongodb://tyk-mongo:27017/tyk_tib",
+        }
+    }
 }
 ```
 
@@ -259,6 +265,23 @@ The port of your Advanced API
 #### `TykAPISettings.DashboardConfig.AdminSecret`
 
 The high-level secret for the Advanced API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Advanced Admin API to create one-time tokens for access.
+
+#### `Storage`
+
+The storage system to be used to persist the data regarding profiles. This setting is optional
+
+#### `Storage.StorageType`
+
+To set which kind of data persistance system to use, the accepted values are: file and mongo
+
+#### `Storage.Mongo`
+
+In case that the storage type is mongo, then here will be set all the configurations to connect to mongo
+
+#### `Storage.Mongo.MongoURL`
+
+The URL connection string to connect to mongo.
+
 
 ### The `profiles.conf` file
 
@@ -793,7 +816,7 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 
 ## The Broker API
 
-Tyk Identity Broker has a simple API to allow policies to be created, updated, removed and listed for programmatic and automated access. TIB also has a "flush" feature that enables you to flush the current configuration to disk for use when the client starts again.
+Tyk Identity Broker has a simple API to allow policies to be created, updated, removed and listed for programmatic and automated access. TIB also has a "flush" feature that enables you to flush the current configuration to disk for use when the client starts again, this process is automatically triggered everytime that a create, update or delete action is performed, on flushing changes then a backup of the previous state is created, this backup process changes depending on the profile's storage system connected (file or mongo).
 
 TIB does not store profiles in shared store, so if you have multiple TIB instances, they need to be configured individually (for now), since we don't expect TIB stores to change often, this is acceptable. 
 
@@ -1034,26 +1057,3 @@ Authorization: test-secret
 	"Data": {}
 }
 ```
-
-### Save profiles to disk
-
-#### Request
-
-```
-POST /Authorization: test-secret
-[empty body]api/profiles/save
-```
-
-#### Response
-
-```
-{
-	"Status": "ok",
-	"ID": "",
-	"Data": {}
-}
-```
-
-#### Outcome:
-
-The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new profiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
