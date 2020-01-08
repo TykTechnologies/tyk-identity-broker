@@ -146,6 +146,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 	thisUser := goth.User{
 		UserID:   uname,
 		Provider: "ADProvider",
+		RawData:  make(map[string]interface{}),
 	}
 
 	if s.config.LDAPFilter == "" {
@@ -158,11 +159,11 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 	}
 
 	ADLogger.WithFields(logrus.Fields{
-		"DN":    DN,
-		"Filer": s.prepFilter(username),
+		"DN":     DN,
+		"Filter": s.prepFilter(username),
 	}).Info("Running LDAP search")
 
-	// LDAP search is inconcistent, defaulting to using username, assuming username is an email,
+	// LDAP search is inconsistent, defaulting to using username, assuming username is an email,
 	// otherwise we use an algo to create one
 	search_request := ldap.NewSearchRequest(
 		DN,
@@ -231,8 +232,9 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		if j.Name == s.config.LDAPLastNameAttribute {
 			thisUser.LastName = j.Values[0]
 		}
-		
+
 		thisUser.RawData[j.Name] = j.Values[0]
+
 	}
 
 	if !emailFound {
