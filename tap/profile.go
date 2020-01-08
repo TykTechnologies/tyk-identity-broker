@@ -6,7 +6,7 @@ package tap
 // combines an Action (what to do with the identity once confirmed, this is
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
-	ID                    string `bson:"ID" json:"id"`
+	ID                    string `bson:"ID" json:"ID"`
 	OrgID                 string `bson:"OrgID" json:"OrgID"`
 	ActionType            Action `bson:"ActionType" json:"ActionType"`
 	MatchedPolicyID       string `bson:"MatchedPolicyID" json:"MatchedPolicyID"`
