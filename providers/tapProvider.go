@@ -10,6 +10,7 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
+
 // return a provider based on the name of the provider type, add new providers here
 func GetTAProvider(conf tap.Profile,handler tyk.TykAPI, identityKeyStore tap.AuthRegisterBackend) (tap.TAProvider, error) {
 

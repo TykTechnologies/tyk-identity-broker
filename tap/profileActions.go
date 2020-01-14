@@ -75,6 +75,15 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 		}
 	}
 
+	fErr := flush(AuthConfigStore)
+	if fErr != nil {
+		return &HttpError{
+			Message: "flush failed",
+			Code:    400,
+			Error:   fErr,
+		}
+	}
+
 	return nil
 }
 

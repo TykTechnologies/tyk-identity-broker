@@ -9,9 +9,9 @@ package tothic
 
 import (
 	"errors"
+	"fmt"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"net/http"
@@ -24,6 +24,8 @@ const SessionName = "_gothic_session"
 const EnvPrefix = "TYK_IB"
 
 var log = logger.Get()
+
+var pathParams map[string]string
 
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 
@@ -53,6 +55,9 @@ func KeyFromEnv() (key string) {
 	return
 }
 
+func SetPathParams(newPathParams map[string]string){
+	pathParams = newPathParams
+}
 /*
 BeginAuthHandler is a convienence handler for starting the authentication process.
 It expects to be able to get the name of the provider from the query parameters
@@ -63,7 +68,10 @@ for the requested provider.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) {
+func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, pathParams map[string]string) {
+
+	SetPathParams(pathParams)
+
 	url, err := GetAuthURL(res, req, toth)
 	if err != nil {
 		//res.WriteHeader(http.StatusBadRequest)
@@ -71,7 +79,7 @@ func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.Tot
 		TothErrorHandler("[TOTHIC]", err.Error(), err, http.StatusBadRequest, res, req)
 		return
 	}
-
+	log.Info("redirect to: ",url)
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
@@ -94,7 +102,7 @@ yourself, but that's entirely up to you.
 */
 func GetAuthURL(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) (string, error) {
 
-	providerName, err := GetProviderName(req)
+	providerName, err := GetProviderName()
 	if err != nil {
 		return "", err
 	}
@@ -116,6 +124,7 @@ func GetAuthURL(res http.ResponseWriter, req *http.Request, toth *toth.TothInsta
 	session, _ := Store.Get(req, SessionName)
 	session.Values[SessionName] = sess.Marshal()
 	err = session.Save(req, res)
+	fmt.Printf("Saving into storage %+v",session)
 	if err != nil {
 		return "", err
 	}
@@ -134,7 +143,7 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) (goth.User, error) {
 
-	providerName, err := GetProviderName(req)
+	providerName, err := GetProviderName()
 	if err != nil {
 		return goth.User{}, err
 	}
@@ -144,8 +153,12 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 		return goth.User{}, err
 	}
 
-	session, _ := Store.Get(req, SessionName)
+	session, err := Store.Get(req, SessionName)
+	if err !=  nil {
+		return goth.User{}, errors.New("cannot get session store")
+	}
 
+	fmt.Printf("\n Session stored \n %+v \n",session.Values[SessionName] )
 	if session.Values[SessionName] == nil {
 		return goth.User{}, errors.New("could not find a matching session for this request")
 	}
@@ -171,10 +184,12 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 // name for your request.
 var GetProviderName = getProviderName
 
-func getProviderName(req *http.Request) (string, error) {
-	provider := mux.Vars(req)["provider"]
+func getProviderName() (string, error) {
+	fmt.Printf("vars in url: %+v",pathParams)
+
+	provider := pathParams["provider"]
 	if provider == "" {
-		provider = mux.Vars(req)[":provider"]
+		provider = pathParams[":provider"]
 	}
 	if provider == "" {
 		return provider, errors.New("you must select a provider")

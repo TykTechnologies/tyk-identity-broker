@@ -454,6 +454,7 @@ func (t *TykAPI) RequestOAuthToken(APIlistenPath, redirect_uri, responseType, cl
 	tykAPILogger.Debug("Returned: ", response)
 
 	if dErr != nil {
+		log.Error(dErr.Error())
 		return nil, dErr
 	}
 

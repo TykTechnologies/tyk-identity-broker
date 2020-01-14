@@ -38,7 +38,8 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider.Handle(w, r)
+	pathParams := mux.Vars(r)
+	thisIdentityProvider.Handle(w, r, pathParams)
 	return
 }
 
