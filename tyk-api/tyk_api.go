@@ -299,19 +299,35 @@ func (t *TykAPI) CreateSSONonce(userAPICred string, data interface{}) (interface
 	body := bytes.NewBuffer(SSODataJSON)
 
 	endpoint := SSO_REGULAR
+
 	dErr, retCode, _ := t.DispatchAndDecode(SSO_REGULAR, "POST", DASH, &returnVal, userAPICred, body, "")
-	if retCode == http.StatusNotFound {
-		tykAPILogger.Warn("SSO regular dashboard API returned 404, trying with admin API, you need to upgrade your Tyk Dashboard")
-
-		// body is read in the previous trial, so refresh it
-		body = bytes.NewBuffer(SSODataJSON)
-
-		endpoint = SSO_ADMIN
-		dErr, retCode, _ = t.DispatchAndDecode(SSO_ADMIN, "POST", DASH_SUPER, &returnVal, "", body, "")
+	if retCode != http.StatusOK {
+		tykAPILogger.Warn("SSO regular dashboard API failed, trying with Admin API")
+		return t.CreateAdminSSONonce(data)
 	}
 
 	if dErr == nil && retCode == http.StatusOK {
-		tykAPILogger.Info("Single Sign-On nonce created successfully!")
+		tykAPILogger.Info("Single Sign-On nonce created successfully via Dashboard API!")
+	}
+
+	return returnVal, endpoint, dErr
+}
+
+// Legacy admin API
+func (t *TykAPI) CreateAdminSSONonce(data interface{}) (interface{}, Endpoint, error) {
+	SSODataJSON, err := json.Marshal(data)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	var returnVal interface{}
+	body := bytes.NewBuffer(SSODataJSON)
+	endpoint := SSO_ADMIN
+	dErr, retCode, _ := t.DispatchAndDecode(SSO_ADMIN, "POST", DASH_SUPER, &returnVal, "", body, "")
+
+	if dErr == nil && retCode == http.StatusOK {
+		tykAPILogger.Info("Single Sign-On nonce created successfully via Admin API!")
 	}
 
 	return returnVal, endpoint, dErr
