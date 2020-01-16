@@ -193,10 +193,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 
 	credentials := t.dashboardUserAPICred
-	tykHandlerLogger.Info("valor de credential inicial: ", credentials)
 	if credentials == "" {
 		credentials = t.API.DashboardConfig.AdminSecret
-		tykHandlerLogger.Info("valor de credential actualizado: ", credentials)
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(credentials, accessRequest)
