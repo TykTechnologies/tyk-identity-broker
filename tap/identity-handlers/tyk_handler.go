@@ -191,8 +191,15 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		GroupID:      groupID,
 	}
 
-	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
 
+	credentials := t.dashboardUserAPICred
+	tykHandlerLogger.Info("valor de credential inicial: ", credentials)
+	if credentials == "" {
+		credentials = t.API.DashboardConfig.AdminSecret
+		tykHandlerLogger.Info("valor de credential actualizado: ", credentials)
+	}
+
+	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(credentials, accessRequest)
 	tykHandlerLogger.WithField("return_value", returnVal).Debugf("Returned from %s endpoint", ssoEndpoint)
 	if retErr != nil {
 		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
