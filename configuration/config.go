@@ -26,6 +26,8 @@ type IdentityBackendSettings struct {
 	Password      string
 	EnableCluster bool
 	Hosts         map[string]string
+	UseSSL                bool
+	SSLInsecureSkipVerify bool
 }
 
 type MongoConf struct {

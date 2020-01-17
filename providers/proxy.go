@@ -75,7 +75,6 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 		return
 	}
 	thisProxy := httputil.NewSingleHostReverseProxy(target)
-
 	// intercept the response
 	recorder := httptest.NewRecorder()
 	r.URL.Path = ""
@@ -167,8 +166,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 		AccessToken: AccessToken,
 	}
 
-	proxyLogger.Debug("Username: ", thisUser.UserID)
-	proxyLogger.Debug("Access token: ", thisUser.AccessToken)
+	proxyLogger.Info("Username: ", thisUser.UserID)
+	proxyLogger.Info("Access token: ", thisUser.AccessToken)
 
 	// Complete the identity action
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
