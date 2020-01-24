@@ -181,7 +181,6 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 	}
 
 	//Todo set the user's email here, befotr going back to the handler
-	log.Info("completing identity action")
 	// Complete login and redirect
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 }

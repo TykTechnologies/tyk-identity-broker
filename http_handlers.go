@@ -24,7 +24,7 @@ func getId(req *http.Request) (string, error) {
 
 }
 
-// HandleAuth is the main entrypoint handler for any profile (i.e. /auth/:profile-id/:provider)
+// HandleAuth is the main entry point handler for any profile (i.e. /auth/:profile-id/:provider)
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 
 	thisId, idErr := getId(r)

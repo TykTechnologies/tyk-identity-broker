@@ -71,41 +71,19 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 	//read all
 
-	bkCollectionName := "profiles_backup"
-	oldSet := []tap.Profile{}
 	database := m.config.DialInfo.Database
-
-	err := m.session.DB(database).C(profilesCollectionName).Find(nil).All(&oldSet)
-	if err != nil {
-		return err
-	}
-
-	ts := int(time.Now().Unix())
-	backup := ProfilesBackup{
-		Timestamp: ts,
-		Profiles:  oldSet,
-	}
-
-	//put all the data there
-	collection := m.session.DB(database).C(bkCollectionName)
-	err = collection.Insert(backup)
-	if err != nil {
-		return err
-	}
-
-	//save this in the main profiles collection, so empty and store
-	newSet := store.GetAll()
+	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
+	updatedSet := store.GetAll()
 	profilesCollection := m.session.DB(database).C(profilesCollectionName)
 
-	_, err = profilesCollection.RemoveAll(nil)
-	for _, profile := range newSet {
-		err = profilesCollection.Insert(&profile)
-		if err != nil {
-			return err
-		}
+	//empty to store new changes
+	_, err := profilesCollection.RemoveAll(nil)
+	if err != nil {
+		return err
 	}
+	err = profilesCollection.Insert(updatedSet...)
 
-	return nil
+	return err
 }
 
 func MongoDialInfo(mongoURL string, useSSL bool, SSLInsecureSkipVerify bool) (dialInfo *mgo.DialInfo, err error) {

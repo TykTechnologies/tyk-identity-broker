@@ -327,7 +327,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	if !t.disableOneTokenPerAPI {
 		fErr := t.Store.GetKey(id_with_profile, &value)
 		if fErr == nil {
-			fmt.Printf("found key: %+v",value)
 			// Key found
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
 			iErr, isAuthorized := t.API.InvalidateToken(t.dashboardUserAPICred, t.oauth.BaseAPIID, value)

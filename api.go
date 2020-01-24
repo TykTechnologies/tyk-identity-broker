@@ -122,7 +122,7 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpErr := tap.AddProfile(thisProfile,AuthConfigStore, GlobalDataLoader.Flush)
-	if httpErr == nil {
+	if httpErr != nil {
 		HandleAPIError(APILogTag,httpErr.Message, httpErr.Error, httpErr.Code, w, r)
 		return
 	}

@@ -9,7 +9,6 @@ package tothic
 
 import (
 	"errors"
-	"fmt"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/sessions"
@@ -79,7 +78,7 @@ func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.Tot
 		TothErrorHandler("[TOTHIC]", err.Error(), err, http.StatusBadRequest, res, req)
 		return
 	}
-	log.Info("redirect to: ",url)
+
 	http.Redirect(res, req, url, http.StatusTemporaryRedirect)
 }
 
@@ -124,7 +123,6 @@ func GetAuthURL(res http.ResponseWriter, req *http.Request, toth *toth.TothInsta
 	session, _ := Store.Get(req, SessionName)
 	session.Values[SessionName] = sess.Marshal()
 	err = session.Save(req, res)
-	fmt.Printf("Saving into storage %+v",session)
 	if err != nil {
 		return "", err
 	}
@@ -158,7 +156,6 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 		return goth.User{}, errors.New("cannot get session store")
 	}
 
-	fmt.Printf("\n Session stored \n %+v \n",session.Values[SessionName] )
 	if session.Values[SessionName] == nil {
 		return goth.User{}, errors.New("could not find a matching session for this request")
 	}
@@ -185,7 +182,6 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 var GetProviderName = getProviderName
 
 func getProviderName() (string, error) {
-	fmt.Printf("vars in url: %+v",pathParams)
 
 	provider := pathParams["provider"]
 	if provider == "" {
