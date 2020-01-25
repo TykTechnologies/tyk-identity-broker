@@ -80,6 +80,7 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
 // up in main
 func (t *TykIdentityHandler) Init(conf interface{}) error {
+
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {
 		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})

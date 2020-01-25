@@ -20,7 +20,7 @@ type MongoLoaderConf struct {
 // MongoLoader implements DataLoader and will load TAP Profiles from a file
 type MongoLoader struct {
 	config MongoLoaderConf
-	session *mgo.Session
+	Db *mgo.Database
 }
 
 type ProfilesBackup struct {
@@ -33,7 +33,7 @@ func (m *MongoLoader) Init(conf interface{}) error {
 	m.config = conf.(MongoLoaderConf)
 
 	var err error
-	m.session, err = mgo.DialWithInfo(m.config.DialInfo)
+	session, err := mgo.DialWithInfo(m.config.DialInfo)
 	if err != nil {
 		dataLogger.WithFields(logrus.Fields{
 			"prefix": mongoPrefix,
@@ -43,14 +43,15 @@ func (m *MongoLoader) Init(conf interface{}) error {
 		time.Sleep(5 * time.Second)
 		m.Init(conf)
 	}
+	m.Db = session.DB("")
 	return err
 }
 
 // LoadIntoStore will load, unmarshal and copy profiles into a an AuthRegisterBackend
 func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	var profiles []tap.Profile
-	database := m.config.DialInfo.Database
-	err := m.session.DB(database).C(profilesCollectionName).Find(nil).All(&profiles)
+
+	err := m.Db.C(profilesCollectionName).Find(nil).All(&profiles)
 	if err != nil {
 		dataLogger.Error("error reading profiles from mongo: "+err.Error())
 		return err
@@ -71,10 +72,9 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 	//read all
 
-	database := m.config.DialInfo.Database
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
 	updatedSet := store.GetAll()
-	profilesCollection := m.session.DB(database).C(profilesCollectionName)
+	profilesCollection := m.Db.C(profilesCollectionName)
 
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
@@ -85,6 +85,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 
 	return err
 }
+
 
 func MongoDialInfo(mongoURL string, useSSL bool, SSLInsecureSkipVerify bool) (dialInfo *mgo.DialInfo, err error) {
 

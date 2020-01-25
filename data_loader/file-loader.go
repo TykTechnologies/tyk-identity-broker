@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-
-
 // FileLoader implements DataLoader and will load TAP Profiles from a file
 type FileLoader struct {
 	config configuration.FileLoaderConf
