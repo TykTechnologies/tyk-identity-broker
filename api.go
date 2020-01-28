@@ -115,8 +115,6 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Profile to save: %+v", thisProfile)
-
 	if thisProfile.ID != key {
 		HandleAPIError(APILogTag, "Object ID and URI resource ID do not match", errors.New("ID Mismatch"), 400, w, r)
 		return
