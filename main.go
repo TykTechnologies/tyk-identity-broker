@@ -61,7 +61,7 @@ func init() {
 	}
 	err = GlobalDataLoader.LoadIntoStore(AuthConfigStore)
 	if err != nil {
-		mainLogger.Errorf("loading into store ",err)
+		mainLogger.Errorf("loading into store ", err)
 		return
 	}
 

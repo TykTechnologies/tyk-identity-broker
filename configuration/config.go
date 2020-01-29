@@ -20,14 +20,15 @@ const (
 )
 
 type IdentityBackendSettings struct {
-	MaxIdle       int
-	MaxActive     int
-	Database      int
-	Password      string
-	EnableCluster bool
-	Hosts         map[string]string
+	MaxIdle               int
+	MaxActive             int
+	Database              int
+	Password              string
+	EnableCluster         bool
+	Hosts                 map[string]string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
+	MasterName            string
 }
 
 type MongoConf struct {
@@ -42,14 +43,14 @@ type MongoConf struct {
 }
 
 type Storage struct {
-	StorageType string     `json:"storage_type" mapstructure:"storage_type"`
-	MongoConf   *MongoConf `json:"mongo" mapstructure:"mongo"`
+	StorageType string          `json:"storage_type" mapstructure:"storage_type"`
+	MongoConf   *MongoConf      `json:"mongo" mapstructure:"mongo"`
 	FileConf    *FileLoaderConf `json:"file" mapstructure:"file"`
 }
 
 // FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
 type FileLoaderConf struct {
-	FileName string
+	FileName   string
 	ProfileDir string
 }
 
@@ -60,10 +61,10 @@ type Backend struct {
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
-	Secret     string
-	Port       int
-	ProfileDir string
-	BackEnd    Backend
+	Secret            string
+	Port              int
+	ProfileDir        string
+	BackEnd           Backend
 	TykAPISettings    tyk.TykAPI
 	HttpServerOptions struct {
 		UseSSL   bool
