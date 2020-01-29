@@ -35,7 +35,6 @@ var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename *string
 
-
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", VERSION)
 	mainLogger.Info("Copyright Tyk Technologies Ltd 2019")

@@ -1,26 +1,17 @@
-/* package backends provides different storage back ends for the configuration of a
-TAP node. Backends ned only be k/v stores. The in-memory provider is given as an example and usefule for testing
-*/
 package backends
 
 import (
+	"crypto/tls"
 	"encoding/json"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/redigocluster/rediscluster"
-	"github.com/garyburd/redigo/redis"
+	"github.com/go-redis/redis"
 )
 
-var redisClusterSingleton *rediscluster.RedisCluster
 var redisLogger = log.WithField("prefix", "REDIS STORE")
-
-// RedisBackend implements tap.AuthRegisterBackend to store profile configs in memory
-type RedisBackend struct {
-	db        *rediscluster.RedisCluster
-	config    *RedisConfig
-	KeyPrefix string
-}
 
 type RedisConfig struct {
 	MaxIdle               int
@@ -31,79 +22,79 @@ type RedisConfig struct {
 	Hosts                 map[string]string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
+	Timeout               int
+	Port                  int
+	Host                  string
 }
 
-func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster.RedisCluster {
-	if !forceReconnect {
-		if redisClusterSingleton != nil {
-			redisLogger.Debug("Redis pool already INITIALISED")
-			return redisClusterSingleton
+type RedisBackend struct {
+	db        redis.UniversalClient
+	dbMu      sync.RWMutex
+	config    *RedisConfig
+	KeyPrefix string
+}
+
+type KeyError struct{}
+
+func (e KeyError) Error() string {
+	return "Key not found"
+}
+
+func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
+	redisLogger.Info("Creating new Redis connection pool")
+
+	timeout := 5 * time.Second
+
+	if r.config.Timeout > 0 {
+		timeout = time.Duration(r.config.Timeout) * time.Second
+	}
+
+	var tlsConfig *tls.Config
+	if r.config.UseSSL {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: r.config.SSLInsecureSkipVerify,
+		}
+	}
+
+	seedRedis := []string{}
+	if len(r.config.Hosts) > 0 {
+		for h, p := range r.config.Hosts {
+			addr := h + ":" + p
+			seedRedis = append(seedRedis, addr)
 		}
 	} else {
-		if redisClusterSingleton != nil {
-			redisClusterSingleton.CloseConnection()
-		}
+		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
+		seedRedis = append(seedRedis, addr)
 	}
 
-	redisLogger.Debug("Creating new Redis connection pool")
-
-	maxIdle := 100
-	if config.MaxIdle > 0 {
-		maxIdle = config.MaxIdle
+	if !r.config.EnableCluster {
+		seedRedis = seedRedis[:1]
 	}
 
-	maxActive := 500
-	if config.MaxActive > 0 {
-		maxActive = config.MaxActive
-	}
+	thisInstance := redis.NewUniversalClient(&redis.UniversalOptions{
+		Addrs:        seedRedis,
+		DB:           r.config.Database,
+		Password:     r.config.Password,
+		IdleTimeout:  240 * time.Second,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+		DialTimeout:  timeout,
+		TLSConfig:    tlsConfig,
+	})
 
-	if config.EnableCluster {
-		redisLogger.Info("--> Using clustered mode")
-	}
-
-	thisPoolConf := rediscluster.PoolConfig{
-		MaxIdle:       maxIdle,
-		MaxActive:     maxActive,
-		IdleTimeout:   240 * time.Second,
-		Database:      config.Database,
-		Password:      config.Password,
-		IsCluster:     config.EnableCluster,
-		UseTLS:        config.UseSSL,
-		TLSSkipVerify: config.SSLInsecureSkipVerify,
-	}
-
-	seed_redii := []map[string]string{}
-
-	if len(config.Hosts) > 0 {
-		for h, p := range config.Hosts {
-			seed_redii = append(seed_redii, map[string]string{h: p})
-		}
-	} else {
-		redisLogger.Fatal("No Redis hosts set!")
-	}
-
-	thisInstance := rediscluster.NewRedisCluster(seed_redii, thisPoolConf, false)
-
-	redisClusterSingleton = &thisInstance
-
-	return &thisInstance
+	return thisInstance
 }
 
-func (r *RedisBackend) fixKey(keyName string) string {
-	return r.KeyPrefix + keyName
+func (r *RedisBackend) Connect() bool {
+	r.dbMu.Lock()
+	defer r.dbMu.Unlock()
+
+	r.db = r.newRedisClusterPool()
+	return true
 }
 
-func (r *RedisBackend) connect() {
-	if r.db == nil {
-		redisLogger.Debug("Connecting to redis")
-		r.db = newRedisClusterPool(false, r.config)
-	}
-
-	redisLogger.Debug("Storage Engine already initialised...")
-	redisLogger.Debug("Redis handles: ", len(r.db.Handles))
-
-	// Reset it just in case
-	r.db = redisClusterSingleton
+func (r *RedisBackend) cleanKey(keyName string) string {
+	return strings.Replace(keyName, r.KeyPrefix, "", 1)
 }
 
 // Init will create the initial in-memory store structures
@@ -112,78 +103,41 @@ func (r *RedisBackend) Init(config interface{}) {
 	fixedConf := RedisConfig{}
 	json.Unmarshal(asJ, &fixedConf)
 	r.config = &fixedConf
-	r.connect()
-	redisLogger.Info("Initialised")
+	r.Connect()
+	redisLogger.Info("Initialized")
 }
 
-// SetKey will set the value of a key in the map
+// SetDb from existent connection
+func (r *RedisBackend) SetDb(db redis.UniversalClient) {
+	r.db = db
+	redisLogger.Info("Set DB")
+}
+
+// SetDbMu set mutex from existent connection
+func (r *RedisBackend) SetDbMu(mu sync.RWMutex) {
+	r.dbMu = mu
+	redisLogger.Info("Set db mutex")
+}
+
 func (r *RedisBackend) SetKey(key string, val interface{}) error {
-	redisLogger.Debug("SET Raw key is: ", key)
-	redisLogger.Debug("Setting key: ", r.fixKey(key))
+	db := r.ensureConnection()
 
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.SetKey(key, val)
-	} else {
-		asByte, encErr := json.Marshal(val)
-		if encErr != nil {
-			return encErr
-		}
-
-		_, err := r.db.Do("SET", r.fixKey(key), string(asByte))
-		if err != nil {
-			redisLogger.WithField("error", err).Error("Error trying to set value")
-			return err
-		}
-	}
-
-	return nil
-}
-
-// SetKey will set the value of a key in the map
-func (r *RedisBackend) DeleteKey(key string) error {
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.DeleteKey(key)
-	}
-
-	redisLogger.Debug("DEL Key was: ", key)
-	redisLogger.Debug("DEL Key became: ", r.fixKey(key))
-	_, err := r.db.Do("DEL", r.fixKey(key))
-	if err != nil {
-		redisLogger.WithFields(logrus.Fields{
-			"error": err,
-			"key":   r.fixKey(key),
-		}).Error("Error trying to delete key")
+	redisLogger.Debug("Setting key=", key)
+	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
+		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
 
 	return nil
 }
 
-// GetKey will retuyrn the value of a key as an interface
-func (r *RedisBackend) GetKey(key string, target interface{}) error {
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.GetKey(key, target)
-	}
-	redisLogger.Debug("Getting WAS: ", key)
-	redisLogger.Debug("Getting: ", r.fixKey(key))
-	val, err := redis.String(r.db.Do("GET", r.fixKey(key)))
-
-	decErr := json.Unmarshal([]byte(val), target)
-	if decErr != nil {
-		return decErr
-	}
-
+func (r *RedisBackend) GetKey(key string, val interface{}) error {
+	db := r.ensureConnection()
+	var err error
+	val, err = db.Get(r.fixKey(key)).Result()
 	if err != nil {
-		redisLogger.WithField("error", err).Debug("Error trying to get value")
 		return err
 	}
-
 	return nil
 }
 
@@ -191,4 +145,36 @@ func (r *RedisBackend) GetAll() []interface{} {
 	target := make([]interface{}, 0)
 	redisLogger.Warning("GetAll() Not implemented")
 	return target
+}
+
+func (r *RedisBackend) DeleteKey(key string) error {
+	db := r.ensureConnection()
+	return db.Del(r.fixKey(key)).Err()
+}
+
+func (r *RedisBackend) getDB() redis.UniversalClient {
+	r.dbMu.RLock()
+	defer r.dbMu.RUnlock()
+
+	return r.db
+}
+
+func (r *RedisBackend) ensureConnection() redis.UniversalClient {
+	if db := r.getDB(); db != nil {
+		// already connected
+		return db
+	}
+	redisLogger.Info("Connection dropped, reconnecting...")
+	for {
+		r.Connect()
+		if db := r.getDB(); db != nil {
+			// reconnection worked
+			return db
+		}
+		redisLogger.Info("Reconnecting again...")
+	}
+}
+
+func (r *RedisBackend) fixKey(keyName string) string {
+	return r.KeyPrefix + keyName
 }
