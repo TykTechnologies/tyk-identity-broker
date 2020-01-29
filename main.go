@@ -53,6 +53,7 @@ func init() {
 	flag.Parse()
 
 	loadConfig(*confFile, &config)
+	mainLogger.Info("config loaded: ", config.BackEnd.IdentityBackendSettings)
 	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings

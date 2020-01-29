@@ -16,6 +16,7 @@ var redisLogger = log.WithField("prefix", "REDIS STORE")
 type RedisConfig struct {
 	MaxIdle               int
 	MaxActive             int
+	MasterName            string
 	Database              int
 	Password              string
 	EnableCluster         bool
@@ -56,23 +57,25 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 		}
 	}
 
-	seedRedis := []string{}
+	var address []string
 	if len(r.config.Hosts) > 0 {
 		for h, p := range r.config.Hosts {
 			addr := h + ":" + p
-			seedRedis = append(seedRedis, addr)
+			address = append(address, addr)
 		}
 	} else {
 		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
-		seedRedis = append(seedRedis, addr)
+		address = append(address, addr)
 	}
 
 	if !r.config.EnableCluster {
-		seedRedis = seedRedis[:1]
+		address = address[:1]
 	}
 
-	thisInstance := redis.NewUniversalClient(&redis.UniversalOptions{
-		Addrs:        seedRedis,
+	var client redis.UniversalClient
+	opts := &RedisOpts{
+		MasterName:   r.config.MasterName,
+		Addrs:        address,
 		DB:           r.config.Database,
 		Password:     r.config.Password,
 		IdleTimeout:  240 * time.Second,
@@ -80,9 +83,20 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 		WriteTimeout: timeout,
 		DialTimeout:  timeout,
 		TLSConfig:    tlsConfig,
-	})
+	}
 
-	return thisInstance
+	if opts.MasterName != "" {
+		redisLogger.Info("Creating sentinel-backed fail-over client")
+		client = redis.NewFailoverClient(opts.failover())
+	} else if r.config.EnableCluster {
+		redisLogger.Info("Creating cluster client")
+		client = redis.NewClusterClient(opts.cluster())
+	} else {
+		redisLogger.Info("Creating single-node client")
+		client = redis.NewClient(opts.simple())
+	}
+
+	return client
 }
 
 func (r *RedisBackend) Connect() bool {
@@ -165,4 +179,108 @@ func (r *RedisBackend) ensureConnection() redis.UniversalClient {
 
 func (r *RedisBackend) fixKey(keyName string) string {
 	return r.KeyPrefix + keyName
+}
+
+
+// RedisOpts is the overriden type of redis.UniversalOptions. simple() and cluster() functions are not public
+// in redis library. Therefore, they are redefined in here to use in creation of new redis cluster logic.
+// We don't want to use redis.NewUniversalClient() logic.
+type RedisOpts redis.UniversalOptions
+
+func (o *RedisOpts) failover() *redis.FailoverOptions {
+	if len(o.Addrs) == 0 {
+		o.Addrs = []string{"127.0.0.1:6379"}
+	}
+
+	return &redis.FailoverOptions{
+		SentinelAddrs: o.Addrs,
+		MasterName:    o.MasterName,
+		OnConnect:     o.OnConnect,
+
+		DB:       o.DB,
+		Password: o.Password,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:  o.DialTimeout,
+		ReadTimeout:  o.ReadTimeout,
+		WriteTimeout: o.WriteTimeout,
+
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
+}
+
+func (o *RedisOpts) cluster() *redis.ClusterOptions {
+	if len(o.Addrs) == 0 {
+		o.Addrs = []string{"127.0.0.1:6379"}
+	}
+
+	return &redis.ClusterOptions{
+		Addrs:     o.Addrs,
+		OnConnect: o.OnConnect,
+
+		Password: o.Password,
+
+		MaxRedirects:   o.MaxRedirects,
+		ReadOnly:       o.ReadOnly,
+		RouteByLatency: o.RouteByLatency,
+		RouteRandomly:  o.RouteRandomly,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:        o.DialTimeout,
+		ReadTimeout:        o.ReadTimeout,
+		WriteTimeout:       o.WriteTimeout,
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
+}
+
+func (o *RedisOpts) simple() *redis.Options {
+	addr := "127.0.0.1:6379"
+	if len(o.Addrs) > 0 {
+		addr = o.Addrs[0]
+	}
+
+	return &redis.Options{
+		Addr:      addr,
+		OnConnect: o.OnConnect,
+
+		DB:       o.DB,
+		Password: o.Password,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:  o.DialTimeout,
+		ReadTimeout:  o.ReadTimeout,
+		WriteTimeout: o.WriteTimeout,
+
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
 }
