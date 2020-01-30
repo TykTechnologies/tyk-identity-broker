@@ -13,7 +13,7 @@ import (
 	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 

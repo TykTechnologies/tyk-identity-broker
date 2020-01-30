@@ -3,7 +3,7 @@ package providers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	identityHandlers "github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"

@@ -1,7 +1,7 @@
 package data_loader
 
 import (
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"gopkg.in/mgo.v2"
