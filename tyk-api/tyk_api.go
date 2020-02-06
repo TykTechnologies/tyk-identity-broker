@@ -271,6 +271,7 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	case GATEWAY:
 		retBytes, retCode, dispatchErr = t.DispatchGateway(target, method, body, ctype)
 	case DASH:
+
 		retBytes, retCode, dispatchErr = t.DispatchDashboard(target, method, creds, body)
 	case DASH_SUPER:
 		retBytes, retCode, dispatchErr = t.DispatchDashboardSuper(target, method, body)
@@ -307,6 +308,7 @@ func (t *TykAPI) CreateSSONonce(userAPICred string, data interface{}) (interface
 	endpoint := SSO_REGULAR
 
 	dErr, retCode, _ := t.DispatchAndDecode(SSO_REGULAR, "POST", DASH, &returnVal, userAPICred, body, "")
+	tykAPILogger.Info("retornado: ",retCode)
 	if retCode != http.StatusOK {
 		tykAPILogger.Warn("SSO regular dashboard API failed, trying with Admin API")
 		return t.CreateAdminSSONonce(data)

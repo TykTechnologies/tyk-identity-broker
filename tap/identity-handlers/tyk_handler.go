@@ -193,7 +193,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
-
+	tykHandlerLogger.Info("return val:",returnVal)
 	tykHandlerLogger.WithField("return_value", returnVal).Debugf("Returned from %s endpoint", ssoEndpoint)
 	if retErr != nil {
 		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
