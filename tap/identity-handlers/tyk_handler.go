@@ -73,8 +73,8 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 		return SSOForPortal, nil
 	}
 
-	tykHandlerLogger.Error("Action: ", action)
-	return InvalidModule, errors.New("Action does not exist")
+	tykHandlerLogger.Error("invalid action: ", action)
+	return InvalidModule, errors.New("action does not exist")
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
@@ -193,7 +193,6 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
-	tykHandlerLogger.Info("return val:",returnVal)
 	tykHandlerLogger.WithField("return_value", returnVal).Debugf("Returned from %s endpoint", ssoEndpoint)
 	if retErr != nil {
 		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
