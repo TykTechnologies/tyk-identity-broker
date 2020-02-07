@@ -1,109 +1,109 @@
-/* package backends provides different storage back ends for the configuration of a
-TAP node. Backends ned only be k/v stores. The in-memory provider is given as an example and usefule for testing
-*/
 package backends
 
 import (
+	"crypto/tls"
 	"encoding/json"
+	"strconv"
+	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/redigocluster/rediscluster"
-	"github.com/garyburd/redigo/redis"
+	"github.com/go-redis/redis"
 )
 
-var redisClusterSingleton *rediscluster.RedisCluster
 var redisLogger = log.WithField("prefix", "REDIS STORE")
-
-// RedisBackend implements tap.AuthRegisterBackend to store profile configs in memory
-type RedisBackend struct {
-	db        *rediscluster.RedisCluster
-	config    *RedisConfig
-	KeyPrefix string
-}
 
 type RedisConfig struct {
 	MaxIdle               int
 	MaxActive             int
+	MasterName            string
 	Database              int
 	Password              string
 	EnableCluster         bool
 	Hosts                 map[string]string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
+	Timeout               int
+	Port                  int
+	Host                  string
 }
 
-func newRedisClusterPool(forceReconnect bool, config *RedisConfig) *rediscluster.RedisCluster {
-	if !forceReconnect {
-		if redisClusterSingleton != nil {
-			redisLogger.Debug("Redis pool already INITIALISED")
-			return redisClusterSingleton
+type RedisBackend struct {
+	db        redis.UniversalClient
+	dbMu      sync.RWMutex
+	config    *RedisConfig
+	KeyPrefix string
+}
+
+type KeyError struct{}
+
+func (e KeyError) Error() string {
+	return "Key not found"
+}
+
+func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
+	redisLogger.Info("Creating new Redis connection pool")
+
+	timeout := 5 * time.Second
+
+	if r.config.Timeout > 0 {
+		timeout = time.Duration(r.config.Timeout) * time.Second
+	}
+
+	var tlsConfig *tls.Config
+	if r.config.UseSSL {
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: r.config.SSLInsecureSkipVerify,
+		}
+	}
+
+	var address []string
+	if len(r.config.Hosts) > 0 {
+		for h, p := range r.config.Hosts {
+			addr := h + ":" + p
+			address = append(address, addr)
 		}
 	} else {
-		if redisClusterSingleton != nil {
-			redisClusterSingleton.CloseConnection()
-		}
+		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
+		address = append(address, addr)
 	}
 
-	redisLogger.Debug("Creating new Redis connection pool")
-
-	maxIdle := 100
-	if config.MaxIdle > 0 {
-		maxIdle = config.MaxIdle
+	if !r.config.EnableCluster {
+		address = address[:1]
 	}
 
-	maxActive := 500
-	if config.MaxActive > 0 {
-		maxActive = config.MaxActive
+	var client redis.UniversalClient
+	opts := &RedisOpts{
+		MasterName:   r.config.MasterName,
+		Addrs:        address,
+		DB:           r.config.Database,
+		Password:     r.config.Password,
+		IdleTimeout:  240 * time.Second,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+		DialTimeout:  timeout,
+		TLSConfig:    tlsConfig,
 	}
 
-	if config.EnableCluster {
-		redisLogger.Info("--> Using clustered mode")
-	}
-
-	thisPoolConf := rediscluster.PoolConfig{
-		MaxIdle:       maxIdle,
-		MaxActive:     maxActive,
-		IdleTimeout:   240 * time.Second,
-		Database:      config.Database,
-		Password:      config.Password,
-		IsCluster:     config.EnableCluster,
-		UseTLS:        config.UseSSL,
-		TLSSkipVerify: config.SSLInsecureSkipVerify,
-	}
-
-	seed_redii := []map[string]string{}
-
-	if len(config.Hosts) > 0 {
-		for h, p := range config.Hosts {
-			seed_redii = append(seed_redii, map[string]string{h: p})
-		}
+	if opts.MasterName != "" {
+		redisLogger.Info("Creating sentinel-backed fail-over client")
+		client = redis.NewFailoverClient(opts.failover())
+	} else if r.config.EnableCluster {
+		redisLogger.Info("Creating cluster client")
+		client = redis.NewClusterClient(opts.cluster())
 	} else {
-		redisLogger.Fatal("No Redis hosts set!")
+		redisLogger.Info("Creating single-node client")
+		client = redis.NewClient(opts.simple())
 	}
 
-	thisInstance := rediscluster.NewRedisCluster(seed_redii, thisPoolConf, false)
-
-	redisClusterSingleton = &thisInstance
-
-	return &thisInstance
+	return client
 }
 
-func (r *RedisBackend) fixKey(keyName string) string {
-	return r.KeyPrefix + keyName
-}
+func (r *RedisBackend) Connect() bool {
+	r.dbMu.Lock()
+	defer r.dbMu.Unlock()
 
-func (r *RedisBackend) connect() {
-	if r.db == nil {
-		redisLogger.Debug("Connecting to redis")
-		r.db = newRedisClusterPool(false, r.config)
-	}
-
-	redisLogger.Debug("Storage Engine already initialised...")
-	redisLogger.Debug("Redis handles: ", len(r.db.Handles))
-
-	// Reset it just in case
-	r.db = redisClusterSingleton
+	r.db = r.newRedisClusterPool()
+	return true
 }
 
 // Init will create the initial in-memory store structures
@@ -112,78 +112,29 @@ func (r *RedisBackend) Init(config interface{}) {
 	fixedConf := RedisConfig{}
 	json.Unmarshal(asJ, &fixedConf)
 	r.config = &fixedConf
-	r.connect()
-	redisLogger.Info("Initialised")
+	r.Connect()
+	redisLogger.Info("Initialized")
 }
 
-// SetKey will set the value of a key in the map
 func (r *RedisBackend) SetKey(key string, val interface{}) error {
-	redisLogger.Debug("SET Raw key is: ", key)
-	redisLogger.Debug("Setting key: ", r.fixKey(key))
+	db := r.ensureConnection()
 
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.SetKey(key, val)
-	} else {
-		asByte, encErr := json.Marshal(val)
-		if encErr != nil {
-			return encErr
-		}
-
-		_, err := r.db.Do("SET", r.fixKey(key), string(asByte))
-		if err != nil {
-			redisLogger.WithField("error", err).Error("Error trying to set value")
-			return err
-		}
-	}
-
-	return nil
-}
-
-// SetKey will set the value of a key in the map
-func (r *RedisBackend) DeleteKey(key string) error {
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.DeleteKey(key)
-	}
-
-	redisLogger.Debug("DEL Key was: ", key)
-	redisLogger.Debug("DEL Key became: ", r.fixKey(key))
-	_, err := r.db.Do("DEL", r.fixKey(key))
-	if err != nil {
-		redisLogger.WithFields(logrus.Fields{
-			"error": err,
-			"key":   r.fixKey(key),
-		}).Error("Error trying to delete key")
+	redisLogger.Debug("Setting key=", key)
+	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
+		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
 
 	return nil
 }
 
-// GetKey will retuyrn the value of a key as an interface
-func (r *RedisBackend) GetKey(key string, target interface{}) error {
-	if r.db == nil {
-		redisLogger.Info("Connection dropped, connecting..")
-		r.connect()
-		return r.GetKey(key, target)
-	}
-	redisLogger.Debug("Getting WAS: ", key)
-	redisLogger.Debug("Getting: ", r.fixKey(key))
-	val, err := redis.String(r.db.Do("GET", r.fixKey(key)))
-
-	decErr := json.Unmarshal([]byte(val), target)
-	if decErr != nil {
-		return decErr
-	}
-
+func (r *RedisBackend) GetKey(key string, val interface{}) error {
+	db := r.ensureConnection()
+	var err error
+	val, err = db.Get(r.fixKey(key)).Result()
 	if err != nil {
-		redisLogger.WithField("error", err).Debug("Error trying to get value")
 		return err
 	}
-
 	return nil
 }
 
@@ -191,4 +142,140 @@ func (r *RedisBackend) GetAll() []interface{} {
 	target := make([]interface{}, 0)
 	redisLogger.Warning("GetAll() Not implemented")
 	return target
+}
+
+func (r *RedisBackend) DeleteKey(key string) error {
+	db := r.ensureConnection()
+	return db.Del(r.fixKey(key)).Err()
+}
+
+func (r *RedisBackend) getDB() redis.UniversalClient {
+	r.dbMu.RLock()
+	defer r.dbMu.RUnlock()
+
+	return r.db
+}
+
+func (r *RedisBackend) ensureConnection() redis.UniversalClient {
+	if db := r.getDB(); db != nil {
+		// already connected
+		return db
+	}
+	redisLogger.Info("Connection dropped, reconnecting...")
+	for {
+		r.Connect()
+		if db := r.getDB(); db != nil {
+			// reconnection worked
+			return db
+		}
+		redisLogger.Info("Reconnecting again...")
+	}
+}
+
+func (r *RedisBackend) fixKey(keyName string) string {
+	return r.KeyPrefix + keyName
+}
+
+
+// RedisOpts is the overriden type of redis.UniversalOptions. simple() and cluster() functions are not public
+// in redis library. Therefore, they are redefined in here to use in creation of new redis cluster logic.
+// We don't want to use redis.NewUniversalClient() logic.
+type RedisOpts redis.UniversalOptions
+
+func (o *RedisOpts) failover() *redis.FailoverOptions {
+	if len(o.Addrs) == 0 {
+		o.Addrs = []string{"127.0.0.1:6379"}
+	}
+
+	return &redis.FailoverOptions{
+		SentinelAddrs: o.Addrs,
+		MasterName:    o.MasterName,
+		OnConnect:     o.OnConnect,
+
+		DB:       o.DB,
+		Password: o.Password,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:  o.DialTimeout,
+		ReadTimeout:  o.ReadTimeout,
+		WriteTimeout: o.WriteTimeout,
+
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
+}
+
+func (o *RedisOpts) cluster() *redis.ClusterOptions {
+	if len(o.Addrs) == 0 {
+		o.Addrs = []string{"127.0.0.1:6379"}
+	}
+
+	return &redis.ClusterOptions{
+		Addrs:     o.Addrs,
+		OnConnect: o.OnConnect,
+
+		Password: o.Password,
+
+		MaxRedirects:   o.MaxRedirects,
+		ReadOnly:       o.ReadOnly,
+		RouteByLatency: o.RouteByLatency,
+		RouteRandomly:  o.RouteRandomly,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:        o.DialTimeout,
+		ReadTimeout:        o.ReadTimeout,
+		WriteTimeout:       o.WriteTimeout,
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
+}
+
+func (o *RedisOpts) simple() *redis.Options {
+	addr := "127.0.0.1:6379"
+	if len(o.Addrs) > 0 {
+		addr = o.Addrs[0]
+	}
+
+	return &redis.Options{
+		Addr:      addr,
+		OnConnect: o.OnConnect,
+
+		DB:       o.DB,
+		Password: o.Password,
+
+		MaxRetries:      o.MaxRetries,
+		MinRetryBackoff: o.MinRetryBackoff,
+		MaxRetryBackoff: o.MaxRetryBackoff,
+
+		DialTimeout:  o.DialTimeout,
+		ReadTimeout:  o.ReadTimeout,
+		WriteTimeout: o.WriteTimeout,
+
+		PoolSize:           o.PoolSize,
+		MinIdleConns:       o.MinIdleConns,
+		MaxConnAge:         o.MaxConnAge,
+		PoolTimeout:        o.PoolTimeout,
+		IdleTimeout:        o.IdleTimeout,
+		IdleCheckFrequency: o.IdleCheckFrequency,
+
+		TLSConfig: o.TLSConfig,
+	}
 }

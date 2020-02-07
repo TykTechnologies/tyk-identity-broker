@@ -33,12 +33,11 @@ var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename *string
 
-// Get our bak end to use, new beack-ends must be registered here
+// Get our backend to use, new backend's must be registered here
 func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
 
 	AuthConfigStore = &backends.InMemoryBackend{}
-	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
-
+	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache"}
 	mainLogger.Info("Initialising Profile Configuration Store")
 	AuthConfigStore.Init(profileBackendConfiguration)
 	mainLogger.Info("Initialising Identity Cache")
@@ -54,6 +53,7 @@ func init() {
 	flag.Parse()
 
 	loadConfig(*confFile, &config)
+	mainLogger.Info("config loaded: ", config.BackEnd.IdentityBackendSettings)
 	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings

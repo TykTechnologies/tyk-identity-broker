@@ -21,6 +21,7 @@ type IdentityBackendSettings struct {
 	Hosts                 map[string]string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
+	MasterName            string
 }
 
 // Configuration holds all configuration settings for TAP
@@ -63,5 +64,5 @@ func loadConfig(filePath string, conf *Configuration) {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
 	}
 
-	mainLogger.Debug("Settings Struct: ", conf.TykAPISettings)
+	mainLogger.Info("Settings Struct: ", conf.BackEnd)
 }
