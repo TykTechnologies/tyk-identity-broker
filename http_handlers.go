@@ -1,26 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/TykTechnologies/tyk-identity-broker/constants"
+	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/TykTechnologies/tyk-identity-broker/providers"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
+	tykerrors "github.com/TykTechnologies/tyk-identity-broker/error"
 	"github.com/gorilla/mux"
 )
 
-// APIErrorMessage is an object that defines when a generic error occurred
-type APIErrorMessage struct {
-	Status string
-	Error  string
-}
-
-// HandlerLogTag is a tag we are uing to identify log messages from the handler
-var HandlerLogTag = "AUTH HANDLERS"
 
 // Returns a profile ID
 func getId(req *http.Request) (string, error) {
@@ -29,128 +18,51 @@ func getId(req *http.Request) (string, error) {
 		id = mux.Vars(req)[":id"]
 	}
 	if id == "" {
-		return id, errors.New("No profile id detected")
+		return id, errors.New("no profile id detected")
 	}
 	return id, nil
+
 }
 
-// Maps an identity handler from an Action type, register new Identity Handlers and methods here
-func getIdentityHandler(name tap.Action) tap.IdentityHandler {
-	var thisIdentityHandler tap.IdentityHandler
+// HandleAuth is the main entry point handler for any profile (i.e. /auth/:profile-id/:provider)
+func HandleAuth(w http.ResponseWriter, r *http.Request) {
 
-	switch name {
-	case tap.GenerateOrLoginDeveloperProfile, tap.GenerateOrLoginUserProfile, tap.GenerateOAuthTokenForClient, tap.GenerateTemporaryAuthToken:
-		thisIdentityHandler = &identityHandlers.TykIdentityHandler{
-			API:   &TykAPIHandler,
-			Store: IdentityKeyStore}
-	}
-
-	return thisIdentityHandler
-}
-
-// A hack to marshal a provider conf from map[string]interface{} intoa type without type checking, ugly, but effective
-func hackProviderConf(conf interface{}) []byte {
-	thisConf, err := json.Marshal(conf)
-	if err != nil {
-		log.WithFields(logrus.Fields{
-			"prefix": HandlerLogTag,
-			"error":  err,
-		}).Warning("Failure in JSON conversion")
-		return []byte{}
-	}
-	return thisConf
-}
-
-// return a provider based on the name of the provider type, add new providers here
-func getTAProvider(conf tap.Profile) (tap.TAProvider, error) {
-
-	var thisProvider tap.TAProvider
-
-	switch conf.ProviderName {
-	case "SocialProvider":
-		thisProvider = &providers.Social{}
-	case "ADProvider":
-		thisProvider = &providers.ADProvider{}
-	case "ProxyProvider":
-		thisProvider = &providers.ProxyProvider{}
-	}
-
-	thisIdentityHandler := getIdentityHandler(conf.ActionType)
-	thisIdentityHandler.Init(conf)
-	err := thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
-
-	return thisProvider, err
-}
-
-// HandleError is a generic error handler
-func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
-	log.WithFields(logrus.Fields{
-		"prefix":   tag,
-		"errorMsg": errorMsg,
-	}).Error(rawErr)
-
-	errorObj := APIErrorMessage{"error", errorMsg}
-	responseMsg, err := json.Marshal(&errorObj)
-
-	if err != nil {
-		log.WithField("prefix", tag).Error("[Error Handler] Couldn't marshal error stats: ", err)
-		fmt.Fprintf(w, "System Error")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
-}
-
-func getTapProfile(w http.ResponseWriter, r *http.Request) (tap.TAProvider, error) {
 	thisId, idErr := getId(r)
 	if idErr != nil {
-		HandleError(HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
-		return nil, idErr
+		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
+		return
 	}
 
-	thisProfile := tap.Profile{}
-	log.WithField("prefix", HandlerLogTag).Debug("--> Looking up profile ID: ", thisId)
-	foundProfileErr := AuthConfigStore.GetKey(thisId, &thisProfile)
-
-	if foundProfileErr != nil {
-		errorMsg := "Profile " + thisId + " not found"
-		HandleError(HandlerLogTag, errorMsg, foundProfileErr, 404, w, r)
-		return nil, foundProfileErr
-	}
-
-	thisIdentityProvider, providerErr := getTAProvider(thisProfile)
-	if providerErr != nil {
-		HandleError(HandlerLogTag, "Could not initialise provider", providerErr, 400, w, r)
-		return nil, providerErr
-	}
-	return thisIdentityProvider, nil
-}
-
-// HandleAuth is the main entrypoint handler for any profile (i.e. /auth/:profile-id/:provider)
-func HandleAuth(w http.ResponseWriter, r *http.Request) {
-	thisIdentityProvider, err := getTapProfile(w, r)
+	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
 
-	thisIdentityProvider.Handle(w, r)
+	pathParams := mux.Vars(r)
+	thisIdentityProvider.Handle(w, r, pathParams)
 	return
 }
 
 // HandleAuthCallback Is a callback URL passed to OAuth providers such as Social, handles completing an auth request
 func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 
-	thisIdentityProvider, err := getTapProfile(w, r)
-	if err != nil {
+	thisId, idErr := getId(r)
+	if idErr != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
 		return
 	}
 
-	thisIdentityProvider.HandleCallback(w, r, HandleError)
+	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	if err != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
+		return
+	}
+
+	thisIdentityProvider.HandleCallback(w, r, tykerrors.HandleError)
 	return
 }
 
 func HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
+

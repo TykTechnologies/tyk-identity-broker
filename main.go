@@ -3,11 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/TykTechnologies/tyk-identity-broker/Initializer"
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
+	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"net/http"
-	"path"
 	"strconv"
 
-	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
@@ -22,27 +24,16 @@ var AuthConfigStore tap.AuthRegisterBackend
 var IdentityKeyStore tap.AuthRegisterBackend
 
 //  config is the system-wide configuration
-var config Configuration
+var config configuration.Configuration
 
 // TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
 var TykAPIHandler tyk.TykAPI
 
-var GlobalDataLoader DataLoader
+var GlobalDataLoader data_loader.DataLoader
 
 var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename *string
-
-// Get our backend to use, new backend's must be registered here
-func initBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) {
-
-	AuthConfigStore = &backends.InMemoryBackend{}
-	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache"}
-	mainLogger.Info("Initialising Profile Configuration Store")
-	AuthConfigStore.Init(profileBackendConfiguration)
-	mainLogger.Info("Initialising Identity Cache")
-	IdentityKeyStore.Init(identityBackendConfiguration)
-}
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", VERSION)
@@ -52,9 +43,8 @@ func init() {
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
 	flag.Parse()
 
-	loadConfig(*confFile, &config)
-	mainLogger.Info("config loaded: ", config.BackEnd.IdentityBackendSettings)
-	initBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
+	configuration.LoadConfig(*confFile, &config)
+	AuthConfigStore, IdentityKeyStore = Initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
 
@@ -64,16 +54,18 @@ func init() {
 	http.DefaultClient.Transport =
 		&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.SSLInsecureSkipVerify}}
 
-	pDir := path.Join(config.ProfileDir, *ProfileFilename)
-	loaderConf := FileLoaderConf{
-		FileName: pDir,
+	var err error
+	GlobalDataLoader, err = data_loader.CreateDataLoader(config, ProfileFilename)
+	if err != nil {
+		return
+	}
+	err = GlobalDataLoader.LoadIntoStore(AuthConfigStore)
+	if err != nil {
+		mainLogger.Errorf("loading into store ", err)
+		return
 	}
 
-	GlobalDataLoader = &FileLoader{}
-	GlobalDataLoader.Init(loaderConf)
-	GlobalDataLoader.LoadIntoStore(AuthConfigStore)
-
-	tothic.TothErrorHandler = HandleError
+	tothic.TothErrorHandler = errors.HandleError
 }
 
 func main() {
@@ -81,7 +73,6 @@ func main() {
 	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
 	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
 
-	p.Handle("/api/profiles/save", IsAuthenticated(http.HandlerFunc(HandleFlushProfileList))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleAddProfile))).Methods("POST")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleUpdateProfile))).Methods("PUT")

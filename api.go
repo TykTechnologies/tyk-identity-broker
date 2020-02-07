@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/gorilla/mux"
 )
@@ -49,7 +50,7 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 		"error":  errorMsg,
 	}).Error(rawErr)
 
-	errorObj := APIErrorMessage{"error", errorMsg}
+	errorObj := tykerror.APIErrorMessage{"error", errorMsg}
 	responseMsg, err := json.Marshal(&errorObj)
 
 	if err != nil {
@@ -120,16 +121,9 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr == nil {
-		HandleAPIError(APILogTag, "Object ID already exists", keyErr, 400, w, r)
-		return
-	}
-
-	saveErr := AuthConfigStore.SetKey(key, &thisProfile)
-	if saveErr != nil {
-		HandleAPIError(APILogTag, "Update failed", saveErr, 500, w, r)
+	httpErr := tap.AddProfile(thisProfile,AuthConfigStore, GlobalDataLoader.Flush)
+	if httpErr != nil {
+		HandleAPIError(APILogTag,httpErr.Message, httpErr.Error, httpErr.Code, w, r)
 		return
 	}
 
@@ -152,21 +146,9 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if thisProfile.ID != key {
-		HandleAPIError(APILogTag, "Object ID and URI resource ID do not match", errors.New("ID Mismatch"), 400, w, r)
-		return
-	}
-
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr != nil {
-		HandleAPIError(APILogTag, "Object ID does not exist, operation not permnitted", keyErr, 400, w, r)
-		return
-	}
-
-	saveErr := AuthConfigStore.SetKey(key, &thisProfile)
-	if saveErr != nil {
-		HandleAPIError(APILogTag, "Update failed", saveErr, 500, w, r)
+	updateErr := tap.UpdateProfile(key, thisProfile, AuthConfigStore, GlobalDataLoader.Flush)
+	if updateErr != nil {
+		HandleAPIError(APILogTag,updateErr.Message,updateErr.Error, updateErr.Code,w,r)
 		return
 	}
 
@@ -175,30 +157,12 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
-
-	dumpProfile := tap.Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
-	if keyErr != nil {
-		HandleAPIError(APILogTag, "Object ID does not exist", keyErr, 400, w, r)
-		return
-	}
-
-	delErr := AuthConfigStore.DeleteKey(key)
-	if delErr != nil {
-		HandleAPIError(APILogTag, "Delete failed", delErr, 500, w, r)
+	err := tap.DeleteProfile(key,AuthConfigStore, GlobalDataLoader.Flush)
+	if err != nil {
+		HandleAPIError(APILogTag, err.Message, err.Error, err.Code, w, r)
 		return
 	}
 
 	data := make(map[string]string)
 	HandleAPIOK(data, key, 200, w, r)
-}
-
-func HandleFlushProfileList(w http.ResponseWriter, r *http.Request) {
-	fErr := GlobalDataLoader.Flush(AuthConfigStore)
-	if fErr != nil {
-		HandleAPIError(APILogTag, "Flush failed", fErr, 400, w, r)
-		return
-	}
-	data := make(map[string]string)
-	HandleAPIOK(data, "", 200, w, r)
 }

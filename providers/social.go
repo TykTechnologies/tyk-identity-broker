@@ -139,8 +139,8 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 }
 
 // Handle is the main callback delegate for the generic auth flow
-func (s *Social) Handle(w http.ResponseWriter, r *http.Request) {
-	tothic.BeginAuthHandler(w, r, &s.toth)
+func (s *Social) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	tothic.BeginAuthHandler(w, r, &s.toth, pathParams)
 }
 
 func (s *Social) checkConstraints(user interface{}) error {
@@ -149,7 +149,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 
 	if s.profile.ProviderConstraints.Domain != "" {
 		if !strings.HasSuffix(thisUser.Email, s.profile.ProviderConstraints.Domain) {
-			return errors.New("Domain constraint failed, user domain does not match profile")
+			return errors.New("domain constraint failed, user domain does not match profile")
 		}
 	}
 
@@ -162,6 +162,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+
 	user, err := tothic.CompleteUserAuth(w, r, &s.toth)
 	if err != nil {
 		fmt.Fprintln(w, err)
@@ -180,7 +181,6 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 	}
 
 	//Todo set the user's email here, befotr going back to the handler
-
 	// Complete login and redirect
 	s.handler.CompleteIdentityAction(w, r, user, s.profile)
 }

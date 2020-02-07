@@ -4,9 +4,9 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	"github.com/Jeffail/gabs"
+	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/jeffail/gabs"
 	"github.com/markbates/goth"
 	"io/ioutil"
 	"net/http"
@@ -64,7 +64,7 @@ func (p *ProxyProvider) respondFailure(rw http.ResponseWriter, r *http.Request) 
 	fmt.Fprintf(rw, "Authentication Failed")
 }
 
-func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
+func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 	// copy the request to a target
 	target, tErr := url.Parse(p.config.TargetHost)
 	if tErr != nil {
@@ -75,7 +75,6 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	thisProxy := httputil.NewSingleHostReverseProxy(target)
-
 	// intercept the response
 	recorder := httptest.NewRecorder()
 	r.URL.Path = ""
@@ -167,8 +166,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request) {
 		AccessToken: AccessToken,
 	}
 
-	proxyLogger.Debug("Username: ", thisUser.UserID)
-	proxyLogger.Debug("Access token: ", thisUser.AccessToken)
+	proxyLogger.Info("Username: ", thisUser.UserID)
+	proxyLogger.Info("Access token: ", thisUser.AccessToken)
 
 	// Complete the identity action
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)

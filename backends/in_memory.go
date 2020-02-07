@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
 var log = logger.Get()
@@ -30,7 +31,7 @@ func (m *InMemoryBackend) Init(config interface{}) {
 // SetKey will set the value of a key in the map
 func (m *InMemoryBackend) SetKey(key string, val interface{}) error {
 	if m.kv == nil {
-		return errors.New("Store not initialised!")
+		return errors.New("store not initialised!")
 	}
 
 	asByte, encErr := json.Marshal(val)
@@ -60,7 +61,7 @@ func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 	v, ok := m.kv[key]
 
 	if !ok {
-		return errors.New("Not found")
+		return errors.New("not found")
 	}
 
 	decErr := json.Unmarshal(v.([]byte), target)
@@ -72,12 +73,14 @@ func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 }
 
 func (m *InMemoryBackend) GetAll() []interface{} {
+
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	target := make([]interface{}, 0)
 	for _, v := range m.kv {
-		var thisVal interface{}
+
+		var thisVal tap.Profile
 		decErr := json.Unmarshal(v.([]byte), &thisVal)
 		if decErr != nil {
 			inMemoryLogger.Error(decErr)

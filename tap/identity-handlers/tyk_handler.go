@@ -73,13 +73,14 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 		return SSOForPortal, nil
 	}
 
-	tykHandlerLogger.Error("Action: ", action)
-	return InvalidModule, errors.New("Action does not exist")
+	tykHandlerLogger.Error("invalid action: ", action)
+	return InvalidModule, errors.New("action does not exist")
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
 // up in main
 func (t *TykIdentityHandler) Init(conf interface{}) error {
+
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {
 		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})
@@ -192,7 +193,6 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
-
 	tykHandlerLogger.WithField("return_value", returnVal).Debugf("Returned from %s endpoint", ssoEndpoint)
 	if retErr != nil {
 		tykHandlerLogger.WithField("return_value", returnVal).Error("API Response error: ", retErr)
@@ -341,7 +341,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 			}
 		}
 	}
-
 	// Generate OAuth
 	resp, oErr := t.API.RequestOAuthToken(t.oauth.APIListenPath,
 		t.oauth.RedirectURI,

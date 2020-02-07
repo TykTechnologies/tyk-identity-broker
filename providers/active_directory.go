@@ -13,7 +13,7 @@ import (
 	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
@@ -251,7 +251,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
-func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request) {
+func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request,pathParams map[string]string) {
 	s.connect()
 
 	username := r.FormValue("username")

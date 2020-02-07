@@ -44,6 +44,7 @@ type TokenResponse struct {
 type TykAPI struct {
 	GatewayConfig   EndpointConfig
 	DashboardConfig EndpointConfig
+	CustomDispatcher func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
 }
 
 // PortalDeveloper represents a portal developer
@@ -134,6 +135,11 @@ const (
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
+	//if user set custom dispatcher then lets use it
+	if t.CustomDispatcher != nil{
+		return t.CustomDispatcher(target,method,usercode,body)
+	}
+
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
@@ -265,6 +271,7 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	case GATEWAY:
 		retBytes, retCode, dispatchErr = t.DispatchGateway(target, method, body, ctype)
 	case DASH:
+
 		retBytes, retCode, dispatchErr = t.DispatchDashboard(target, method, creds, body)
 	case DASH_SUPER:
 		retBytes, retCode, dispatchErr = t.DispatchDashboardSuper(target, method, body)
@@ -328,12 +335,14 @@ func (t *TykAPI) CreateAdminSSONonce(data interface{}) (interface{}, Endpoint, e
 
 	if dErr == nil && retCode == http.StatusOK {
 		tykAPILogger.Info("Single Sign-On nonce created successfully via Admin API!")
+	}else{
+		tykAPILogger.Error("could not create nonce for admin api:", dErr.Error())
 	}
 
 	return returnVal, endpoint, dErr
 }
 
-// GetDeveloper will retrieve a deverloper from the Advanced API using their Email address
+// GetDeveloper will retrieve a developer from the Advanced API using their Email address
 func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDeveloper, error) {
 	asStr := url.QueryEscape(DeveloperEmail)
 	target := strings.Join([]string{string(PORTAL_DEVS), asStr}, "/")

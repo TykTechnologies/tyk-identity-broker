@@ -116,6 +116,18 @@ func (r *RedisBackend) Init(config interface{}) {
 	redisLogger.Info("Initialized")
 }
 
+// SetDb from existent connection
+func (r *RedisBackend) SetDb(db redis.UniversalClient) {
+	r.db = db
+	redisLogger.Info("Set DB")
+}
+
+// SetDbMu set mutex from existent connection
+func (r *RedisBackend) SetDbMu(mu sync.RWMutex) {
+	r.dbMu = mu
+	redisLogger.Info("Set db mutex")
+}
+
 func (r *RedisBackend) SetKey(key string, val interface{}) error {
 	db := r.ensureConnection()
 
