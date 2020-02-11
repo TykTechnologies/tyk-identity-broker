@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -101,10 +100,6 @@ func (r *RedisBackend) Connect() bool {
 
 	r.db = r.newRedisClusterPool()
 	return true
-}
-
-func (r *RedisBackend) cleanKey(keyName string) string {
-	return strings.Replace(keyName, r.KeyPrefix, "", 1)
 }
 
 // Init will create the initial in-memory store structures
