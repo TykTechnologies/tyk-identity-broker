@@ -470,7 +470,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	return
 }
 
-// CompleteIdentityAction will log a user into Tyk dashbaord or Tyk portal
+// CompleteIdentityAction will log a user into Tyk dashboard or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
 		t.CompleteIdentityActionForDashboard(w, r, i, profile)

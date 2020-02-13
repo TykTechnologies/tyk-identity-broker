@@ -5,7 +5,6 @@ import (
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/go-redis/redis"
-	"sync"
 )
 
 var log = logger.Get()
@@ -26,13 +25,12 @@ func InitBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 }
 
 // CreateBackendFromRedisConn: creates a redis backend from an existent redis Connection
-func CreateBackendFromRedisConn(db redis.UniversalClient,mu sync.RWMutex, keyPrefix string) tap.AuthRegisterBackend {
+func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.AuthRegisterBackend {
 
 	redisBackend := &backends.RedisBackend{KeyPrefix: keyPrefix}
 
 	initializerLogger.Info("Initializing Identity Cache")
 	redisBackend.SetDb(db)
-	redisBackend.SetDbMu(mu)
 
 	return redisBackend
 }

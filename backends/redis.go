@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -29,7 +28,6 @@ type RedisConfig struct {
 
 type RedisBackend struct {
 	db        redis.UniversalClient
-	dbMu      sync.RWMutex
 	config    *RedisConfig
 	KeyPrefix string
 }
@@ -99,8 +97,6 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 }
 
 func (r *RedisBackend) Connect() bool {
-	r.dbMu.Lock()
-	defer r.dbMu.Unlock()
 
 	r.db = r.newRedisClusterPool()
 	return true
@@ -120,12 +116,6 @@ func (r *RedisBackend) Init(config interface{}) {
 func (r *RedisBackend) SetDb(db redis.UniversalClient) {
 	r.db = db
 	redisLogger.Info("Set DB")
-}
-
-// SetDbMu set mutex from existent connection
-func (r *RedisBackend) SetDbMu(mu sync.RWMutex) {
-	r.dbMu = mu
-	redisLogger.Info("Set db mutex")
 }
 
 func (r *RedisBackend) SetKey(key string, val interface{}) error {
@@ -162,9 +152,6 @@ func (r *RedisBackend) DeleteKey(key string) error {
 }
 
 func (r *RedisBackend) getDB() redis.UniversalClient {
-	r.dbMu.RLock()
-	defer r.dbMu.RUnlock()
-
 	return r.db
 }
 
