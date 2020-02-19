@@ -66,6 +66,7 @@ func (p *ProxyProvider) respondFailure(rw http.ResponseWriter, r *http.Request) 
 
 func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 	// copy the request to a target
+
 	target, tErr := url.Parse(p.config.TargetHost)
 	if tErr != nil {
 		proxyLogger.WithFields(logrus.Fields{

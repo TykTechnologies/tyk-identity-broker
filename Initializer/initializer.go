@@ -26,7 +26,7 @@ func InitBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 
 // CreateBackendFromRedisConn: creates a redis backend from an existent redis Connection
 func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.AuthRegisterBackend {
-
+	logger.SetLogger(logger.GetRaw())
 	redisBackend := &backends.RedisBackend{KeyPrefix: keyPrefix}
 
 	initializerLogger.Info("Initializing Identity Cache")
