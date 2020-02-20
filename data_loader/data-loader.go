@@ -1,12 +1,13 @@
 package data_loader
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"gopkg.in/mgo.v2"
 )
 
+var log = logger.Get()
 var dataLogger = log.WithField("prefix", "TIB DATA LOADER")
 
 // DataLoader is an interface that defines how data is loaded from a source into a AuthRegisterBackend interface store
@@ -16,11 +17,11 @@ type DataLoader interface {
 	Flush(tap.AuthRegisterBackend) error
 }
 
-func CreateMongoLoaderFromConnection(db *mgo.Database)DataLoader{
+func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
 	var dataLoader DataLoader
 
 	dataLogger.Info("Set mongo loader for TIB")
-	dataLoader = &MongoLoader{Db:db}
+	dataLoader = &MongoLoader{Db: db}
 
 	return dataLoader
 }
@@ -37,26 +38,26 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename *strin
 	}
 
 	switch storageType {
-		case configuration.MONGO:
-			dataLoader = &MongoLoader{}
+	case configuration.MONGO:
+		dataLoader = &MongoLoader{}
 
-			mongoConf := config.Storage.MongoConf
-			dialInfo, err := MongoDialInfo(mongoConf.MongoURL, mongoConf.MongoUseSSL, mongoConf.MongoSSLInsecureSkipVerify)
-			if err != nil {
-				dataLogger.Error("Error getting mongo settings: " + err.Error())
-				return nil, err
-			}
-			loaderConf = MongoLoaderConf{
-				DialInfo: dialInfo,
-			}
-		default:
-			//default: FILE
-			dataLoader = &FileLoader{}
-			//pDir := path.Join(config.ProfileDir, *ProfileFilename)
-			loaderConf = configuration.FileLoaderConf{
-				FileName:   *ProfileFilename,
-				ProfileDir: config.ProfileDir,
-			}
+		mongoConf := config.Storage.MongoConf
+		dialInfo, err := MongoDialInfo(mongoConf.MongoURL, mongoConf.MongoUseSSL, mongoConf.MongoSSLInsecureSkipVerify)
+		if err != nil {
+			dataLogger.Error("Error getting mongo settings: " + err.Error())
+			return nil, err
+		}
+		loaderConf = MongoLoaderConf{
+			DialInfo: dialInfo,
+		}
+	default:
+		//default: FILE
+		dataLoader = &FileLoader{}
+		//pDir := path.Join(config.ProfileDir, *ProfileFilename)
+		loaderConf = configuration.FileLoaderConf{
+			FileName:   *ProfileFilename,
+			ProfileDir: config.ProfileDir,
+		}
 	}
 
 	err := dataLoader.Init(loaderConf)
