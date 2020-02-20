@@ -18,15 +18,18 @@ func (f *RawFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func init() {
-	log.Info("set format")
 	formatter := new(prefixed.TextFormatter)
 	formatter.TimestampFormat = `Jan 02 15:04:05`
 	formatter.FullTimestamp = true
 
 	log.Formatter = formatter
 	rawLog.Formatter = new(RawFormatter)
-	log.Info("formate set")
 }
+
+func SetFormatter(newFormatter logrus.TextFormatter){
+	log.Formatter = newFormatter
+}
+
 
 func Get() *logrus.Logger {
 	switch strings.ToLower(os.Getenv("TYK_LOGLEVEL")) {
