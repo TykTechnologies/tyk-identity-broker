@@ -26,11 +26,6 @@ func init() {
 	rawLog.Formatter = new(RawFormatter)
 }
 
-func SetFormatter(newFormatter logrus.TextFormatter){
-	log.Formatter = newFormatter
-}
-
-
 func Get() *logrus.Logger {
 	switch strings.ToLower(os.Getenv("TYK_LOGLEVEL")) {
 	case "error":
