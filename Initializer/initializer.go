@@ -39,6 +39,7 @@ func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.
 func SetLogger(newLogger *logrus.Logger){
 	logger.SetLogger(newLogger)
 	log = newLogger
+	initializerLogger = &logrus.Entry{Logger:log}
 }
 
 func CreateInMemoryBackend() tap.AuthRegisterBackend  {
