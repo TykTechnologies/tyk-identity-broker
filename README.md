@@ -31,7 +31,7 @@ Table of Contents
             * [TykAPISettings.DashboardConfig.Endpoint](#tykapisettingsdashboardconfigendpoint)
             * [TykAPISettings.DashboardConfig.Port](#tykapisettingsdashboardconfigport)
             * [TykAPISettings.DashboardConfig.AdminSecret](#tykapisettingsdashboardconfigadminsecret)
-         * [The profiles.conf file](#the-profilesconf-file)
+         * [The profiles.json file](#the-profilesjson-file)
       * [Using Identity Providers](#using-identity-providers)
          * [Social](#social)
             * [Authenticate a user for the portal using Google and a constraint:](#authenticate-a-user-for-the-portal-using-google-and-a-constraint)
@@ -67,7 +67,7 @@ Table of Contents
 Tyk Identity Broker (TIB)
 ==============================
 
-## What is Tyk Identity Broker?
+## What is the Tyk Identity Broker?
 
 The Tyk Identity Broker provides a service-level component that enables delegated identities to be authorized and provide authenticated access to various Tyk-powered components such as the Tyk Dashboard, the Tyk Developer Portal and Tyk Gateway API flows such as OAuth access tokens, and regular API tokens.
 
@@ -85,8 +85,8 @@ You can install via Docker https://hub.docker.com/r/tykio/tyk-identity-broker/
 
 Of via packages (deb or rpm): https://packagecloud.io/tyk/tyk-identity-broker/install#bash-deb
 
-#### Run via docker
-To run the docker, you can use the following command (assuming that you run it from the directory which contains tib.conf and profiles.json files, which **must** be edited according to [How to configure TIB](#how-to-configure-tib) section before running it):
+#### Run via Docker
+To run the container, you can use the following command (assuming that you run it from the directory which contains `tib.conf` and `profiles.json` files, which **must** be edited according to [How to configure TIB](#how-to-configure-tib) section before running it):
 
 ```
 docker run -p 3010:3010 -v $(pwd)/tib.conf:/opt/tyk-identity-broker/tib.conf -v $(pwd)/profiles.json:/opt/tyk-identity-broker/profiles.json tykio/tyk-identity-broker
@@ -181,7 +181,7 @@ The various configuration options are outlined below:
 
 #### `Secret`
 
-The REST API secret to configure the Tyk Identity Broker remotely.
+The Gateway API secret to configure the Tyk Identity Broker remotely.
 
 #### `HttpServerOptions.UseSSL`
 
@@ -202,7 +202,7 @@ This is useful when using OpenID Connect (OIDC). During the authorization there 
 
 #### `BackEnd`
 
-TIB is quite modular and different back-ends can be generated quite easily, out of the Box, TIb will store profile configurations in memory, which does not require any new configuration. 
+TIB is quite modular and different back-ends can be generated quite easily, out of the Box, TIB will store profile configurations in memory, which does not require any new configuration. 
 
 For Identity Handlers that provide token-based access, it is possible to enforce a "One token per provider, per user" policy, which keeps a cache of tokens assigned to identities in Redis, this is so that the broker can be scaled and share the cache across instances. 
 
@@ -246,21 +246,21 @@ The Port to use on the Tyk Gateway host
 
 #### `TykAPISettings.GatewayConfig.AdminSecret`
 
-The API secret for the Tyk Gateway REST API
+The API secret for the Tyk Gateway API
 
 #### `TykAPISettings.DashboardConfig.Endpoint`
 
-The hostname of your Dashboard (Advanced API)
+The hostname of your Dashboard API
 
 #### `TykAPISettings.DashboardConfig.Port`
 
-The port of your Advanced API
+The port of your Dashboard API
 
 #### `TykAPISettings.DashboardConfig.AdminSecret`
 
-The high-level secret for the Advanced API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Advanced Admin API to create one-time tokens for access.
+The high-level secret for the Dashboard API. This is required because of the SSO-nature of some of the actions provided by TIB, it requires the capability to access a special SSO endpoint in the Dashboard Admin API to create one-time tokens for access.
 
-### The `profiles.conf` file
+### The `profiles.json` file
 
 The Profiles configuration file outlines which identity providers to match to which handlers and what actions to perform. The entries in this file encapsulate the activity for a single endpoint based on the ID and provider name.
 
@@ -334,7 +334,7 @@ In the following sections we outline multiple configurations you can use for Ide
 
 Tyk Identity Broker comes with a few providers built-in, these are specialized around a few use cases, but we focus primarily on:
 
-- Enabling easy access via social logins to the developer portal (e.g. Github login)
+- Enabling easy access via social logins to the developer portal (e.g. GitHub login)
 - Enabling internal access to the dashboard (e.g. via LDAP/ActiveDirectory)
 - Enabling easy token generation from a third party for things such as mobile apps and webapps without complex configuration
 
@@ -529,7 +529,7 @@ SSO for Salesforce Community is handled differently. Instead of using `salesforc
 
 A common use case for Tyk Gateway users is to enable users to log into a web app or mobile app using a social provider such as Google, but have that user use a token in the app that is time-delimited and issued by their own API (or in this case, Tyk). 
 
-Tyk can act as an OAuth provider, but requires some glue code to work, in particular, generating a token based on the authentication of a third party, which needs to run on a server hosted by the owner of the application. This is not ideal in many scenarios where authentication has been delegated to a third-party provider (such as Google or Github). 
+Tyk can act as an OAuth provider, but requires some glue code to work, in particular, generating a token based on the authentication of a third party, which needs to run on a server hosted by the owner of the application. This is not ideal in many scenarios where authentication has been delegated to a third-party provider (such as Google or GitHub). 
 
 In this case, we can enable this flow with Tyk Gateway by Using TIB. 
 
@@ -790,6 +790,24 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 	"Type": "passthrough"
 }
 ```
+
+#### User Group ID Support
+
+You can specify User Groups within a TIB Profile. This can either be a static or dynamic setting.
+
+```
+{
+  "DefaultUserGroupID": "default-user-group",
+  "CustomUserGroupField": "scope",
+  "UserGroupMapping": {
+    "admin": "<admin-group-id>",
+    "analytics": "<analytics-group-id>"
+  }
+}
+```
+* For a static setting, use `DefaultUserGroupID`
+* For a dynamic setting based on OAuth/OpenID scope, use `CustomUserGroupField` with  `UserGroupMapping` listing your User Groups and ID in the following format - `"<User Group Name>": "<ID>".
+* 
 
 ## The Broker API
 
