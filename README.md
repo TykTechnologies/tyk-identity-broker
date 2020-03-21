@@ -479,6 +479,7 @@ Similar to Google or Twitter auth, you can configure TIB to work with any OpenID
 			"Name": "openid-connect",
 			"Key": "OKTA-CLIENT-KEY",
 			"Secret": "OKTA-CLIENT-SECRET",
+			"Scopes": ["openid", "email"],
 			"DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration"
 		}]
 	},
