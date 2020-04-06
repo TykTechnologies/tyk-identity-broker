@@ -76,8 +76,8 @@ The Tyk Identity Broker provides a service-level component that enables delegate
 TIB requires:
 
 - Tyk Gateway v1.9.1+
-- Tyk Dashboard v0.9.7.1+
 - Redis
+- Tyk Dashboard v0.9.7.1+ (Only if you want to do SSO to Tyk Dashbaord UI or Tyk Developer Portal)
 
 ### Installation
 
