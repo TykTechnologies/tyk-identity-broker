@@ -185,18 +185,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			}
 		}
 
-		// check if we have a field to find roles in
-		if t.profile.CustomPortalGroupField != "" {
-			groups := ""
-			if gUser.RawData[t.profile.CustomPortalGroupField] != nil {
-				groups = gUser.RawData[t.profile.CustomPortalGroupField].(string)
-			}
-			for _, group := range strings.Split(groups, " ") {
-				if gName, ok := t.profile.PortalGroupMapping[group]; ok {
-					portalScopes = append(portalScopes, gName)
-				}
-			}
-		}
+		portalScopes = calculateDeveloperScopes(t, gUser)
+
 	}
 
 	accessRequest := SSOAccessData{
@@ -279,20 +269,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		tykHandlerLogger.Info("Creating user")
 		tykHandlerLogger.WithField("user_name", user.Email).Debug()
 
-		portalScopes := make([]string, 0)
-
-		// check if we have a field to find roles in
-		if t.profile.CustomPortalGroupField != "" {
-			groups := ""
-			if user.RawData[t.profile.CustomPortalGroupField] != nil {
-				groups = user.RawData[t.profile.CustomPortalGroupField].(string)
-			}
-			for _, group := range strings.Split(groups, " ") {
-				if gName, ok := t.profile.PortalGroupMapping[group]; ok {
-					portalScopes = append(portalScopes, gName)
-				}
-			}
-		}
+		portalScopes := calculateDeveloperScopes(t, user)
 
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
@@ -517,4 +494,20 @@ func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *ht
 		t.CompleteIdentityActionForTokenAuth(w, r, i, profile)
 		return
 	}
+}
+
+func calculateDeveloperScopes(t *TykIdentityHandler, user goth.User) (portalScopes []string) {
+	// check if we have a field to find roles in
+	if t.profile.CustomPortalGroupField != "" {
+		groups := ""
+		if user.RawData[t.profile.CustomPortalGroupField] != nil {
+			groups = user.RawData[t.profile.CustomPortalGroupField].(string)
+		}
+		for _, group := range strings.Split(groups, " ") {
+			if gName, ok := t.profile.PortalGroupMapping[group]; ok {
+				portalScopes = append(portalScopes, gName)
+			}
+		}
+	}
+	return portalScopes
 }
