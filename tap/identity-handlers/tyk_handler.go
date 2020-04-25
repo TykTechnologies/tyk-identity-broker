@@ -36,6 +36,7 @@ type SSOAccessData struct {
 	EmailAddress string
 	DisplayName  string
 	GroupID      string
+	PortalScopes []string
 }
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
@@ -127,7 +128,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 }
 
 // CreateIdentity will generate an SSO token that can be used with the tyk SSO endpoints for dash or portal.
-// Identity is assumed to be a goth.User object as this is what we are stnadardiseing on.
+// Identity is assumed to be a goth.User object as this is what we are standardising on.
 func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 	tykHandlerLogger.Debugf("Creating identity for user: %#v", i.(goth.User))
@@ -142,6 +143,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	email := ""
 	displayName := ""
 	groupID := ""
+	portalScopes := make([]string, 0)
 	if ok {
 		if t.profile.CustomEmailField != "" {
 			if gUser.RawData[t.profile.CustomEmailField] != nil {
@@ -182,6 +184,19 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 				}
 			}
 		}
+
+		// check if we have a field to find roles in
+		if t.profile.CustomPortalGroupField != "" {
+			groups := ""
+			if gUser.RawData[t.profile.CustomPortalGroupField] != nil {
+				groups = gUser.RawData[t.profile.CustomPortalGroupField].(string)
+			}
+			for _, group := range strings.Split(groups, " ") {
+				if gName, ok := t.profile.PortalGroupMapping[group]; ok {
+					portalScopes = append(portalScopes, gName)
+				}
+			}
+		}
 	}
 
 	accessRequest := SSOAccessData{
@@ -190,6 +205,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		EmailAddress: email,
 		DisplayName:  displayName,
 		GroupID:      groupID,
+		PortalScopes: portalScopes,
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
@@ -228,7 +244,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForDashboard(w http.ResponseW
 }
 
 // CompleteIdentityActionForPortal will generate an identity for a portal user based, so it will AddOrUpdate that
-// user depnding on if they exist or not and validate the login using a one-time nonce.
+// user depending on if they exist or not and validate the login using a one-time nonce.
 func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	// Create a nonce
 	tykHandlerLogger.Info("Creating nonce")
@@ -263,6 +279,21 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		tykHandlerLogger.Info("Creating user")
 		tykHandlerLogger.WithField("user_name", user.Email).Debug()
 
+		portalScopes := make([]string, 0)
+
+		// check if we have a field to find roles in
+		if t.profile.CustomPortalGroupField != "" {
+			groups := ""
+			if user.RawData[t.profile.CustomPortalGroupField] != nil {
+				groups = user.RawData[t.profile.CustomPortalGroupField].(string)
+			}
+			for _, group := range strings.Split(groups, " ") {
+				if gName, ok := t.profile.PortalGroupMapping[group]; ok {
+					portalScopes = append(portalScopes, gName)
+				}
+			}
+		}
+
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
 			Password:      uuid.NewV4().String(),
@@ -273,6 +304,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 			Fields:        map[string]string{},
 			Nonce:         nonce,
 			SSOKey:        sso_key,
+			PortalScopes:  portalScopes,
 		}
 		createErr := t.API.CreateDeveloper(t.dashboardUserAPICred, newUser)
 		if createErr != nil {

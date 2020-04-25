@@ -42,8 +42,8 @@ type TokenResponse struct {
 
 // TykAPI is the main object (and configuration) of the Tyk API wrapper
 type TykAPI struct {
-	GatewayConfig   EndpointConfig
-	DashboardConfig EndpointConfig
+	GatewayConfig    EndpointConfig
+	DashboardConfig  EndpointConfig
 	CustomDispatcher func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
 }
 
@@ -60,6 +60,7 @@ type PortalDeveloper struct {
 	Fields        map[string]string `bson:"fields" json:"fields"`
 	Nonce         string            `bson:"nonce" json:"nonce"`
 	SSOKey        string            `bson:"sso_key" json:"sso_key"`
+	PortalScopes  []string          `bson:"portal_scopes" json:"portal_scopes"`
 }
 
 // HashType is an encryption method for basic auth keys
@@ -136,8 +137,8 @@ const (
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	//if user set custom dispatcher then lets use it
-	if t.CustomDispatcher != nil{
-		return t.CustomDispatcher(target,method,usercode,body)
+	if t.CustomDispatcher != nil {
+		return t.CustomDispatcher(target, method, usercode, body)
 	}
 
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
@@ -335,7 +336,7 @@ func (t *TykAPI) CreateAdminSSONonce(data interface{}) (interface{}, Endpoint, e
 
 	if dErr == nil && retCode == http.StatusOK {
 		tykAPILogger.Info("Single Sign-On nonce created successfully via Admin API!")
-	}else{
+	} else {
 		tykAPILogger.Error("could not create nonce for admin api:", dErr.Error())
 	}
 
@@ -354,7 +355,7 @@ func (t *TykAPI) GetDeveloper(UserCred string, DeveloperEmail string) (PortalDev
 	return retUser, dErr
 }
 
-// GetDeveloperBySSOKey will retrieve a deverloper from the Advanced API using their SSO Key address
+// GetDeveloperBySSOKey will retrieve a developer from the Advanced API using their SSO Key address
 func (t *TykAPI) GetDeveloperBySSOKey(UserCred string, SsoKey string) (PortalDeveloper, error, bool) {
 	SsoKeyStr := url.QueryEscape(SsoKey)
 	target := strings.Join([]string{string(PORTAL_DEVS_SSO), SsoKeyStr}, "/")
