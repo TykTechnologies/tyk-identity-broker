@@ -8,7 +8,9 @@ import (
 
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/sirupsen/logrus"
 )
+
 
 var failCount int
 var log = logger.Get()
@@ -77,6 +79,11 @@ type Configuration struct {
 
 //LoadConfig will load the config from a file
 func LoadConfig(filePath string, conf *Configuration) {
+
+	log = logger.Get()
+	mainLogger = &logrus.Entry{Logger:log}
+	mainLogger = mainLogger.Logger.WithField("prefix", "TIB CONFIG")
+
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		mainLogger.Error("Couldn't load configuration file: ", err)

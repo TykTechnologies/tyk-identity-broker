@@ -3,13 +3,15 @@ package backends
 import (
 	"crypto/tls"
 	"encoding/json"
-	"strconv"
-	"time"
+	"github.com/TykTechnologies/tyk-identity-broker/log"
 
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
+	"strconv"
+	"time"
 )
 
-var redisLogger = log.WithField("prefix", "REDIS STORE")
+var redisLogger = logger.WithField("prefix", "TIB REDIS STORE")
 
 type RedisConfig struct {
 	MaxIdle               int
@@ -114,6 +116,10 @@ func (r *RedisBackend) Init(config interface{}) {
 
 // SetDb from existent connection
 func (r *RedisBackend) SetDb(db redis.UniversalClient) {
+	logger = log.Get()
+	redisLogger = &logrus.Entry{Logger:logger}
+	redisLogger = redisLogger.Logger.WithField("prefix", "TIB REDIS STORE")
+
 	r.db = db
 	redisLogger.Info("Set DB")
 }

@@ -7,6 +7,8 @@
 package providers
 
 import (
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/http"
@@ -15,6 +17,10 @@ import (
 	"sync"
 	"time"
 )
+
+var onceReloadReverseProxyLogger sync.Once
+var reverseProxyLogTag =  "Reverse proxy"
+var reverseProxyLogger = log.WithField("prefix", reverseProxyLogTag)
 
 // onExitFlushLoop is a callback set by tests to detect the state of the
 // flushLoop() goroutine.
@@ -121,6 +127,13 @@ func (c *runOnFirstRead) Read(bs []byte) (int, error) {
 }
 
 func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	//if an external logger was set, then lets reload it to inherit those configs
+	onceReloadReverseProxyLogger.Do(func() {
+		log = logger.Get()
+		reverseProxyLogger = &logrus.Entry{Logger:log}
+		reverseProxyLogger = reverseProxyLogger.Logger.WithField("prefix", reverseProxyLogTag)
+	})
+
 	transport := p.Transport
 	if transport == nil {
 		transport = http.DefaultTransport
@@ -192,7 +205,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	res, err := transport.RoundTrip(outreq)
 	if err != nil {
-		p.logf("http: proxy error: %v", err)
+		reverseProxyLogger.Error(err)
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}

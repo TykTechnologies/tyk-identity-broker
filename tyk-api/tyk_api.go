@@ -9,15 +9,19 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/markbates/goth"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 )
 
+var onceReloadTykApiLogger sync.Once
 var log = logger.Get()
-var tykAPILogger = log.WithField("prefix", "TYK_API")
+var tykApiLogTag = "TYK_API"
+var tykAPILogger = log.WithField("prefix", tykApiLogTag)
 
 type Endpoint string   // A type for endpoints
 type TykAPIName string // A type for Tyk API names (e.g. dashboard, gateway)
@@ -132,6 +136,16 @@ const (
 	HASH_PlainText HashType = ""
 	HASH_BCrypt    HashType = "bcrypt"
 )
+
+// ReloadLogger in case that user set an external logger
+func ReloadLogger(){
+	//if an external logger was set, then lets reload it to inherit those configs
+	onceReloadTykApiLogger.Do(func() {
+		log = logger.Get()
+		tykAPILogger = &logrus.Entry{Logger:log}
+		tykAPILogger = tykAPILogger.Logger.WithField("prefix", tykApiLogTag)
+	})
+}
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
@@ -271,7 +285,6 @@ func (t *TykAPI) DispatchAndDecode(target Endpoint, method string, APIName TykAP
 	case GATEWAY:
 		retBytes, retCode, dispatchErr = t.DispatchGateway(target, method, body, ctype)
 	case DASH:
-
 		retBytes, retCode, dispatchErr = t.DispatchDashboard(target, method, creds, body)
 	case DASH_SUPER:
 		retBytes, retCode, dispatchErr = t.DispatchDashboardSuper(target, method, body)

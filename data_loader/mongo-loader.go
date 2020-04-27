@@ -2,8 +2,8 @@ package data_loader
 
 import (
 	"crypto/tls"
-	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 	"net"
 	"time"

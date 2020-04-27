@@ -1,12 +1,14 @@
 package data_loader
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 )
 
+var log = logger.Get()
 var dataLogger = log.WithField("prefix", "TIB DATA LOADER")
 
 // DataLoader is an interface that defines how data is loaded from a source into a AuthRegisterBackend interface store
@@ -18,6 +20,10 @@ type DataLoader interface {
 
 func CreateMongoLoaderFromConnection(db *mgo.Database)DataLoader{
 	var dataLoader DataLoader
+
+	log = logger.Get()
+	dataLogger = &logrus.Entry{Logger:log}
+	dataLogger = dataLogger.Logger.WithField("prefix", "TIB DATA LOADER")
 
 	dataLogger.Info("Set mongo loader for TIB")
 	dataLoader = &MongoLoader{Db:db}

@@ -5,18 +5,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Jeffail/gabs"
-	"github.com/sirupsen/logrus"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/markbates/goth"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"sync"
 )
 
-var proxyLogger = log.WithField("prefix", "PROXY PROVIDER")
+var onceReloadProxyLogger sync.Once
+var proxyLogTag = "PROXY PROVIDER"
+var proxyLogger = log.WithField("prefix", proxyLogTag)
 
 type ProxyHandlerConfig struct {
 	TargetHost                         string
@@ -36,6 +40,14 @@ type ProxyProvider struct {
 }
 
 func (p *ProxyProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
+
+	//if a logger was set, then lets reload it to inherit those configs
+	onceReloadProxyLogger.Do(func() {
+		log = logger.Get()
+		proxyLogger = &logrus.Entry{Logger:log}
+		proxyLogger = proxyLogger.Logger.WithField("prefix", proxyLogTag)
+	})
+
 	p.handler = handler
 	p.profile = profile
 

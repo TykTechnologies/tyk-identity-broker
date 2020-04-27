@@ -10,7 +10,7 @@ import (
 )
 
 var log = logger.Get()
-var initializerLogger = log.WithField("prefix", "INITIALIZER")
+var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
 // initBackend: Get our backend to use from configs files, new backends must be registered here
 func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{})(tap.AuthRegisterBackend,tap.AuthRegisterBackend) {
@@ -39,7 +39,9 @@ func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.
 func SetLogger(newLogger *logrus.Logger){
 	logger.SetLogger(newLogger)
 	log = newLogger
+
 	initializerLogger = &logrus.Entry{Logger:log}
+	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
 func CreateInMemoryBackend() tap.AuthRegisterBackend  {
