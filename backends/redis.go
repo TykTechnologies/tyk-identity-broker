@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-var redisLogger = logger.WithField("prefix", "TIB REDIS STORE")
+var redisLoggerTag = "TIB REDIS STORE"
+var redisLogger = logger.WithField("prefix", redisLoggerTag)
 
 type RedisConfig struct {
 	MaxIdle               int

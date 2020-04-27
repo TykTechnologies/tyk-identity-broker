@@ -14,7 +14,8 @@ import (
 )
 
 var logger = log.Get()
-var inMemoryLogger = logger.WithField("prefix", "TIB IN-MEMORY STORE")
+var inMemoryLogTag = "TIB IN-MEMORY STORE"
+var inMemoryLogger = logger.WithField("prefix", inMemoryLogTag)
 
 // InMemoryBackend implements tap.AuthRegisterBackend to store profile configs in memory
 type InMemoryBackend struct {
@@ -26,7 +27,7 @@ type InMemoryBackend struct {
 func (m *InMemoryBackend) Init(config interface{}) {
 	logger = log.Get()
 	inMemoryLogger = &logrus.Entry{Logger:logger}
-	inMemoryLogger = inMemoryLogger.Logger.WithField("prefix", "TIB IN-MEMORY STORE")
+	inMemoryLogger = inMemoryLogger.Logger.WithField("prefix", inMemoryLogTag)
 
 	inMemoryLogger.Info("Initialised")
 	m.kv = make(map[string]interface{})

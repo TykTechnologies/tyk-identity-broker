@@ -14,7 +14,8 @@ import (
 
 var failCount int
 var log = logger.Get()
-var mainLogger = log.WithField("prefix", "CONFIG")
+var mainLoggerTag = "CONFIG"
+var mainLogger = log.WithField("prefix", mainLoggerTag)
 
 const (
 	MONGO = "mongo"
@@ -82,7 +83,7 @@ func LoadConfig(filePath string, conf *Configuration) {
 
 	log = logger.Get()
 	mainLogger = &logrus.Entry{Logger:log}
-	mainLogger = mainLogger.Logger.WithField("prefix", "TIB CONFIG")
+	mainLogger = mainLogger.Logger.WithField("prefix", mainLoggerTag)
 
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {
