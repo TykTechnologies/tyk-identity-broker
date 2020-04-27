@@ -30,7 +30,7 @@ func CreateMongoLoaderFromConnection(db *mgo.Database)DataLoader{
 
 	reloadDataLoaderLogger()
 	dataLogger.Info("Set mongo loader for TIB")
-	dataLoader = &MongoLoader{Db:db}
+	dataLoader = &MongoLoader{Db: db}
 
 	return dataLoader
 }
@@ -48,26 +48,26 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename *strin
 	}
 
 	switch storageType {
-		case configuration.MONGO:
-			dataLoader = &MongoLoader{}
+	case configuration.MONGO:
+		dataLoader = &MongoLoader{}
 
-			mongoConf := config.Storage.MongoConf
-			dialInfo, err := MongoDialInfo(mongoConf.MongoURL, mongoConf.MongoUseSSL, mongoConf.MongoSSLInsecureSkipVerify)
-			if err != nil {
-				dataLogger.Error("Error getting mongo settings: " + err.Error())
-				return nil, err
-			}
-			loaderConf = MongoLoaderConf{
-				DialInfo: dialInfo,
-			}
-		default:
-			//default: FILE
-			dataLoader = &FileLoader{}
-			//pDir := path.Join(config.ProfileDir, *ProfileFilename)
-			loaderConf = configuration.FileLoaderConf{
-				FileName:   *ProfileFilename,
-				ProfileDir: config.ProfileDir,
-			}
+		mongoConf := config.Storage.MongoConf
+		dialInfo, err := MongoDialInfo(mongoConf.MongoURL, mongoConf.MongoUseSSL, mongoConf.MongoSSLInsecureSkipVerify)
+		if err != nil {
+			dataLogger.Error("Error getting mongo settings: " + err.Error())
+			return nil, err
+		}
+		loaderConf = MongoLoaderConf{
+			DialInfo: dialInfo,
+		}
+	default:
+		//default: FILE
+		dataLoader = &FileLoader{}
+		//pDir := path.Join(config.ProfileDir, *ProfileFilename)
+		loaderConf = configuration.FileLoaderConf{
+			FileName:   *ProfileFilename,
+			ProfileDir: config.ProfileDir,
+		}
 	}
 
 	err := dataLoader.Init(loaderConf)

@@ -3,6 +3,7 @@ package tap
 import (
 	"errors"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"net/http"
 )
 
 var log = logger.Get()
@@ -19,7 +20,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 	if keyErr == nil {
 		return &HttpError{
 			Message: "Object ID already exists",
-			Code:    400,
+			Code:    http.StatusBadRequest,
 			Error:   keyErr,
 		}
 	}
@@ -28,7 +29,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 	if saveErr != nil {
 		return &HttpError{
 			Message: "Update failed",
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 			Error:   saveErr,
 		}
 	}
@@ -37,7 +38,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 	if fErr != nil {
 		return &HttpError{
 			Message: "flush failed",
-			Code:    400,
+			Code:    http.StatusBadRequest,
 			Error:   fErr,
 		}
 	}
@@ -51,7 +52,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	if profile.ID != key {
 		return &HttpError{
 			Message: "Object ID and URI resource ID do not match",
-			Code:    400,
+			Code:    http.StatusBadRequest,
 			Error:   errors.New("ID Mismatch"),
 		}
 	}
@@ -61,7 +62,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist, operation not permitted",
-			Code:    400,
+			Code:    http.StatusNotFound,
 			Error:   keyErr,
 		}
 	}
@@ -70,7 +71,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	if saveErr != nil {
 		return &HttpError{
 			Message: "Update failed",
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 			Error:   saveErr,
 		}
 	}
@@ -79,7 +80,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	if fErr != nil {
 		return &HttpError{
 			Message: "flush failed",
-			Code:    400,
+			Code:    http.StatusBadRequest,
 			Error:   fErr,
 		}
 	}
@@ -94,7 +95,7 @@ func DeleteProfile(key string,AuthConfigStore AuthRegisterBackend, flush func(ba
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist",
-			Code:    400,
+			Code:    http.StatusNotFound,
 			Error:  keyErr,
 		}
 	}
@@ -103,7 +104,7 @@ func DeleteProfile(key string,AuthConfigStore AuthRegisterBackend, flush func(ba
 	if delErr != nil {
 		return &HttpError{
 			Message: "Delete failed",
-			Code:    500,
+			Code:    http.StatusInternalServerError,
 			Error:   delErr,
 		}
 	}
@@ -112,7 +113,7 @@ func DeleteProfile(key string,AuthConfigStore AuthRegisterBackend, flush func(ba
 	if fErr != nil {
 		return &HttpError{
 			Message: "flush failed",
-			Code:    400,
+			Code:    http.StatusBadRequest,
 			Error:   fErr,
 		}
 	}
