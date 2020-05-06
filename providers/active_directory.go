@@ -9,15 +9,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/go-ldap/ldap"
 	"github.com/markbates/goth"
 
-	"github.com/sirupsen/logrus"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 )
 
-var ADLogger = log.WithField("prefix", "AD AUTH")
+var onceReloadADLogger sync.Once
+var ADLogTag =  "AD AUTH"
+var ADLogger = log.WithField("prefix", ADLogTag)
 
 // ADProvider is an auth delegation provider for LDAP protocol
 type ADProvider struct {
@@ -94,6 +98,13 @@ func (s *ADProvider) connect() {
 // The config is a byte stream as a hack so we do not need to type cast a map[string]interface{} manually from
 // a JSON configuration
 func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
+	//if an external logger was set, then lets reload it to inherit those configs
+	onceReloadADLogger.Do(func() {
+		log = logger.Get()
+		ADLogger = &logrus.Entry{Logger:log}
+		ADLogger = ADLogger.Logger.WithField("prefix", ADLogTag)
+	})
+
 	s.handler = handler
 	s.profile = profile
 

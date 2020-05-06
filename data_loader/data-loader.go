@@ -4,11 +4,13 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
 )
 
 var log = logger.Get()
-var dataLogger = log.WithField("prefix", "TIB DATA LOADER")
+var dataLoaderLoggerTag = "TIB DATA LOADER"
+var dataLogger = log.WithField("prefix", dataLoaderLoggerTag)
 
 // DataLoader is an interface that defines how data is loaded from a source into a AuthRegisterBackend interface store
 type DataLoader interface {
@@ -17,9 +19,16 @@ type DataLoader interface {
 	Flush(tap.AuthRegisterBackend) error
 }
 
-func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
+func reloadDataLoaderLogger(){
+	log = logger.Get()
+	dataLogger = &logrus.Entry{Logger:log}
+	dataLogger = dataLogger.Logger.WithField("prefix", dataLoaderLoggerTag)
+}
+
+func CreateMongoLoaderFromConnection(db *mgo.Database)DataLoader{
 	var dataLoader DataLoader
 
+	reloadDataLoaderLogger()
 	dataLogger.Info("Set mongo loader for TIB")
 	dataLoader = &MongoLoader{Db: db}
 
@@ -29,6 +38,7 @@ func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
 func CreateDataLoader(config configuration.Configuration, ProfileFilename *string) (DataLoader, error) {
 	var dataLoader DataLoader
 	var loaderConf interface{}
+	reloadDataLoaderLogger()
 
 	//default storage
 	storageType := configuration.FILE

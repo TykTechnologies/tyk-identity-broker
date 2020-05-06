@@ -8,11 +8,14 @@ import (
 
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/sirupsen/logrus"
 )
+
 
 var failCount int
 var log = logger.Get()
-var mainLogger = log.WithField("prefix", "CONFIG")
+var mainLoggerTag = "CONFIG"
+var mainLogger = log.WithField("prefix", mainLoggerTag)
 
 const (
 	MONGO = "mongo"
@@ -77,6 +80,11 @@ type Configuration struct {
 
 //LoadConfig will load the config from a file
 func LoadConfig(filePath string, conf *Configuration) {
+
+	log = logger.Get()
+	mainLogger = &logrus.Entry{Logger:log}
+	mainLogger = mainLogger.Logger.WithField("prefix", mainLoggerTag)
+
 	configuration, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		mainLogger.Error("Couldn't load configuration file: ", err)

@@ -5,10 +5,12 @@ import (
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
+
 )
 
 var log = logger.Get()
-var initializerLogger = log.WithField("prefix", "INITIALIZER")
+var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
 // initBackend: Get our backend to use from configs files, new backends must be registered here
 func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{})(tap.AuthRegisterBackend,tap.AuthRegisterBackend) {
@@ -26,13 +28,20 @@ func InitBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 
 // CreateBackendFromRedisConn: creates a redis backend from an existent redis Connection
 func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.AuthRegisterBackend {
-
 	redisBackend := &backends.RedisBackend{KeyPrefix: keyPrefix}
 
 	initializerLogger.Info("Initializing Identity Cache")
 	redisBackend.SetDb(db)
 
 	return redisBackend
+}
+
+func SetLogger(newLogger *logrus.Logger){
+	logger.SetLogger(newLogger)
+	log = newLogger
+
+	initializerLogger = &logrus.Entry{Logger:log}
+	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
 func CreateInMemoryBackend() tap.AuthRegisterBackend  {

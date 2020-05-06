@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
@@ -24,6 +25,7 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+	"github.com/sirupsen/logrus"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 )
@@ -32,7 +34,8 @@ var log = logger.Get()
 
 // SocialLogTag is the log tag for the social provider
 var SocialLogTag = "SOCIAL AUTH"
-var socialLogger = log.WithField("prefix", "SOCIAL AUTH")
+var onceReloadSocialLogger sync.Once
+var socialLogger = log.WithField("prefix", SocialLogTag)
 
 // Social is the identity handler for all social auth, it is a wrapper around Goth, and makes use of it's pluggable
 // providers to provide a raft of social OAuth providers as SSO or Login delegates.
@@ -78,6 +81,13 @@ func (s *Social) UseCallback() bool {
 
 // Init will configure the social provider for this request.
 func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
+	//if an external logger was set, then lets reload it to inherit those configs
+	onceReloadADLogger.Do(func() {
+		log = logger.Get()
+		socialLogger = &logrus.Entry{Logger:log}
+		socialLogger = socialLogger.Logger.WithField("prefix", SocialLogTag)
+	})
+
 	s.handler = handler
 	s.profile = profile
 

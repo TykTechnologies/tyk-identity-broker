@@ -8,16 +8,21 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/markbates/goth"
 	uuid "github.com/satori/go.uuid"
 
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+	"github.com/sirupsen/logrus"
 )
 
-var tykHandlerLogger = log.WithField("prefix", "TYK ID HANDLER")
+var tykHandlerLogTag = "TYK ID HANDLER"
+var tykHandlerLogger = log.WithField("prefix", tykHandlerLogTag)
+var onceReloadTykIdHandlerLogger sync.Once
 
 type ModuleName string // To separate out target modules of the dashboard
 
@@ -80,6 +85,14 @@ func mapActionToModule(action tap.Action) (ModuleName, error) {
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
 // up in main
 func (t *TykIdentityHandler) Init(conf interface{}) error {
+
+	//if an external logger was set, then lets reload it to inherit those configs
+	onceReloadTykIdHandlerLogger.Do(func() {
+		log = logger.Get()
+		tykHandlerLogger = &logrus.Entry{Logger:log}
+		tykHandlerLogger = tykHandlerLogger.Logger.WithField("prefix", tykHandlerLogTag)
+		tyk.ReloadLogger()
+	})
 
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {

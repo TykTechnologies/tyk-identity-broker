@@ -3,11 +3,12 @@ package error
 import (
 	"encoding/json"
 	"fmt"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
-var log = logrus.New()
+var log = logger.Get()
 
 // APIErrorMessage is an object that defines when a generic error occurred
 type APIErrorMessage struct {

@@ -40,6 +40,10 @@ func Get() *logrus.Logger {
 	return log
 }
 
+func SetLogger(logger *logrus.Logger){
+	log = logger
+}
+
 func GetRaw() *logrus.Logger {
 	return rawLog
 }

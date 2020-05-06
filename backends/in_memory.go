@@ -8,12 +8,14 @@ import (
 	"errors"
 	"sync"
 
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 )
 
-var log = logger.Get()
-var inMemoryLogger = log.WithField("prefix", "IN-MEMORY STORE")
+var logger = log.Get()
+var inMemoryLogTag = "TIB IN-MEMORY STORE"
+var inMemoryLogger = logger.WithField("prefix", inMemoryLogTag)
 
 // InMemoryBackend implements tap.AuthRegisterBackend to store profile configs in memory
 type InMemoryBackend struct {
@@ -23,6 +25,10 @@ type InMemoryBackend struct {
 
 // Init will create the initial in-memory store structures
 func (m *InMemoryBackend) Init(config interface{}) {
+	logger = log.Get()
+	inMemoryLogger = &logrus.Entry{Logger:logger}
+	inMemoryLogger = inMemoryLogger.Logger.WithField("prefix", inMemoryLogTag)
+
 	inMemoryLogger.Info("Initialised")
 	m.kv = make(map[string]interface{})
 	m.lock = sync.RWMutex{}
