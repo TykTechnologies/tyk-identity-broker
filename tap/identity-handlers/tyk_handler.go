@@ -89,7 +89,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadTykIdHandlerLogger.Do(func() {
 		log = logger.Get()
-		tykHandlerLogger = &logrus.Entry{Logger:log}
+		tykHandlerLogger = &logrus.Entry{Logger: log}
 		tykHandlerLogger = tykHandlerLogger.Logger.WithField("prefix", tykHandlerLogTag)
 		tyk.ReloadLogger()
 	})
@@ -184,14 +184,15 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		groupID = t.profile.DefaultUserGroupID
 
 		if t.profile.CustomUserGroupField != "" {
-			groups := ""
+			groups := make([]string, 0)
 			if gUser.RawData[t.profile.CustomUserGroupField] != nil {
-				groups = gUser.RawData[t.profile.CustomUserGroupField].(string)
+				groups = groupsStringer(gUser.RawData[t.profile.CustomUserGroupField])
 			}
 
-			for _, group := range strings.Split(groups, " ") {
+			for _, group := range groups {
 				if gid, ok := t.profile.UserGroupMapping[group]; ok {
 					groupID = gid
+					fmt.Println(groupID)
 				}
 			}
 		}
@@ -215,6 +216,22 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	asMapString := returnVal.(map[string]interface{})
 
 	return asMapString["Meta"].(string), nil
+}
+
+// azure give us a []interface{} so need to handle that for now
+//this lets us deal with odd inputs from other IDPs in future
+func groupsStringer(i interface{}) []string {
+	switch v := i.(type) {
+	case []interface{}:
+		groups := make([]string, 0)
+		for _, str := range v {
+			groups = append(groups, str.(string))
+		}
+		return groups
+
+	default:
+		return strings.Split(i.(string), " ")
+	}
 }
 
 // CompleteIdentityActionForDashboard handles a dashboard identity. No ise is created, only an SSO login session
