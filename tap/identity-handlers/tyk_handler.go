@@ -150,7 +150,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 		if email == "" && gUser.Email != "" {
 			email = gUser.Email
-		} else {
+		}
+		if email == "" {
 			email = DefaultSSOEmail
 		}
 
