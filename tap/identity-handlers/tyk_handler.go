@@ -193,7 +193,6 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			for _, group := range groups {
 				if gid, ok := t.profile.UserGroupMapping[group]; ok {
 					groupID = gid
-					fmt.Println(groupID)
 				}
 			}
 		}
