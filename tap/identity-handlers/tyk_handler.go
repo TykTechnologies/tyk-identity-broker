@@ -89,7 +89,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadTykIdHandlerLogger.Do(func() {
 		log = logger.Get()
-		tykHandlerLogger = &logrus.Entry{Logger:log}
+		tykHandlerLogger = &logrus.Entry{Logger: log}
 		tykHandlerLogger = tykHandlerLogger.Logger.WithField("prefix", tykHandlerLogTag)
 		tyk.ReloadLogger()
 	})
@@ -164,7 +164,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 		if email == "" && gUser.Email != "" {
 			email = gUser.Email
-		} else {
+		}
+		if email == "" {
 			email = DefaultSSOEmail
 		}
 
