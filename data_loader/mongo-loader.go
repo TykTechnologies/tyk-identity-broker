@@ -20,12 +20,12 @@ type MongoLoaderConf struct {
 // MongoLoader implements DataLoader and will load TAP Profiles from a file
 type MongoLoader struct {
 	config MongoLoaderConf
-	Db *mgo.Database
+	Db     *mgo.Database
 }
 
 type ProfilesBackup struct {
-	Timestamp int  `bson:"timestamp" json:"timestamp"`
-	Profiles []tap.Profile `bson:"profiles" json:"profiles"`
+	Timestamp int           `bson:"timestamp" json:"timestamp"`
+	Profiles  []tap.Profile `bson:"profiles" json:"profiles"`
 }
 
 // Init initialises the mongo loader
@@ -37,7 +37,7 @@ func (m *MongoLoader) Init(conf interface{}) error {
 	if err != nil {
 		dataLogger.WithFields(logrus.Fields{
 			"prefix": mongoPrefix,
-			"error":    "Mongo connection failed:",
+			"error":  "Mongo connection failed:",
 		}).Error("load failed!")
 
 		time.Sleep(5 * time.Second)
@@ -53,7 +53,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 
 	err := m.Db.C(profilesCollectionName).Find(nil).All(&profiles)
 	if err != nil {
-		dataLogger.Error("error reading profiles from mongo: "+err.Error())
+		dataLogger.Error("error reading profiles from mongo: " + err.Error())
 		return err
 	}
 
@@ -69,7 +69,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 }
 
 //Flush creates a backup of the current loaded config
-func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
+func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
 
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
@@ -79,13 +79,16 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error{
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
 	if err != nil {
+
 		return err
 	}
-	err = profilesCollection.Insert(updatedSet...)
 
-	return err
+	if len(updatedSet) > 0 {
+		return profilesCollection.Insert(updatedSet...)
+	}
+
+	return nil
 }
-
 
 func MongoDialInfo(mongoURL string, useSSL bool, SSLInsecureSkipVerify bool) (dialInfo *mgo.DialInfo, err error) {
 
