@@ -54,6 +54,7 @@ type GothProviderConfig struct {
 	DiscoverURL                     string
 	DisableAuthHeaderProviderDomain string
 	Scopes                          []string
+	SkipUserInfoRequest             bool
 }
 
 // GothConfig is the main configuration object for the Social provider
@@ -134,6 +135,8 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 				socialLogger.Error(err)
 				return err
 			}
+			
+			gProv.SkipUserInfoRequest = provider.SkipUserInfoRequest
 
 			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
 			if provider.DisableAuthHeaderProviderDomain != "" {
