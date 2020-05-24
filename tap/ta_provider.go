@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-
 // TAProvider is an interface that defines an actual handler for a specific authentication provider. It can wrap
 // largert libraries (such as Goth for social), or individual pass-throughs such as LDAP.
 type TAProvider interface {

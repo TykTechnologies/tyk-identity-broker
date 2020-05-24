@@ -2,14 +2,14 @@ package main
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
-	"net/http"
 
 	tykerrors "github.com/TykTechnologies/tyk-identity-broker/error"
 	"github.com/gorilla/mux"
 )
-
 
 // Returns a profile ID
 func getId(req *http.Request) (string, error) {
@@ -24,6 +24,43 @@ func getId(req *http.Request) (string, error) {
 
 }
 
+func HandleAuthSAMLLogon(w http.ResponseWriter, r *http.Request) {
+	//thisId, idErr := getId(r)
+	//if idErr != nil {
+	//	tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
+	//	return
+	//}
+	//
+	//thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	//if err != nil {
+	//	tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
+	//	return
+	//}
+
+	return
+}
+
+//does nothing - extend tap interface
+func HandleSAMLMetadata(w http.ResponseWriter, r *http.Request) {
+	thisId, idErr := getId(r)
+	if idErr != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
+		return
+	}
+
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	if err != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
+		return
+	}
+	switch thisIdentityProvider.Name() {
+	case "SAMLProvider":
+	default:
+		return
+	}
+
+}
+
 // HandleAuth is the main entry point handler for any profile (i.e. /auth/:profile-id/:provider)
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 
@@ -33,7 +70,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
@@ -52,12 +89,11 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
 	}
-
 	thisIdentityProvider.HandleCallback(w, r, tykerrors.HandleError)
 	return
 }
@@ -65,4 +101,3 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 func HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
-
