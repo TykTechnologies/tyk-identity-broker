@@ -15,4 +15,5 @@ type TAProvider interface {
 	UseCallback() bool
 	Handle(http.ResponseWriter, *http.Request, map[string]string)
 	HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request))
+	HandleMetadata(http.ResponseWriter, *http.Request)
 }

@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
+	"encoding/xml"
 	"net/http"
 	"net/url"
 	"sync"
@@ -37,26 +37,28 @@ type SAMLProvider struct {
 var middleware *samlsp.Middleware
 
 type SAMLConfig struct {
-	MetadataURL     string
-	CertFile        string
-	KeyFile         string
-	CallbackBaseURL string
+	IDPMetadataURL      string
+	CertFile            string
+	KeyFile             string
+	SAMLBaseURL         string
+	ForceAuthentication bool
+	SAMLBinding         string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadADLogger.Do(func() {
 		log = logger.Get()
-		ADLogger = &logrus.Entry{Logger: log}
-		ADLogger = ADLogger.Logger.WithField("prefix", ADLogTag)
+		SAMLLogger = &logrus.Entry{Logger: log}
+		SAMLLogger = SAMLLogger.Logger.WithField("prefix", SAMLLogTag)
 	})
 
 	s.handler = handler
 	s.profile = profile
-	unmarshallErr := json.Unmarshal(config, &s.config)
+	unmarshalErr := json.Unmarshal(config, &s.config)
 
-	if unmarshallErr != nil {
-		return unmarshallErr
+	if unmarshalErr != nil {
+		return unmarshalErr
 	}
 	s.initialiseSAMLMiddleware()
 
@@ -78,51 +80,51 @@ func (s *SAMLProvider) UseCallback() bool {
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
 	if middleware == nil {
 
-		log.Debug("Initialising middleware SAML")
+		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
-		keyPair, err := tls.LoadX509KeyPair("myservice.cert", "myservice.key")
+		keyPair, err := tls.LoadX509KeyPair(s.config.CertFile, s.config.KeyFile)
 		if err != nil {
-			panic(err) // TODO handle error
+			log.Errorf("Error loading keypair: %v", err)
 		}
-		log.Debug("loaded cert and key")
+
 		keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
 		if err != nil {
-			panic(err) // TODO handle error
+			SAMLLogger.Errorf("Error parsing certificate: %v", err)
 		}
 
-		idpMetadataURL, err := url.Parse(s.config.MetadataURL)
+		idpMetadataURL, err := url.Parse(s.config.IDPMetadataURL)
 		if err != nil {
-			panic(err) // TODO handle error
+			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
 		}
-		log.Debugf("metadataurl is: %v", idpMetadataURL.String())
+		SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
 
-		rootURL, err := url.Parse("https://c22192bb.ngrok.io/auth/azure-saml/")
+		rootURL, err := url.Parse(s.config.SAMLBaseURL)
 		if err != nil {
-			panic(err) // TODO handle error
+			SAMLLogger.Errorf("Error parsing SAMLBaseURL: %v", err)
 		}
 
 		httpClient := http.DefaultClient
 
 		metadata, err := samlsp.FetchMetadata(context.TODO(), httpClient, *idpMetadataURL)
 		if err != nil {
-			panic(err)
+			SAMLLogger.Errorf("Error retrieving IDP Metadata: %v", err)
 		}
 
-		log.Debugf("Root URL: %v", rootURL.String())
+		SAMLLogger.Debugf("Root URL: %v", rootURL.String())
 
 		opts := samlsp.Options{
 			URL: *rootURL,
 			Key: keyPair.PrivateKey.(*rsa.PrivateKey),
 		}
 
-		metadataURL := rootURL.ResolveReference(&url.URL{Path: "saml/metadata"})
-		acsURL := rootURL.ResolveReference(&url.URL{Path: "saml/callback"})
-		sloURL := rootURL.ResolveReference(&url.URL{Path: "saml/slo"})
+		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
+		acsURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/callback"})
+		sloURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/slo"})
 
-		log.Debugf("SP metadata URL: %v", metadataURL.String())
-		log.Debugf("SP acs URL: %v", acsURL.String())
+		SAMLLogger.Debugf("SP metadata URL: %v", metadataURL.String())
+		SAMLLogger.Debugf("SP acs URL: %v", acsURL.String())
 
-		var forceAuthn = false
+		var forceAuthn = s.config.ForceAuthentication
 
 		sp := saml.ServiceProvider{
 			EntityID:          metadataURL.String(),
@@ -138,7 +140,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		middleware = &samlsp.Middleware{
 			ServiceProvider: sp,
-			Binding:         "",
+			Binding:         s.config.SAMLBinding,
 			OnError:         samlsp.DefaultOnError,
 			Session:         samlsp.DefaultSessionProvider(opts),
 		}
@@ -155,7 +157,8 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	// redirect loop.
 	//log.Debug(s.m)
 	if r.URL.Path == s.m.ServiceProvider.AcsURL.Path {
-		panic("don't wrap Middleware with RequireAccount")
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
 	}
 
 	var binding, bindingLocation string
@@ -170,8 +173,8 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 			bindingLocation = s.m.ServiceProvider.GetSSOBindingLocation(binding)
 		}
 	}
-	log.Debugf("Binding: %v", binding)
-	log.Debugf("BindingLocation: %v", bindingLocation)
+	SAMLLogger.Debugf("Binding: %v", binding)
+	SAMLLogger.Debugf("BindingLocation: %v", bindingLocation)
 
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation)
 	if err != nil {
@@ -206,30 +209,26 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 		w.Write([]byte(`</body></html>`))
 		return
 	}
-	panic("not reached")
 }
 
 func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 	s.m = middleware
-	fmt.Println(r.Cookies())
-	//log.Debug(s.m)
+
 	err := r.ParseForm()
 	if err != nil {
-		log.Error(err)
+		SAMLLogger.Error(err)
 	}
 
 	var possibleRequestIDs = make([]string, 0)
 	if s.m.ServiceProvider.AllowIDPInitiated {
-		log.Debug("allowing IDP initiated ID")
+		SAMLLogger.Debug("allowing IDP initiated ID")
 		possibleRequestIDs = append(possibleRequestIDs, "")
 	}
 
 	trackedRequests := s.m.RequestTracker.GetTrackedRequests(r)
 	for _, tr := range trackedRequests {
-		log.Debug(tr)
 		possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
 	}
-	log.Debugf("Possible request IDs: %v", possibleRequestIDs)
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
 		s.m.OnError(w, r, err)
@@ -238,31 +237,26 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	rawData := make(map[string]interface{}, 0)
 	for _, v := range assertion.AttributeStatements {
 		for _, att := range v.Attributes {
-			fmt.Printf("attribute name: %v\n", att.Name)
+			SAMLLogger.Debugf("attribute name: %v\n", att.Name)
 			rawData[att.Name] = ""
 			for _, vals := range att.Values {
 				rawData[att.Name] = vals.Value
-				fmt.Printf("vals.value: %v\n ", vals.Value)
+				SAMLLogger.Debugf("vals.value: %v\n ", vals.Value)
 			}
 
 		}
 	}
 
+	//this is going to be a nightmare of slight differences between IDPs
 	var email string
 	name := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"].(string) + " " +
 		rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"].(string)
 
 	if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]; ok {
 		email = rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"].(string)
-	}
-
-	if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]; ok {
+	} else if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/"]; ok {
 		email = rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].(string)
 	}
-
-	//fmt.Println(rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"])
-
-	//s.m.CreateSessionFromAssertion(w, r, assertion)
 
 	thisUser := goth.User{
 		UserID:   name,
@@ -273,6 +267,11 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	s.handler.CompleteIdentityAction(w, r, thisUser, s.profile)
 }
 
-func (s *SAMLProvider) getCallBackURL() string {
-	return s.config.CallbackBaseURL + "/auth/" + s.profile.ID + "/" + "saml" + "/callback"
+func (s *SAMLProvider) HandleMetadata(w http.ResponseWriter, r *http.Request) {
+	s.m = middleware
+
+	buf, _ := xml.MarshalIndent(s.m.ServiceProvider.Metadata(), "", "  ")
+	w.Header().Set("Content-Type", "application/samlmetadata+xml")
+	w.Write(buf)
+	return
 }

@@ -4,11 +4,6 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Jeffail/gabs"
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/markbates/goth"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +11,12 @@ import (
 	"net/url"
 	"regexp"
 	"sync"
+
+	"github.com/Jeffail/gabs"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/markbates/goth"
+	"github.com/sirupsen/logrus"
 )
 
 var onceReloadProxyLogger sync.Once
@@ -44,7 +45,7 @@ func (p *ProxyProvider) Init(handler tap.IdentityHandler, profile tap.Profile, c
 	//if a logger was set, then lets reload it to inherit those configs
 	onceReloadProxyLogger.Do(func() {
 		log = logger.Get()
-		proxyLogger = &logrus.Entry{Logger:log}
+		proxyLogger = &logrus.Entry{Logger: log}
 		proxyLogger = proxyLogger.Logger.WithField("prefix", proxyLogTag)
 	})
 
@@ -188,4 +189,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 
 func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 	return
+}
+
+func (s *ProxyProvider) HandleMetadata(http.ResponseWriter, *http.Request) {
+	proxyLogger.Warning("metadata not implemented for provider")
 }

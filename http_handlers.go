@@ -24,43 +24,6 @@ func getId(req *http.Request) (string, error) {
 
 }
 
-func HandleAuthSAMLLogon(w http.ResponseWriter, r *http.Request) {
-	//thisId, idErr := getId(r)
-	//if idErr != nil {
-	//	tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
-	//	return
-	//}
-	//
-	//thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
-	//if err != nil {
-	//	tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
-	//	return
-	//}
-
-	return
-}
-
-//does nothing - extend tap interface
-func HandleSAMLMetadata(w http.ResponseWriter, r *http.Request) {
-	thisId, idErr := getId(r)
-	if idErr != nil {
-		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
-		return
-	}
-
-	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
-	if err != nil {
-		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
-		return
-	}
-	switch thisIdentityProvider.Name() {
-	case "SAMLProvider":
-	default:
-		return
-	}
-
-}
-
 // HandleAuth is the main entry point handler for any profile (i.e. /auth/:profile-id/:provider)
 func HandleAuth(w http.ResponseWriter, r *http.Request) {
 
@@ -100,4 +63,20 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 func HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+}
+
+func HandleMetadata(w http.ResponseWriter, r *http.Request) {
+	thisId, idErr := getId(r)
+	if idErr != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
+		return
+	}
+
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	if err != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
+		return
+	}
+	thisIdentityProvider.HandleMetadata(w, r)
+	return
 }

@@ -73,10 +73,7 @@ func main() {
 	p := mux.NewRouter()
 	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
 	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
-
-	//saml specific handlers
-	p.Handle("/auth/{id}/{provider}/signon", http.HandlerFunc(HandleAuthSAMLLogon))
-	p.Handle("/auth/{id}/{provider}/metadata", http.HandlerFunc(HandleSAMLMetadata))
+	p.Handle("/auth/{id}/saml/metadata", http.HandlerFunc(HandleMetadata))
 
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleAddProfile))).Methods("POST")

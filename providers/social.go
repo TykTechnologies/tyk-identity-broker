@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"sync"
 
+	"net/http"
+	"strings"
+
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -19,8 +22,6 @@ import (
 	"github.com/markbates/goth/providers/salesforce"
 	"github.com/markbates/goth/providers/twitter"
 	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
@@ -85,7 +86,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadADLogger.Do(func() {
 		log = logger.Get()
-		socialLogger = &logrus.Entry{Logger:log}
+		socialLogger = &logrus.Entry{Logger: log}
 		socialLogger = socialLogger.Logger.WithField("prefix", SocialLogTag)
 	})
 
@@ -135,7 +136,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 				socialLogger.Error(err)
 				return err
 			}
-			
+
 			gProv.SkipUserInfoRequest = provider.SkipUserInfoRequest
 
 			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
@@ -200,4 +201,8 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 
 func (s *Social) getCallBackURL(provider string) string {
 	return s.config.CallbackBaseURL + "/auth/" + s.profile.ID + "/" + provider + "/callback"
+}
+
+func (s *Social) HandleMetadata(http.ResponseWriter, *http.Request) {
+	socialLogger.Warning("metadata not implemented for provider")
 }
