@@ -43,6 +43,9 @@ type SAMLConfig struct {
 	SAMLBaseURL         string
 	ForceAuthentication bool
 	SAMLBinding         string
+	SAMLEmailClaim      string
+	SAMLForenameClaim   string
+	SAMLSurnameClaim    string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -248,15 +251,31 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 
 	//this is going to be a nightmare of slight differences between IDPs
+	// so lets make it configurable with a sensible backup
 	var email string
-	name := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"].(string) + " " +
-		rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"].(string)
+	emailClaim := s.config.SAMLEmailClaim
+	if emailClaim == "" {
+		emailClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+	}
 
-	if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"]; ok {
-		email = rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"].(string)
+	if _, ok := rawData[emailClaim]; ok {
+		email = rawData[emailClaim].(string)
 	} else if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/"]; ok {
 		email = rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].(string)
 	}
+
+	givenNameClaim := s.config.SAMLForenameClaim
+	surnameClaim := s.config.SAMLSurnameClaim
+
+	if givenNameClaim == "" {
+		givenNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+	}
+
+	if surnameClaim == "" {
+		surnameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+	}
+	name := rawData[givenNameClaim].(string) + " " +
+		rawData[surnameClaim].(string)
 
 	thisUser := goth.User{
 		UserID:   name,

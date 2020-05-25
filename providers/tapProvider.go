@@ -22,7 +22,7 @@ func GetTAProvider(conf tap.Profile, handler tyk.TykAPI, identityKeyStore tap.Au
 		thisProvider = &ADProvider{}
 	case constants.ProxyProvider:
 		thisProvider = &ProxyProvider{}
-	case "SAMLProvider":
+	case constants.SAMLProvider:
 		thisProvider = &SAMLProvider{}
 	default:
 		return nil, errors.New("invalid provider name")
