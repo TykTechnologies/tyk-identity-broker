@@ -46,6 +46,7 @@ type SAMLConfig struct {
 	SAMLEmailClaim      string
 	SAMLForenameClaim   string
 	SAMLSurnameClaim    string
+	FailureRedirect     string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -155,12 +156,9 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 	s.m = middleware
 	// If we try to redirect when the original request is the ACS URL we'll
-	// end up in a loop. This is a programming error, so we panic here. In
-	// general this means a 500 to the user, which is preferable to a
-	// redirect loop.
-	//log.Debug(s.m)
+	// end up in a loop so just fail and error instead
 	if r.URL.Path == s.m.ServiceProvider.AcsURL.Path {
-		http.Error(w, "Server error", http.StatusInternalServerError)
+		s.provideErrorRedirect(w, r)
 		return
 	}
 
@@ -181,7 +179,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.provideErrorRedirect(w, r)
 		return
 	}
 
@@ -191,7 +189,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	// against the SAML response when we get it.
 	relayState, err := s.m.RequestTracker.TrackRequest(w, r, authReq.ID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.provideErrorRedirect(w, r)
 		return
 	}
 
@@ -219,7 +217,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 
 	err := r.ParseForm()
 	if err != nil {
-		SAMLLogger.Error(err)
+		SAMLLogger.Errorf("Error parsing form: %v", err)
 	}
 
 	var possibleRequestIDs = make([]string, 0)
@@ -234,7 +232,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
-		s.m.OnError(w, r, err)
+		s.provideErrorRedirect(w, r)
 		return
 	}
 	rawData := make(map[string]interface{}, 0)
@@ -292,5 +290,10 @@ func (s *SAMLProvider) HandleMetadata(w http.ResponseWriter, r *http.Request) {
 	buf, _ := xml.MarshalIndent(s.m.ServiceProvider.Metadata(), "", "  ")
 	w.Header().Set("Content-Type", "application/samlmetadata+xml")
 	w.Write(buf)
+	return
+}
+
+func (s *SAMLProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, s.config.FailureRedirect, 301)
 	return
 }
