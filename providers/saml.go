@@ -51,7 +51,7 @@ type SAMLConfig struct {
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
 	//if an external logger was set, then lets reload it to inherit those configs
-	onceReloadADLogger.Do(func() {
+	onceReloadSAMLLogger.Do(func() {
 		log = logger.Get()
 		SAMLLogger = &logrus.Entry{Logger: log}
 		SAMLLogger = SAMLLogger.Logger.WithField("prefix", SAMLLogTag)
@@ -88,7 +88,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		//needs to match the signing cert if IDP
 		keyPair, err := tls.LoadX509KeyPair(s.config.CertFile, s.config.KeyFile)
 		if err != nil {
-			log.Errorf("Error loading keypair: %v", err)
+			SAMLLogger.Errorf("Error loading keypair: %v", err)
 		}
 
 		keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
