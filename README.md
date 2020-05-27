@@ -279,7 +279,8 @@ The file is JSON object which is essentially a list of objects:
 		"UseProviders": [{
 			"Key": "GOOGLE-OAUTH-TOKEN",
 			"Name": "gplus",
-			"Secret": "GOOGLE OAUTH SECRET"
+			"Secret": "GOOGLE OAUTH SECRET",
+			"SkipUserInfoRequest": false
 		}]
 	},
 	"ProviderConstraints": {
@@ -480,7 +481,8 @@ Similar to Google or Twitter auth, you can configure TIB to work with any OpenID
 			"Key": "OKTA-CLIENT-KEY",
 			"Secret": "OKTA-CLIENT-SECRET",
 			"Scopes": ["openid", "email"],
-			"DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration"
+			"DiscoverURL": "https://<your-okta-domain>/.well-known/openid-configuration",
+			"SkipUserInfoRequest": false
 		}]
 	},
 ```
@@ -491,6 +493,8 @@ Please ensure that your Identity Provider is not returning `URL` in subject fiel
 TIB can also be configured to use the `openid email` claim.  This claim must be requested for Portal SSO to work, but it can also be used for Dashboard SSO.  Some OpenID providers return this claim by default, but not all, in which case the `openid email` claim needs to be included, as per the example above.
 
 If you are getting 403 error, it can be that your OpenID provider requires providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
+
+Some Identity providers do not have support for `userinfo` endpoint, so you can optionally disable it using `SkipUserInfoRequest` flag, and rely only on information inside the ID token. 
 
 #### Salesforce
 
