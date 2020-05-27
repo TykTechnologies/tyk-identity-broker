@@ -85,7 +85,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadADLogger.Do(func() {
 		log = logger.Get()
-		socialLogger = &logrus.Entry{Logger:log}
+		socialLogger = &logrus.Entry{Logger: log}
 		socialLogger = socialLogger.Logger.WithField("prefix", SocialLogTag)
 	})
 
@@ -135,7 +135,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 				socialLogger.Error(err)
 				return err
 			}
-			
+
 			gProv.SkipUserInfoRequest = provider.SkipUserInfoRequest
 
 			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
