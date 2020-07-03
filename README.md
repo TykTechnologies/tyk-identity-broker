@@ -102,6 +102,13 @@ No command line arguments are needed, but if you are running TIB from another di
 	  -p#=string
 			Path to the profiles file (default "profiles.json")
 
+### Log level
+You set the log level using the environment variable `TYK_LOGLEVEL`
+
+Possible levels: `"debug"` , `"error"`, `"warn"` and `"info"` which is also the default.
+
+For instance for debug `export TYK_LOGLEVEL=debug`
+
 ### How it works
 
 Tyk Identity Broker provides a simple API, which traffic can be sent *through*, the API will match the request to a *profile* which then exposes two things:
@@ -804,7 +811,7 @@ You can specify User Groups within a TIB Profile. This can either be a static or
 
 ```
 {
-  "DefaultUserGroupID": "default-user-group",
+  "DefaultUserGroupID": "<dashboard-user-group-id>",
   "CustomUserGroupField": "scope",
   "UserGroupMapping": {
     "admin": "<admin-group-id>",
@@ -812,8 +819,9 @@ You can specify User Groups within a TIB Profile. This can either be a static or
   }
 }
 ```
-* For a static setting, use `DefaultUserGroupID`
-* For a dynamic setting based on OAuth/OpenID scope, use `CustomUserGroupField` with  `UserGroupMapping` listing your User Groups and ID in the following format - `"<User Group Name>": "<ID>".
+When doing SSO for a user, you need to think about the user's permissions once he is logged into the application. TIB can request the dashboard to log in a user with a certain specific  during the SSO of the user.   In order to configure the user's permission you need to create a group in the dashboard and use this group object ID as a value for these fields: 
+* For a static setting and set `DefaultUserGroupID` with a dashboard group id. TIB will use it as the default user permissions when requesting a nonce from the dashboard. **Note:** If you don't set this field, the user will be logged in as admin dashboard user.
+* For a dynamic setting based on OAuth/OpenID scope, use `CustomUserGroupField` with  `UserGroupMapping` listing your User Groups names from the scopes to user group IDs in the dashboard, in the following format - `"<user-group-name>": "<user-group-id>".
 * 
 
 ## The Broker API
