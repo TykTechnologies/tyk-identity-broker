@@ -819,8 +819,8 @@ You can specify User Groups within a TIB Profile. This can either be a static or
   }
 }
 ```
-When doing SSO for a user, you need to think about the user's permissions once he is logged into the application. TIB can request the dashboard to log in a user with a certain specific  during the SSO of the user.   In order to configure the user's permission you need to create a group in the dashboard and use this group object ID as a value for these fields: 
-* For a static setting and set `DefaultUserGroupID` with a dashboard group id. TIB will use it as the default user permissions when requesting a nonce from the dashboard. **Note:** If you don't set this field, the user will be logged in as admin dashboard user.
+When doing SSO for a user, you need to think about the user's permissions once they are logged into the application. TIB can request the Dashboard to log in a user with a certain specific  during the SSO of the user.   In order to configure the user's permission you need to create a group in the Dashboard and use this group object ID as a value for these fields: 
+* For a static setting and set `DefaultUserGroupID` with a Dashboard group id. TIB will use it as the default user permissions when requesting a nonce from the dashboard. **Note:** If you don't set this field, the user will be logged in as an admin dashboard user.
 * For a dynamic setting based on OAuth/OpenID scope, use `CustomUserGroupField` with  `UserGroupMapping` listing your User Groups names from the scopes to user group IDs in the dashboard, in the following format - `"<user-group-name>": "<user-group-id>".
 * 
 
