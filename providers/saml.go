@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/markbates/goth"
@@ -236,15 +237,17 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 		return
 	}
 	rawData := make(map[string]interface{}, 0)
+	var str strings.Builder
 	for _, v := range assertion.AttributeStatements {
 		for _, att := range v.Attributes {
 			SAMLLogger.Debugf("attribute name: %v\n", att.Name)
 			rawData[att.Name] = ""
 			for _, vals := range att.Values {
-				rawData[att.Name] = vals.Value
+				str.WriteString(vals.Value + " ")
 				SAMLLogger.Debugf("vals.value: %v\n ", vals.Value)
 			}
-
+			rawData[att.Name] = strings.TrimSuffix(str.String(), " ")
+			str.Reset()
 		}
 	}
 
