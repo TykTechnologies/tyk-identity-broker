@@ -1,4 +1,4 @@
-# Goth: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/markbates/goth?status.svg)](https://godoc.org/github.com/markbates/goth) [![Build Status](https://travis-ci.org/markbates/goth.svg)](https://travis-ci.org/markbates/goth)
+# Goth: Multi-Provider Authentication for Go [![GoDoc](https://godoc.org/github.com/markbates/goth?status.svg)](https://godoc.org/github.com/markbates/goth) [![Build Status](https://travis-ci.org/markbates/goth.svg)](https://travis-ci.org/markbates/goth) [![Go Report Card](https://goreportcard.com/badge/github.com/markbates/goth)](https://goreportcard.com/report/github.com/markbates/goth)
 
 Package goth provides a simple, clean, and idiomatic way to write authentication
 packages for Go web applications.
@@ -17,7 +17,9 @@ $ go get github.com/markbates/goth
 ## Supported Providers
 
 * Amazon
+* Apple
 * Auth0
+* Azure AD
 * Battle.net
 * Bitbucket
 * Box
@@ -30,32 +32,46 @@ $ go get github.com/markbates/goth
 * Eve Online
 * Facebook
 * Fitbit
+* Gitea
 * GitHub
 * Gitlab
-* Google+
+* Google
+* Google+ (deprecated)
 * Heroku
 * InfluxCloud
 * Instagram
 * Intercom
+* Kakao
 * Lastfm
 * Linkedin
+* LINE
+* Mailru
 * Meetup
+* MicrosoftOnline
+* Naver
+* Nextcloud
 * OneDrive
 * OpenID Connect (auto discovery)
 * Paypal
 * SalesForce
+* Shopify
 * Slack
 * Soundcloud
 * Spotify
 * Steam
+* Strava
 * Stripe
+* Tumblr
 * Twitch
 * Twitter
+* Typetalk
 * Uber
+* VK
 * Wepay
 * Xero
 * Yahoo
 * Yammer
+* Yandex
 
 ## Examples
 
@@ -74,7 +90,7 @@ $ go get github.com/markbates/goth
 ```text
 $ cd goth/examples
 $ go get -v
-$ go build 
+$ go build
 $ ./examples
 ```
 
@@ -100,7 +116,7 @@ As configured, this default store (`gothic.Store`) will generate cookies with `O
 
 To tailor these fields for your application, you can override the `gothic.Store` variable at startup.
 
-The follow snippet show one way to do this:
+The following snippet shows one way to do this:
 
 ```go
 key := ""             // Replace with your SESSION_SECRET or similar
@@ -131,51 +147,3 @@ Would I love to see more providers? Certainly! Would you love to contribute one?
 4. Commit your changes (git commit -am 'Add some feature')
 5. Push to the branch (git push origin my-new-feature)
 6. Create new Pull Request
-
-## Contributors
-
-* Mark Bates
-* Tyler Bunnell
-* Corey McGrillis
-* willemvd
-* Rakesh Goyal
-* Andy Grunwald
-* Glenn Walker
-* Kevin Fitzpatrick
-* Ben Tranter
-* Sharad Ganapathy
-* Andrew Chilton
-* sharadgana
-* Aurorae
-* Craig P Jolicoeur
-* Zac Bergquist
-* Geoff Franks
-* Raphael Geronimi
-* Noah Shibley
-* lumost
-* oov
-* Felix Lamouroux
-* Rafael Quintela
-* Tyler
-* DenSm
-* Samy KACIMI
-* dante gray
-* Noah
-* Jacob Walker
-* Marin Martinic
-* Roy
-* Omni Adams
-* Sasa Brankovic
-* dkhamsing
-* Dante Swift
-* Attila Domokos
-* Albin Gilles
-* Syed Zubairuddin
-* Johnny Boursiquot
-* Jerome Touffe-Blin
-* bryanl
-* Masanobu YOSHIOKA
-* Jonathan Hall
-* HaiMing.Yin
-* Sairam Kunala
-* Regan Ashworth
