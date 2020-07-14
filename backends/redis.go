@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 
-	"context"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 	"strconv"
@@ -130,7 +129,7 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 	db := r.ensureConnection()
 
 	redisLogger.Debug("Setting key=", key)
-	if err := db.Set(context.Background(), r.fixKey(key), val, 0).Err(); err != nil {
+	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
@@ -141,7 +140,7 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 func (r *RedisBackend) GetKey(key string, val interface{}) error {
 	db := r.ensureConnection()
 	var err error
-	val, err = db.Get(context.Background(), r.fixKey(key)).Result()
+	val, err = db.Get(r.fixKey(key)).Result()
 	if err != nil {
 		return err
 	}
@@ -156,7 +155,7 @@ func (r *RedisBackend) GetAll() []interface{} {
 
 func (r *RedisBackend) DeleteKey(key string) error {
 	db := r.ensureConnection()
-	return db.Del(context.Background(), r.fixKey(key)).Err()
+	return db.Del(r.fixKey(key)).Err()
 }
 
 func (r *RedisBackend) getDB() redis.UniversalClient {
