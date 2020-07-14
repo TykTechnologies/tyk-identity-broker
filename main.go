@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -84,13 +85,18 @@ func main() {
 
 	p.Handle("/health", http.HandlerFunc(HandleHealthCheck)).Methods("GET")
 
-	listenPort := "3010"
+	listenPort := 3010
 	if config.Port != 0 {
-		listenPort = strconv.Itoa(config.Port)
+		listenPort = config.Port
 	}
 
-	if config.HttpServerOptions.UseSSL {
+	/*if config.HttpServerOptions.UseSSL {
 		mainLogger.Info("Broker Listening on SSL:", listenPort)
+
+		tlsConfig := tls.Config{
+			InsecureSkipVerify:config.SSLInsecureSkipVerify,
+		}
+		_ := http.Server{TLSConfig:&tlsConfig}
 		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
 		if err != nil {
 			mainLogger.Fatal("ListenAndServe: ", err)
@@ -98,6 +104,36 @@ func main() {
 	} else {
 		mainLogger.Info("Broker Listening on :", listenPort)
 		http.ListenAndServe(":"+listenPort, p)
+	}*/
+
+	var tibServer net.Listener
+	if config.HttpServerOptions.UseSSL{
+		log.Info("--> Using SSL (https) for TIB")
+		cert, _:= tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
+		cfg := tls.Config{
+			Certificates:             []tls.Certificate{cert},
+			InsecureSkipVerify:       config.SSLInsecureSkipVerify,
+		}
+		tibServer = createListener(listenPort, &cfg)
+	}else{
+		log.Info("--> Standard listener (http) for TIB")
+		tibServer = createListener(listenPort, nil)
+	}
+	_ = http.Serve(tibServer, p)
+}
+
+func createListener(port int, tlsConfig *tls.Config) (listener net.Listener) {
+	var err error
+	addr := ":" + strconv.Itoa(port)
+
+	if tlsConfig != nil {
+		listener, err = tls.Listen("tcp", addr, tlsConfig)
+	} else {
+		listener, err = net.Listen("tcp", addr)
+	}
+	if err != nil {
+		log.Panic("Server creation failed! ", err)
 	}
 
+	return
 }

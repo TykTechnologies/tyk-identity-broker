@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 var APILogTag string = "API"
