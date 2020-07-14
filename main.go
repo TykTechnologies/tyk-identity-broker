@@ -96,7 +96,7 @@ func main() {
 		cert, _:= tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
 		cfg := tls.Config{
 			Certificates:             []tls.Certificate{cert},
-			InsecureSkipVerify:       config.SSLInsecureSkipVerify,
+			InsecureSkipVerify:       config.HttpServerOptions.SSLInsecureSkipVerify,
 		}
 		tibServer = createListener(listenPort, &cfg)
 	}else{
