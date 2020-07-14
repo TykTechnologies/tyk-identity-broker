@@ -90,22 +90,6 @@ func main() {
 		listenPort = config.Port
 	}
 
-	/*if config.HttpServerOptions.UseSSL {
-		mainLogger.Info("Broker Listening on SSL:", listenPort)
-
-		tlsConfig := tls.Config{
-			InsecureSkipVerify:config.SSLInsecureSkipVerify,
-		}
-		_ := http.Server{TLSConfig:&tlsConfig}
-		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
-		if err != nil {
-			mainLogger.Fatal("ListenAndServe: ", err)
-		}
-	} else {
-		mainLogger.Info("Broker Listening on :", listenPort)
-		http.ListenAndServe(":"+listenPort, p)
-	}*/
-
 	var tibServer net.Listener
 	if config.HttpServerOptions.UseSSL{
 		log.Info("--> Using SSL (https) for TIB")
