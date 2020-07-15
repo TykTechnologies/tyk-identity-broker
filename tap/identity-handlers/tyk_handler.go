@@ -156,18 +156,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	displayName := ""
 	groupID := ""
 	if ok {
-		if t.profile.CustomEmailField != "" {
-			if gUser.RawData[t.profile.CustomEmailField] != nil {
-				email = gUser.RawData[t.profile.CustomEmailField].(string)
-			}
-		}
-
-		if email == "" && gUser.Email != "" {
-			email = gUser.Email
-		}
-		if email == "" {
-			email = DefaultSSOEmail
-		}
+		email = GetEmail(gUser,t.profile.CustomEmailField)
 
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
@@ -217,6 +206,25 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	asMapString := returnVal.(map[string]interface{})
 
 	return asMapString["Meta"].(string), nil
+}
+
+// GetEmail returns the email to be used
+func GetEmail(gUser goth.User, customEmailField string)string{
+	email := ""
+
+	if customEmailField != "" {
+		if gUser.RawData[customEmailField] != nil {
+			email = gUser.RawData[customEmailField].(string)
+		}
+	}
+
+	if email == "" && gUser.Email != "" {
+		email = gUser.Email
+	}
+	if email == "" {
+		email = DefaultSSOEmail
+	}
+	return email
 }
 
 // azure give us a []interface{} so need to handle that for now
