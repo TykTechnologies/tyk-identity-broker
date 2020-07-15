@@ -171,21 +171,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			displayName = email
 		}
 
-		groupID = t.profile.DefaultUserGroupID
-
-		if t.profile.CustomUserGroupField != "" {
-			groups := make([]string, 0)
-			if gUser.RawData[t.profile.CustomUserGroupField] != nil {
-				groups = groupsStringer(gUser.RawData[t.profile.CustomUserGroupField])
-			}
-
-			for _, group := range groups {
-				if gid, ok := t.profile.UserGroupMapping[group]; ok {
-					groupID = gid
-					fmt.Println(groupID)
-				}
-			}
-		}
+		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField,t.profile.DefaultUserGroupID,t.profile.UserGroupMapping)
 	}
 
 	accessRequest := SSOAccessData{
@@ -206,25 +192,6 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	asMapString := returnVal.(map[string]interface{})
 
 	return asMapString["Meta"].(string), nil
-}
-
-// GetEmail returns the email to be used
-func GetEmail(gUser goth.User, customEmailField string)string{
-	email := ""
-
-	if customEmailField != "" {
-		if gUser.RawData[customEmailField] != nil {
-			email = gUser.RawData[customEmailField].(string)
-		}
-	}
-
-	if email == "" && gUser.Email != "" {
-		email = gUser.Email
-	}
-	if email == "" {
-		email = DefaultSSOEmail
-	}
-	return email
 }
 
 // azure give us a []interface{} so need to handle that for now
@@ -280,11 +247,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	user := i.(goth.User)
-	if t.profile.CustomUserIDField != "" {
-		if user.RawData[t.profile.CustomUserIDField] != nil {
-			user.UserID = user.RawData[t.profile.CustomUserIDField].(string)
-		}
-	}
+	user.UserID = GetUserID(user,t.profile.CustomUserIDField)
+
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
 	tykHandlerLogger.Debug("sso_key = ", sso_key)
@@ -524,4 +488,50 @@ func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *ht
 		t.CompleteIdentityActionForTokenAuth(w, r, i, profile)
 		return
 	}
+}
+
+// GetEmail returns the email to be used for SSO
+func GetEmail(gUser goth.User, customEmailField string)string{
+	email := ""
+
+	if customEmailField != "" {
+		if gUser.RawData[customEmailField] != nil {
+			email = gUser.RawData[customEmailField].(string)
+		}
+	}
+
+	if email == "" && gUser.Email != "" {
+		email = gUser.Email
+	}
+	if email == "" {
+		email = DefaultSSOEmail
+	}
+	return email
+}
+
+func GetUserID(gUser goth.User,CustomUserIDField string) string {
+	if CustomUserIDField != "" {
+		if gUser.RawData[CustomUserIDField] != nil {
+			return gUser.RawData[CustomUserIDField].(string)
+		}
+	}
+	return gUser.UserID
+}
+
+func GetGroupId(gUser goth.User,CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string) string{
+	groupID := DefaultUserGroup
+	if CustomUserGroupField != "" {
+		groups := make([]string, 0)
+		if gUser.RawData[CustomUserGroupField] != nil {
+			groups = groupsStringer(gUser.RawData[CustomUserGroupField])
+		}
+
+		for _, group := range groups {
+			if gid, ok := userGroupMapping[group]; ok {
+				groupID = gid
+				log.Debug(groupID)
+			}
+		}
+	}
+	return groupID
 }
