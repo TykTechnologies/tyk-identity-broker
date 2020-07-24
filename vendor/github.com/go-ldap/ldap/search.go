@@ -309,10 +309,10 @@ func (l *Conn) SearchWithPaging(searchRequest *SearchRequest, pagingSize uint32)
 	} else {
 		castControl, ok := control.(*ControlPaging)
 		if !ok {
-			return nil, fmt.Errorf("Expected paging control to be of type *ControlPaging, got %v", control)
+			return nil, fmt.Errorf("expected paging control to be of type *ControlPaging, got %v", control)
 		}
 		if castControl.PagingSize != pagingSize {
-			return nil, fmt.Errorf("Paging size given in search request (%d) conflicts with size given in search call (%d)", castControl.PagingSize, pagingSize)
+			return nil, fmt.Errorf("paging size given in search request (%d) conflicts with size given in search call (%d)", castControl.PagingSize, pagingSize)
 		}
 		pagingControl = castControl
 	}
@@ -375,7 +375,7 @@ func (l *Conn) Search(searchRequest *SearchRequest) (*SearchResult, error) {
 	}
 	packet.AppendChild(encodedSearchRequest)
 	// encode search controls
-	if searchRequest.Controls != nil {
+	if len(searchRequest.Controls) > 0 {
 		packet.AppendChild(encodeControls(searchRequest.Controls))
 	}
 
@@ -427,13 +427,17 @@ func (l *Conn) Search(searchRequest *SearchRequest) (*SearchResult, error) {
 			}
 			result.Entries = append(result.Entries, entry)
 		case 5:
-			resultCode, resultDescription := getLDAPResultCode(packet)
-			if resultCode != 0 {
-				return result, NewError(resultCode, errors.New(resultDescription))
+			err := GetLDAPError(packet)
+			if err != nil {
+				return nil, err
 			}
 			if len(packet.Children) == 3 {
 				for _, child := range packet.Children[2].Children {
-					result.Controls = append(result.Controls, DecodeControl(child))
+					decodedChild, err := DecodeControl(child)
+					if err != nil {
+						return nil, fmt.Errorf("failed to decode child control: %s", err)
+					}
+					result.Controls = append(result.Controls, decodedChild)
 				}
 			}
 			foundSearchResultDone = true
