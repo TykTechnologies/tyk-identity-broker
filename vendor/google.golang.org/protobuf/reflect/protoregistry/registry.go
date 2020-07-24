@@ -21,9 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"google.golang.org/protobuf/internal/encoding/messageset"
 	"google.golang.org/protobuf/internal/errors"
-	"google.golang.org/protobuf/internal/flags"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -98,38 +96,6 @@ func (r *Files) RegisterFile(file protoreflect.FileDescriptor) error {
 	}
 	path := file.Path()
 	if prev := r.filesByPath[path]; prev != nil {
-		// TODO: Remove this after some soak-in period after moving these types.
-		var prevPath string
-		const prevModule = "google.golang.org/genproto"
-		const prevVersion = "cb27e3aa (May 26th, 2020)"
-		switch path {
-		case "google/protobuf/field_mask.proto":
-			prevPath = prevModule + "/protobuf/field_mask"
-		case "google/protobuf/api.proto":
-			prevPath = prevModule + "/protobuf/api"
-		case "google/protobuf/type.proto":
-			prevPath = prevModule + "/protobuf/ptype"
-		case "google/protobuf/source_context.proto":
-			prevPath = prevModule + "/protobuf/source_context"
-		}
-		if r == GlobalFiles && prevPath != "" {
-			pkgName := strings.TrimSuffix(strings.TrimPrefix(path, "google/protobuf/"), ".proto")
-			pkgName = strings.Replace(pkgName, "_", "", -1) + "pb"
-			currPath := "google.golang.org/protobuf/types/known/" + pkgName
-			panic(fmt.Sprintf(""+
-				"duplicate registration of %q\n"+
-				"\n"+
-				"The generated definition for this file has moved:\n"+
-				"\tfrom: %q\n"+
-				"\tto:   %q\n"+
-				"A dependency on the %q module must\n"+
-				"be at version %v or higher.\n"+
-				"\n"+
-				"Upgrade the dependency by running:\n"+
-				"\tgo get -u %v\n",
-				path, prevPath, currPath, prevModule, prevVersion, prevPath))
-		}
-
 		err := errors.New("file %q is already registered", file.Path())
 		err = amendErrorWithCaller(err, prev, file)
 		if r == GlobalFiles && ignoreConflict(file, err) {
@@ -562,25 +528,13 @@ func (r *Types) FindEnumByName(enum protoreflect.FullName) (protoreflect.EnumTyp
 	return nil, NotFound
 }
 
-// FindMessageByName looks up a message by its full name,
-// e.g. "google.protobuf.Any".
+// FindMessageByName looks up a message by its full name.
+// E.g., "google.protobuf.Any"
 //
-// This returns (nil, NotFound) if not found.
+// This return (nil, NotFound) if not found.
 func (r *Types) FindMessageByName(message protoreflect.FullName) (protoreflect.MessageType, error) {
-	if r == nil {
-		return nil, NotFound
-	}
-	if r == GlobalTypes {
-		globalMutex.RLock()
-		defer globalMutex.RUnlock()
-	}
-	if v := r.typesByName[message]; v != nil {
-		if mt, _ := v.(protoreflect.MessageType); mt != nil {
-			return mt, nil
-		}
-		return nil, errors.New("found wrong type: got %v, want message", typeName(v))
-	}
-	return nil, NotFound
+	// The full name by itself is a valid URL.
+	return r.FindMessageByURL(string(message))
 }
 
 // FindMessageByURL looks up a message by a URL identifier.
@@ -588,8 +542,6 @@ func (r *Types) FindMessageByName(message protoreflect.FullName) (protoreflect.M
 //
 // This returns (nil, NotFound) if not found.
 func (r *Types) FindMessageByURL(url string) (protoreflect.MessageType, error) {
-	// This function is similar to FindMessageByName but
-	// truncates anything before and including '/' in the URL.
 	if r == nil {
 		return nil, NotFound
 	}
@@ -629,26 +581,6 @@ func (r *Types) FindExtensionByName(field protoreflect.FullName) (protoreflect.E
 		if xt, _ := v.(protoreflect.ExtensionType); xt != nil {
 			return xt, nil
 		}
-
-		// MessageSet extensions are special in that the name of the extension
-		// is the name of the message type used to extend the MessageSet.
-		// This naming scheme is used by text and JSON serialization.
-		//
-		// This feature is protected by the ProtoLegacy flag since MessageSets
-		// are a proto1 feature that is long deprecated.
-		if flags.ProtoLegacy {
-			if _, ok := v.(protoreflect.MessageType); ok {
-				field := field.Append(messageset.ExtensionName)
-				if v := r.typesByName[field]; v != nil {
-					if xt, _ := v.(protoreflect.ExtensionType); xt != nil {
-						if messageset.IsMessageSetExtension(xt.TypeDescriptor()) {
-							return xt, nil
-						}
-					}
-				}
-			}
-		}
-
 		return nil, errors.New("found wrong type: got %v, want extension", typeName(v))
 	}
 	return nil, NotFound
