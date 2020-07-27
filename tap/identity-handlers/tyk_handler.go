@@ -199,6 +199,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		}
 	}
 
+	tykHandlerLogger.Debugf("The GroupID %s is used for SSO: ", groupID)
+
 	accessRequest := SSOAccessData{
 		ForSection:   thisModule,
 		OrgID:        t.profile.OrgID,
