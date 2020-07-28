@@ -2,14 +2,14 @@ package main
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
-	"net/http"
 
 	tykerrors "github.com/TykTechnologies/tyk-identity-broker/error"
 	"github.com/gorilla/mux"
 )
-
 
 // Returns a profile ID
 func getId(req *http.Request) (string, error) {
@@ -33,7 +33,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
@@ -52,12 +52,11 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile( AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
 	}
-
 	thisIdentityProvider.HandleCallback(w, r, tykerrors.HandleError)
 	return
 }
@@ -66,3 +65,18 @@ func HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func HandleMetadata(w http.ResponseWriter, r *http.Request) {
+	thisId, idErr := getId(r)
+	if idErr != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, "Could not retrieve ID", idErr, 400, w, r)
+		return
+	}
+
+	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	if err != nil {
+		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
+		return
+	}
+	thisIdentityProvider.HandleMetadata(w, r)
+	return
+}

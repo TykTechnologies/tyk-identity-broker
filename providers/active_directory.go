@@ -20,7 +20,7 @@ import (
 )
 
 var onceReloadADLogger sync.Once
-var ADLogTag =  "AD AUTH"
+var ADLogTag = "AD AUTH"
 var ADLogger = log.WithField("prefix", ADLogTag)
 
 // ADProvider is an auth delegation provider for LDAP protocol
@@ -101,7 +101,7 @@ func (s *ADProvider) Init(handler tap.IdentityHandler, profile tap.Profile, conf
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadADLogger.Do(func() {
 		log = logger.Get()
-		ADLogger = &logrus.Entry{Logger:log}
+		ADLogger = &logrus.Entry{Logger: log}
 		ADLogger = ADLogger.Logger.WithField("prefix", ADLogTag)
 	})
 
@@ -262,7 +262,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
-func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request,pathParams map[string]string) {
+func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 	s.connect()
 
 	username := r.FormValue("username")
@@ -340,5 +340,10 @@ func (s *ADProvider) checkConstraints(user interface{}) error {
 func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
 
 	ADLogger.Warning("Callback not implemented for provider")
+
+}
+
+func (s *ADProvider) HandleMetadata(http.ResponseWriter, *http.Request) {
+	ADLogger.Warning("metadata not implemented for provider")
 
 }

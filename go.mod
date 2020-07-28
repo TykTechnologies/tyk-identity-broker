@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/Jeffail/gabs v1.4.0
+	github.com/crewjam/saml v0.4.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/go-redis/redis/v8 v8.0.0-beta.6 // indirect
