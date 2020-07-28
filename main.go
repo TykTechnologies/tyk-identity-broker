@@ -3,12 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"net/http"
-	"strconv"
-
 	"github.com/TykTechnologies/tyk-identity-broker/Initializer"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
+	"net"
+	"net/http"
+	"strconv"
+
 
 	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -84,20 +85,46 @@ func main() {
 
 	p.Handle("/health", http.HandlerFunc(HandleHealthCheck)).Methods("GET")
 
-	listenPort := "3010"
+	listenPort := 3010
 	if config.Port != 0 {
-		listenPort = strconv.Itoa(config.Port)
+		listenPort = config.Port
 	}
 
-	if config.HttpServerOptions.UseSSL {
-		mainLogger.Info("Broker Listening on SSL:", listenPort)
-		err := http.ListenAndServeTLS(":"+listenPort, config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile, p)
+	var tibServer net.Listener
+	if config.HttpServerOptions.UseSSL{
+		mainLogger.Info("--> Using SSL (https) for TIB")
+		cert, err := tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
+
 		if err != nil {
-			mainLogger.Fatal("ListenAndServe: ", err)
+			mainLogger.WithError(err).Error("loading cert file")
+			return
 		}
+
+		cfg := tls.Config{
+			Certificates:             []tls.Certificate{cert},
+			InsecureSkipVerify:       config.HttpServerOptions.SSLInsecureSkipVerify,
+		}
+		tibServer = createListener(listenPort, &cfg)
+	}else{
+		mainLogger.Info("--> Standard listener (http) for TIB")
+		tibServer = createListener(listenPort, nil)
+	}
+	_ = http.Serve(tibServer, p)
+
+}
+
+func createListener(port int, tlsConfig *tls.Config) (listener net.Listener) {
+	var err error
+	addr := ":" + strconv.Itoa(port)
+
+	if tlsConfig != nil {
+		listener, err = tls.Listen("tcp", addr, tlsConfig)
 	} else {
-		mainLogger.Info("Broker Listening on :", listenPort)
-		http.ListenAndServe(":"+listenPort, p)
+		listener, err = net.Listen("tcp", addr)
+	}
+	if err != nil {
+		log.Panic("Server creation failed! ", err)
 	}
 
+	return
 }

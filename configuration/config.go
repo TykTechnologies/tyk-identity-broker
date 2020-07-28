@@ -73,6 +73,7 @@ type Configuration struct {
 		UseSSL   bool
 		CertFile string
 		KeyFile  string
+		SSLInsecureSkipVerify bool
 	}
 	SSLInsecureSkipVerify bool
 	Storage               *Storage
