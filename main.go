@@ -93,7 +93,13 @@ func main() {
 	var tibServer net.Listener
 	if config.HttpServerOptions.UseSSL{
 		log.Info("--> Using SSL (https) for TIB")
-		cert, _:= tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
+		cert, err := tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
+
+		if err != nil {
+			log.WithError(err).Error("loading cert file")
+			return
+		}
+
 		cfg := tls.Config{
 			Certificates:             []tls.Certificate{cert},
 			InsecureSkipVerify:       config.HttpServerOptions.SSLInsecureSkipVerify,
