@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"sync"
 
+	"net/http"
+	"strings"
+
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/bitbucket"
 	"github.com/markbates/goth/providers/digitalocean"
@@ -19,8 +22,6 @@ import (
 	"github.com/markbates/goth/providers/salesforce"
 	"github.com/markbates/goth/providers/twitter"
 	"golang.org/x/oauth2"
-	"net/http"
-	"strings"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
@@ -200,4 +201,8 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 
 func (s *Social) getCallBackURL(provider string) string {
 	return s.config.CallbackBaseURL + "/auth/" + s.profile.ID + "/" + provider + "/callback"
+}
+
+func (s *Social) HandleMetadata(http.ResponseWriter, *http.Request) {
+	socialLogger.Warning("metadata not implemented for provider")
 }

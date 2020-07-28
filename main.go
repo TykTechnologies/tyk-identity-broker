@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"net/http"
+	"strconv"
+
 	"github.com/TykTechnologies/tyk-identity-broker/Initializer"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
-	"net/http"
-	"strconv"
 
 	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -72,6 +73,7 @@ func main() {
 	p := mux.NewRouter()
 	p.Handle("/auth/{id}/{provider}/callback", http.HandlerFunc(HandleAuthCallback))
 	p.Handle("/auth/{id}/{provider}", http.HandlerFunc(HandleAuth))
+	p.Handle("/auth/{id}/saml/metadata", http.HandlerFunc(HandleMetadata))
 
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleGetProfile))).Methods("GET")
 	p.Handle("/api/profiles/{id}", IsAuthenticated(http.HandlerFunc(HandleAddProfile))).Methods("POST")

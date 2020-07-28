@@ -7,8 +7,8 @@ const (
 
 //providers
 const (
-    SocialProvider = "SocialProvider"
-    ADProvider = "ADProvider"
-    ProxyProvider = "ProxyProvider"
+	SocialProvider = "SocialProvider"
+	ADProvider     = "ADProvider"
+	ProxyProvider  = "ProxyProvider"
+	SAMLProvider   = "SAMLProvider"
 )
-

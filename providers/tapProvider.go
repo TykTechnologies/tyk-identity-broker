@@ -3,6 +3,7 @@ package providers
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	identityHandlers "github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
@@ -11,10 +12,9 @@ import (
 )
 
 // return a provider based on the name of the provider type, add new providers here
-func GetTAProvider(conf tap.Profile,handler tyk.TykAPI, identityKeyStore tap.AuthRegisterBackend) (tap.TAProvider, error) {
+func GetTAProvider(conf tap.Profile, handler tyk.TykAPI, identityKeyStore tap.AuthRegisterBackend) (tap.TAProvider, error) {
 
 	var thisProvider tap.TAProvider
-
 	switch conf.ProviderName {
 	case constants.SocialProvider:
 		thisProvider = &Social{}
@@ -22,6 +22,8 @@ func GetTAProvider(conf tap.Profile,handler tyk.TykAPI, identityKeyStore tap.Aut
 		thisProvider = &ADProvider{}
 	case constants.ProxyProvider:
 		thisProvider = &ProxyProvider{}
+	case constants.SAMLProvider:
+		thisProvider = &SAMLProvider{}
 	default:
 		return nil, errors.New("invalid provider name")
 	}
@@ -34,7 +36,7 @@ func GetTAProvider(conf tap.Profile,handler tyk.TykAPI, identityKeyStore tap.Aut
 }
 
 // Maps an identity handler from an Action type, register new Identity Handlers and methods here
-func getIdentityHandler(name tap.Action,handler tyk.TykAPI, identityKeyStore tap.AuthRegisterBackend) tap.IdentityHandler {
+func getIdentityHandler(name tap.Action, handler tyk.TykAPI, identityKeyStore tap.AuthRegisterBackend) tap.IdentityHandler {
 	var thisIdentityHandler tap.IdentityHandler
 
 	switch name {
@@ -47,7 +49,7 @@ func getIdentityHandler(name tap.Action,handler tyk.TykAPI, identityKeyStore tap
 	return thisIdentityHandler
 }
 
-func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string,tykHandler tyk.TykAPI) (tap.TAProvider, *tap.HttpError) {
+func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string, tykHandler tyk.TykAPI) (tap.TAProvider, *tap.HttpError) {
 
 	thisProfile := tap.Profile{}
 	log.WithField("prefix", constants.HandlerLogTag).Debug("--> Looking up profile ID: ", id)
@@ -62,9 +64,9 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 		}
 	}
 
-	thisIdentityProvider, providerErr := GetTAProvider(thisProfile,tykHandler,identityKeyStore)
+	thisIdentityProvider, providerErr := GetTAProvider(thisProfile, tykHandler, identityKeyStore)
 	if providerErr != nil {
-		return  nil, &tap.HttpError{
+		return nil, &tap.HttpError{
 			Message: "Could not initialise provider",
 			Code:    400,
 			Error:   providerErr,
