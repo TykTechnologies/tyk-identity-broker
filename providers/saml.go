@@ -3,10 +3,9 @@ package providers
 import (
 	"context"
 	"crypto/rsa"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"encoding/xml"
+	"github.com/TykTechnologies/tyk/certs"
 	"net/http"
 	"net/url"
 	"strings"
@@ -27,6 +26,7 @@ import (
 var onceReloadSAMLLogger sync.Once
 var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
+var CertManager *certs.CertificateManager
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
@@ -55,9 +55,11 @@ func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, co
 	onceReloadSAMLLogger.Do(func() {
 		log = logger.Get()
 		SAMLLogger = &logrus.Entry{Logger: log}
-		SAMLLogger = SAMLLogger.Logger.WithField("prefix", SAMLLogTag)
+		SAMLLogger = SAMLLogger.Logger.WithField("prefix", nil)
 	})
 
+	// certManager will fallback as files as default
+	CertManager = certs.NewCertificateManager(nil,"", nil)
 	s.handler = handler
 	s.profile = profile
 	unmarshalErr := json.Unmarshal(config, &s.config)
@@ -87,22 +89,18 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
-		keyPair, err := tls.LoadX509KeyPair(s.config.CertFile, s.config.KeyFile)
-		if err != nil {
-			SAMLLogger.Errorf("Error loading keypair: %v", err)
+		certs := CertManager.List([]string{s.config.CertFile}, certs.CertificateAny)
+
+		if len(certs) == 0 {
+			SAMLLogger.Error("certificate was not loaded")
 		}
 
-		keyPair.Leaf, err = x509.ParseCertificate(keyPair.Certificate[0])
-		if err != nil {
-			SAMLLogger.Errorf("Error parsing certificate: %v", err)
-		}
-
+		keyPair := certs[0]
 		idpMetadataURL, err := url.Parse(s.config.IDPMetadataURL)
 		if err != nil {
 			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
 		}
 		SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
-
 		rootURL, err := url.Parse(s.config.SAMLBaseURL)
 		if err != nil {
 			SAMLLogger.Errorf("Error parsing SAMLBaseURL: %v", err)

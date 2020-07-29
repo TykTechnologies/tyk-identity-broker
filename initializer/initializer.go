@@ -1,9 +1,11 @@
-package Initializer
+package initializer
 
 import (
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 
@@ -49,4 +51,8 @@ func CreateInMemoryBackend() tap.AuthRegisterBackend  {
 	var config interface{}
 	inMemoryBackend.Init(config)
 	return inMemoryBackend
+}
+
+func SetCertManager(cm *certs.CertificateManager){
+	providers.CertManager = cm
 }
