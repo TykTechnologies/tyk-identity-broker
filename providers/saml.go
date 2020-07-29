@@ -41,8 +41,7 @@ var middleware *samlsp.Middleware
 
 type SAMLConfig struct {
 	IDPMetadataURL      string
-	CertFile            string
-	KeyFile             string
+	CertLocation        string
 	SAMLBaseURL         string
 	ForceAuthentication bool
 	SAMLBinding         string
@@ -89,7 +88,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
-		certs := CertManager.List([]string{s.config.CertFile}, certs.CertificateAny)
+		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
 
 		if len(certs) == 0 {
 			SAMLLogger.Error("certificate was not loaded")
