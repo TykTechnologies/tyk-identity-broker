@@ -8,14 +8,13 @@ import (
 	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
-
 )
 
 var log = logger.Get()
 var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
 // initBackend: Get our backend to use from configs files, new backends must be registered here
-func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{})(tap.AuthRegisterBackend,tap.AuthRegisterBackend) {
+func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) (tap.AuthRegisterBackend, tap.AuthRegisterBackend) {
 
 	AuthConfigStore := &backends.InMemoryBackend{}
 	IdentityKeyStore := &backends.RedisBackend{KeyPrefix: "identity-cache."}
@@ -38,21 +37,21 @@ func CreateBackendFromRedisConn(db redis.UniversalClient, keyPrefix string) tap.
 	return redisBackend
 }
 
-func SetLogger(newLogger *logrus.Logger){
+func SetLogger(newLogger *logrus.Logger) {
 	logger.SetLogger(newLogger)
 	log = newLogger
 
-	initializerLogger = &logrus.Entry{Logger:log}
+	initializerLogger = &logrus.Entry{Logger: log}
 	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
-func CreateInMemoryBackend() tap.AuthRegisterBackend  {
+func CreateInMemoryBackend() tap.AuthRegisterBackend {
 	inMemoryBackend := &backends.InMemoryBackend{}
 	var config interface{}
 	inMemoryBackend.Init(config)
 	return inMemoryBackend
 }
 
-func SetCertManager(cm *certs.CertificateManager){
+func SetCertManager(cm *certs.CertificateManager) {
 	providers.CertManager = cm
 }

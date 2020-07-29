@@ -26,8 +26,9 @@ import (
 var onceReloadSAMLLogger sync.Once
 var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
+
 // certManager will fallback as files as default
-var CertManager = certs.NewCertificateManager(nil,"", nil)
+var CertManager = certs.NewCertificateManager(nil, "", nil)
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
