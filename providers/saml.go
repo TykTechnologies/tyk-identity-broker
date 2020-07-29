@@ -26,7 +26,8 @@ import (
 var onceReloadSAMLLogger sync.Once
 var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
-var CertManager *certs.CertificateManager
+// certManager will fallback as files as default
+var CertManager = certs.NewCertificateManager(nil,"", nil)
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
@@ -58,8 +59,6 @@ func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, co
 		SAMLLogger = SAMLLogger.Logger.WithField("prefix", nil)
 	})
 
-	// certManager will fallback as files as default
-	CertManager = certs.NewCertificateManager(nil,"", nil)
 	s.handler = handler
 	s.profile = profile
 	unmarshalErr := json.Unmarshal(config, &s.config)
