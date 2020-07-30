@@ -161,6 +161,7 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
 		tykAPILogger.WithField("error", err).Error("Failed to create request")
+		return []byte{}, http.StatusInternalServerError, err
 	}
 
 	newRequest.Header.Add("authorization", usercode)
@@ -209,8 +210,8 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		tykAPILogger.Error("Failed to create request")
-		tykAPILogger.Error(err)
+		tykAPILogger.WithField("error",err).Error("Failed to create request")
+		return []byte{}, http.StatusInternalServerError, err
 	}
 
 	newRequest.Header.Add("admin-auth", t.DashboardConfig.AdminSecret)
