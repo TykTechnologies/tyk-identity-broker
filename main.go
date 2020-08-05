@@ -39,7 +39,7 @@ var ProfileFilename *string
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", VERSION)
-	mainLogger.Info("Copyright Tyk Technologies Ltd 2019")
+	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
 	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
