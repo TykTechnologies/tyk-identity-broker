@@ -3,13 +3,12 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"github.com/TykTechnologies/tyk-identity-broker/Initializer"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
+	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 	"net"
 	"net/http"
 	"strconv"
-
 
 	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
