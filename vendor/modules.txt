@@ -1,5 +1,18 @@
 # github.com/Jeffail/gabs v1.4.0
 github.com/Jeffail/gabs
+# github.com/TykTechnologies/tyk v2.9.4+incompatible
+github.com/TykTechnologies/tyk/certs
+# github.com/beevik/etree v1.1.0
+github.com/beevik/etree
+# github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
+github.com/crewjam/httperr
+# github.com/crewjam/saml v0.4.0
+github.com/crewjam/saml
+github.com/crewjam/saml/logger
+github.com/crewjam/saml/samlsp
+github.com/crewjam/saml/xmlenc
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
 # github.com/go-ldap/ldap v3.0.3+incompatible
 github.com/go-ldap/ldap
 # github.com/go-redis/redis v6.15.6+incompatible
@@ -18,6 +31,8 @@ github.com/gorilla/mux
 github.com/gorilla/securecookie
 # github.com/gorilla/sessions v1.2.0
 github.com/gorilla/sessions
+# github.com/jonboulle/clockwork v0.1.0
+github.com/jonboulle/clockwork
 # github.com/kelseyhightower/envconfig v1.4.0
 github.com/kelseyhightower/envconfig
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
@@ -41,6 +56,14 @@ github.com/mattn/go-isatty
 github.com/mgutz/ansi
 # github.com/mrjones/oauth v0.0.0-20180629183705-f4e24b6d100c
 github.com/mrjones/oauth
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# github.com/pmylund/go-cache v2.1.0+incompatible
+github.com/pmylund/go-cache
+# github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
+github.com/russellhaering/goxmldsig
+github.com/russellhaering/goxmldsig/etreeutils
+github.com/russellhaering/goxmldsig/types
 # github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
 # github.com/sirupsen/logrus v1.4.3-0.20191026113918-67a7fdcf741f
@@ -48,6 +71,7 @@ github.com/sirupsen/logrus
 # github.com/x-cray/logrus-prefixed-formatter v0.5.2
 github.com/x-cray/logrus-prefixed-formatter
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+golang.org/x/crypto/ripemd160
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
 golang.org/x/net/context
