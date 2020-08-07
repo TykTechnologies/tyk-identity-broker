@@ -49,6 +49,7 @@ type TykAPI struct {
 	GatewayConfig   EndpointConfig
 	DashboardConfig EndpointConfig
 	CustomDispatcher func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
+	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error)
 }
 
 // PortalDeveloper represents a portal developer
@@ -149,7 +150,7 @@ func ReloadLogger(){
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
-	//if user set custom dispatcher then lets use it
+	//if user set custom dispatcher then lets use it (internal tib)
 	if t.CustomDispatcher != nil{
 		return t.CustomDispatcher(target,method,usercode,body)
 	}
@@ -160,6 +161,7 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
 		tykAPILogger.WithField("error", err).Error("Failed to create request")
+		return []byte{}, http.StatusInternalServerError, err
 	}
 
 	newRequest.Header.Add("authorization", usercode)
@@ -199,13 +201,17 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 
 // DispatchDashboardSuper will dispatch a request to the dashbaord super-user API (admin)
 func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, int, error) {
+	//if user set custom super dispatcher then lets use it (internal tib)
+	if t.CustomSuperDispatcher != nil{
+		return t.CustomSuperDispatcher(target, method, body)
+	}
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		tykAPILogger.Error("Failed to create request")
-		tykAPILogger.Error(err)
+		tykAPILogger.WithField("error",err).Error("Failed to create request")
+		return []byte{}, http.StatusInternalServerError, err
 	}
 
 	newRequest.Header.Add("admin-auth", t.DashboardConfig.AdminSecret)
