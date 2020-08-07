@@ -46,7 +46,7 @@ func init() {
 	flag.Parse()
 
 	configuration.LoadConfig(*confFile, &config)
-	AuthConfigStore, IdentityKeyStore = Initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
+	AuthConfigStore, IdentityKeyStore = initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	TykAPIHandler = config.TykAPISettings
 
