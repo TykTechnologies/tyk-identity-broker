@@ -1,7 +1,7 @@
 #!/bin/bash
 
 : ${ORGDIR:="/src/github.com/TykTechnologies"}
-: ${SIGNKEY:="729EA673"}
+: ${SIGNKEY:="12B5D62C28F57592D1575BD51ED14C59E37DAC20"}
 : ${BUILDPKGS:="1"}
 TYK_IB_SRC_DIR=$ORGDIR/tyk-identity-broker
 BUILDTOOLSDIR=$TYK_IB_SRC_DIR/build_tools
@@ -10,8 +10,18 @@ echo "Set version number"
 : ${VERSION:=$(perl -n -e'/v(\d+).(\d+).(\d+)/'' && print "$1\.$2\.$3"' version.go)}
 
 if [ $BUILDPKGS == "1" ]; then
+    echo Configuring gpg-agent-config to accept a passphrase
+    mkdir ~/.gnupg && chmod 700 ~/.gnupg
+    cat >> ~/.gnupg/gpg-agent.conf <<EOF
+allow-preset-passphrase
+debug-level expert
+log-file /tmp/gpg-agent.log
+EOF
+    gpg-connect-agent reloadagent /bye
+
     echo "Importing signing key"
-    gpg --list-keys | grep -w $SIGNKEY && echo "Key exists" || gpg --batch --import $BUILDTOOLSDIR/build_key.key
+    gpg --list-keys | grep -w $SIGNKEY && echo "Key exists" || gpg --batch --import $BUILDTOOLSDIR/tyk.io.signing.key
+    bash $BUILDTOOLSDIR/unlock-agent.sh $SIGNKEY
 fi
 
 DESCRIPTION="Tyk Identity Broker"
@@ -76,8 +86,14 @@ do
         fpm "${FPMCOMMON[@]}" -a $arch -t deb --deb-user tyk --deb-group tyk ./=/opt/tyk-identity-broker
         fpm "${FPMCOMMON[@]}" "${FPMRPM[@]}" -a $arch -t rpm --rpm-user tyk --rpm-group tyk  ./=/opt/tyk-identity-broker
 
-        rpmName="tyk-identity-broker-$VERSION-1.${arch/amd64/x86_64}.rpm"
         echo "Signing $arch RPM"
-        $BUILDTOOLSDIR/rpm-sign.sh $rpmName
+        rpm --define "%_gpg_name Team Tyk (package signing) <team@tyk.io>" \
+            --define "%__gpg /usr/bin/gpg" \
+            --addsign *.rpm || (cat /tmp/gpg-agent.log; exit 1)
+        echo "Signing $arch DEB"
+        for i in *.deb
+        do
+            dpkg-sig --sign builder -k $SIGNKEY $i || (cat /tmp/gpg-agent.log; exit 1)
+        done
     fi
 done
