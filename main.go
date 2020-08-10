@@ -94,6 +94,7 @@ func main() {
 		mainLogger.Info("--> Using SSL (https) for TIB")
 		cert, err := tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
 
+		log.Info("key file:", config.HttpServerOptions.KeyFile)
 		if err != nil {
 			mainLogger.WithError(err).Error("loading cert file")
 			return
@@ -118,6 +119,11 @@ func createListener(port int, tlsConfig *tls.Config) (listener net.Listener) {
 
 	if tlsConfig != nil {
 		listener, err = tls.Listen("tcp", addr, tlsConfig)
+
+		// to consume Dash api, then we skip as well the verification in the client side
+		tr := &http.Transport{TLSClientConfig: tlsConfig}
+		c := &http.Client{Transport: tr}
+		tyk.SetHttpClient(c)
 	} else {
 		listener, err = net.Listen("tcp", addr)
 	}

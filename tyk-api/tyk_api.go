@@ -22,6 +22,7 @@ var onceReloadTykApiLogger sync.Once
 var log = logger.Get()
 var tykApiLogTag = "TYK_API"
 var tykAPILogger = log.WithField("prefix", tykApiLogTag)
+var httpClient = &http.Client{}
 
 type Endpoint string   // A type for endpoints
 type TykAPIName string // A type for Tyk API names (e.g. dashboard, gateway)
@@ -148,6 +149,10 @@ func ReloadLogger(){
 	})
 }
 
+func SetHttpClient(c *http.Client){
+	httpClient = c
+}
+
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	//if user set custom dispatcher then lets use it (internal tib)
@@ -165,8 +170,8 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	}
 
 	newRequest.Header.Add("authorization", usercode)
-	c := &http.Client{}
-	response, reqErr := c.Do(newRequest)
+	//c := &http.Client{}
+	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
 		return []byte{}, http.StatusInternalServerError, reqErr
@@ -215,8 +220,8 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	}
 
 	newRequest.Header.Add("admin-auth", t.DashboardConfig.AdminSecret)
-	c := &http.Client{}
-	response, reqErr := c.Do(newRequest)
+//	c := &http.Client{}
+	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
 		return []byte{}, http.StatusInternalServerError, reqErr
@@ -253,8 +258,8 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader,
 
 	newRequest.Header.Add("x-tyk-authorization", t.GatewayConfig.AdminSecret)
 	newRequest.Header.Add("content-type", ctype)
-	c := &http.Client{}
-	response, reqErr := c.Do(newRequest)
+	//c := &http.Client{}
+	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
 		return []byte{}, http.StatusInternalServerError, reqErr
