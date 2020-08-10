@@ -161,7 +161,6 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	}
 
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
-
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
@@ -170,7 +169,6 @@ func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode stri
 	}
 
 	newRequest.Header.Add("authorization", usercode)
-	//c := &http.Client{}
 	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
@@ -220,7 +218,6 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	}
 
 	newRequest.Header.Add("admin-auth", t.DashboardConfig.AdminSecret)
-//	c := &http.Client{}
 	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
@@ -258,7 +255,6 @@ func (t *TykAPI) DispatchGateway(target Endpoint, method string, body io.Reader,
 
 	newRequest.Header.Add("x-tyk-authorization", t.GatewayConfig.AdminSecret)
 	newRequest.Header.Add("content-type", ctype)
-	//c := &http.Client{}
 	response, reqErr := httpClient.Do(newRequest)
 
 	if reqErr != nil {
