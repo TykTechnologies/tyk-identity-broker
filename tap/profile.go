@@ -24,7 +24,7 @@ type Profile struct {
 	UserGroupMapping      map[string]string `bson:"UserGroupMapping" json:"UserGroupMapping"`
 }
 
-// Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
+// ProfileConstraint Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
 // social logins to only those with a tyk.io domain name
 type ProfileConstraint struct {
 	Domain string
