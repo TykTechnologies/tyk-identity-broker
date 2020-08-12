@@ -7,6 +7,7 @@ package tap
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
 	ID                    string            `bson:"ID" json:"ID"`
+	Name                  string            `bson:"Name" json:"Name"`
 	OrgID                 string            `bson:"OrgID" json:"OrgID"`
 	ActionType            Action            `bson:"ActionType" json:"ActionType"`
 	MatchedPolicyID       string            `bson:"MatchedPolicyID" json:"MatchedPolicyID"`
