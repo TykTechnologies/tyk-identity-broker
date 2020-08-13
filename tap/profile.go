@@ -7,6 +7,7 @@ package tap
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
 	ID                    string            `bson:"ID" json:"ID"`
+	Name                  string            `bson:"Name" json:"Name"`
 	OrgID                 string            `bson:"OrgID" json:"OrgID"`
 	ActionType            Action            `bson:"ActionType" json:"ActionType"`
 	MatchedPolicyID       string            `bson:"MatchedPolicyID" json:"MatchedPolicyID"`
@@ -23,7 +24,7 @@ type Profile struct {
 	UserGroupMapping      map[string]string `bson:"UserGroupMapping" json:"UserGroupMapping"`
 }
 
-// Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
+// ProfileConstraint Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
 // social logins to only those with a tyk.io domain name
 type ProfileConstraint struct {
 	Domain string
