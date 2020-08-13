@@ -118,6 +118,11 @@ func createListener(port int, tlsConfig *tls.Config) (listener net.Listener) {
 
 	if tlsConfig != nil {
 		listener, err = tls.Listen("tcp", addr, tlsConfig)
+
+		// to consume Dash api, then we skip as well the verification in the client side
+		tr := &http.Transport{TLSClientConfig: tlsConfig}
+		c := &http.Client{Transport: tr}
+		tyk.SetHttpClient(c)
 	} else {
 		listener, err = net.Listen("tcp", addr)
 	}
