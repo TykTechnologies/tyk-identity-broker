@@ -56,7 +56,7 @@ func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, co
 	onceReloadSAMLLogger.Do(func() {
 		log = logger.Get()
 		SAMLLogger = &logrus.Entry{Logger: log}
-		SAMLLogger = SAMLLogger.Logger.WithField("prefix", nil)
+		SAMLLogger = SAMLLogger.Logger.WithField("prefix", SAMLLogTag)
 	})
 
 	s.handler = handler
@@ -99,6 +99,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		if err != nil {
 			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
 		}
+
 		SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
 		rootURL, err := url.Parse(s.config.SAMLBaseURL)
 		if err != nil {
@@ -113,10 +114,16 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 
 		SAMLLogger.Debugf("Root URL: %v", rootURL.String())
+		var key *rsa.PrivateKey
+		if keyPair.PrivateKey == nil {
+			SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
+		}else{
+			key = keyPair.PrivateKey.(*rsa.PrivateKey)
+		}
 
 		opts := samlsp.Options{
 			URL: *rootURL,
-			Key: keyPair.PrivateKey.(*rsa.PrivateKey),
+			Key: key,
 		}
 
 		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
@@ -130,7 +137,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		sp := saml.ServiceProvider{
 			EntityID:          metadataURL.String(),
-			Key:               keyPair.PrivateKey.(*rsa.PrivateKey),
+			Key:               key,
 			Certificate:       keyPair.Leaf,
 			MetadataURL:       *metadataURL,
 			AcsURL:            *acsURL,
