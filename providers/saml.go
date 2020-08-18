@@ -86,7 +86,7 @@ func (s *SAMLProvider) UseCallback() bool {
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
 	if middleware == nil {
 
-//		SAMLLogger.Debug("Initialising middleware SAML")
+		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
 		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
 
