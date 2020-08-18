@@ -100,7 +100,6 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
 		}
 
-		SAMLLogger.Debug("SAML Meta:", idpMetadataURL)
 		SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
 		rootURL, err := url.Parse(s.config.SAMLBaseURL)
 		if err != nil {
