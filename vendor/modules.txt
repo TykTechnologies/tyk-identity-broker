@@ -1,6 +1,6 @@
 # github.com/Jeffail/gabs v1.4.0
 github.com/Jeffail/gabs
-# github.com/TykTechnologies/tyk v2.9.4+incompatible
+# github.com/TykTechnologies/tyk v1.9.2-0.20200715083850-7c48b5b185a2
 github.com/TykTechnologies/tyk/certs
 # github.com/beevik/etree v1.1.0
 github.com/beevik/etree
@@ -35,7 +35,7 @@ github.com/gorilla/sessions
 github.com/jonboulle/clockwork
 # github.com/kelseyhightower/envconfig v1.4.0
 github.com/kelseyhightower/envconfig
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/markbates/goth v1.64.2
 github.com/markbates/goth
@@ -86,7 +86,7 @@ golang.org/x/sys/windows
 # golang.org/x/text v0.3.3
 golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# google.golang.org/appengine v1.4.0
+# google.golang.org/appengine v1.6.1
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
