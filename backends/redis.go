@@ -164,12 +164,7 @@ func (r *RedisBackend) GetKeys(filter string) []string {
 	db := r.db
 	client := db
 
-	filterHash := ""
-	if filter != "" {
-		filterHash = r.hashKey(filter)
-	}
-
-	searchStr := r.KeyPrefix + filterHash + "*"
+	searchStr := r.KeyPrefix + "*"
 	logger.Debug("[STORE] Getting list by: ", searchStr)
 
 	fnFetchKeys := func(client *redis.Client) ([]string, error) {
@@ -227,9 +222,6 @@ func (r *RedisBackend) GetKeys(filter string) []string {
 }
 
 func (r *RedisBackend) GetAll() []interface{} {
-	target := make([]interface{}, 0)
-	redisLogger.Warning("GetAll() Not implemented")
-
 	db := r.ensureConnection()
 	keys := r.GetKeys(r.KeyPrefix)
 	if keys == nil {
@@ -280,11 +272,7 @@ func (r *RedisBackend) GetAll() []interface{} {
 		}
 	}
 
-	for i, _ := range keys {
-		target = append(target,values[i])
-	}
-
-	return target
+	return values
 }
 
 func (r *RedisBackend) cleanKey(keyName string) string {
@@ -308,6 +296,7 @@ func singleton(cache bool) redis.UniversalClient {
 
 func (r *RedisBackend) DeleteKey(key string) error {
 	db := r.ensureConnection()
+	logger.Info("Trying to delete:", r.fixKey(key))
 	return db.Del(r.fixKey(key)).Err()
 }
 
