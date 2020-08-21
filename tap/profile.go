@@ -2,6 +2,8 @@
 proxy */
 package tap
 
+import "encoding/json"
+
 // Profile is the configuration objct for an authentication session, it
 // combines an Action (what to do with the identity once confirmed, this is
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
@@ -29,4 +31,13 @@ type Profile struct {
 type ProfileConstraint struct {
 	Domain string
 	Group  string
+}
+
+func(m *Profile)UnmarshalBinary(data []byte) error{
+	// convert data to yours, let's assume its json data
+	return json.Unmarshal(data, m)
+}
+
+func (m *Profile) MarshalBinary() ([]byte, error) {
+	return json.Marshal(m)
 }
