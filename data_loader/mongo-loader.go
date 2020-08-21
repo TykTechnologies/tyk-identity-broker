@@ -1,8 +1,8 @@
 package data_loader
 
 import (
-	"encoding/json"
 	"crypto/tls"
+	"encoding/json"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
@@ -79,7 +79,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
 	if err != nil {
-		logrus.WithError(err).Error("emptying profiles collection")
+		dataLogger.WithError(err).Error("emptying profiles collection")
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 		case string:
 			// we need to make this because redis return string instead objects
 			if err := json.Unmarshal([]byte(p.(string)), &profile); err != nil {
-				log.WithError(err).Error("unmarshaling interface for mongo flushing")
+				dataLogger.WithError(err).Error("unmarshaling interface for mongo flushing")
 				return err
 			}
 			updatedSet[i] =  profile
@@ -101,7 +101,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	if len(updatedSet) > 0 {
 		err = profilesCollection.Insert(updatedSet...)
 		if err != nil {
-			logrus.WithError(err).Error("error refreshing profiles records in mongo")
+			dataLogger.WithError(err).Error("error refreshing profiles records in mongo")
 			return err
 		}
 	}

@@ -22,7 +22,7 @@ func TestInMemoryBackend_GetAndSetKey(t *testing.T) {
 	}
 
 	target := aStruct{}
-	_, vErr := backend.GetKey(keyName, &target)
+	vErr := backend.GetKey(keyName, &target)
 
 	if vErr != nil {
 		t.Error("Error raised on get key: ", vErr)

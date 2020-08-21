@@ -302,7 +302,6 @@ func singleton(cache bool) redis.UniversalClient {
 
 func (r *RedisBackend) DeleteKey(key string) error {
 	db := r.ensureConnection()
-	logger.Info("Trying to delete:", r.fixKey(key))
 	return db.Del(r.fixKey(key)).Err()
 }
 
