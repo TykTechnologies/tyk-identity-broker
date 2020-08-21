@@ -147,10 +147,16 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 func (r *RedisBackend) GetKey(key string, val interface{}) error {
 	db := r.ensureConnection()
 	var err error
-	val, err = db.Get(r.fixKey(key)).Result()
+	result, err := db.Get(r.fixKey(key)).Result()
 	if err != nil {
 		return err
 	}
+
+	// if AuthConfigStore is redis adapter, then redis return string
+	if err := json.Unmarshal([]byte(result), &val); err != nil {
+		return err
+	}
+
 	return nil
 }
 
