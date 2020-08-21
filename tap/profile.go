@@ -33,11 +33,11 @@ type ProfileConstraint struct {
 	Group  string
 }
 
-func(m *Profile)UnmarshalBinary(data []byte) error{
+func(m Profile)UnmarshalBinary(data []byte) error{
 	// convert data to yours, let's assume its json data
 	return json.Unmarshal(data, m)
 }
 
-func (m *Profile) MarshalBinary() ([]byte, error) {
+func (m Profile) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
 }
