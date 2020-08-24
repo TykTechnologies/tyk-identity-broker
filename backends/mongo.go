@@ -18,13 +18,15 @@ func (m MongoBackend) Init(interface{}) {
 
 }
 
-func (m MongoBackend) SetKey(key string,value interface{}) error {
+func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 	profilesCollection := m.Db.C(m.Collection)
 
-	profile := value.(*tap.Profile)
-
+	filter := bson.M{"ID":key}
+	if orgId != "" {
+		filter["OrgID"] = orgId
+	}
 	// delete if exist, where matches the profile ID and org
-	err := profilesCollection.Remove(bson.M{"ID":key,"OrgID":profile.OrgID})
+	err := profilesCollection.Remove(filter)
 	if err != nil {
 		mongoLogger.WithError(err).Error("error setting profile in mongo: ")
 	}
@@ -37,18 +39,30 @@ func (m MongoBackend) SetKey(key string,value interface{}) error {
 	return err
 }
 
-func (m MongoBackend) GetKey(key string, val interface{}) error {
+func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
 	profilesCollection := m.Db.C(m.Collection)
-	err := profilesCollection.Find(bson.M{"ID":key}).One(val)
+
+	filter := bson.M{"ID":key}
+	if orgId != "" {
+		filter["OrgID"] = orgId
+	}
+
+	err := profilesCollection.Find(filter).One(val)
 	if err != nil {
 		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
 	}
 	return err
 }
 
-func (m MongoBackend) GetAll() []interface{} {
+func (m MongoBackend) GetAll(orgId string) []interface{} {
 	var profiles []tap.Profile
-	err := m.Db.C(m.Collection).Find(nil).All(&profiles)
+
+	filter := bson.M{}
+	if orgId != "" {
+		filter["OrgID"] = orgId
+	}
+
+	err := m.Db.C(m.Collection).Find(filter).All(&profiles)
 	if err != nil {
 		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
 	}
@@ -61,10 +75,15 @@ func (m MongoBackend) GetAll() []interface{} {
 	return result
 }
 
-func (m MongoBackend) DeleteKey(key string) error {
+func (m MongoBackend) DeleteKey(key string, orgId string) error {
 	profilesCollection := m.Db.C(m.Collection)
 
-	err := profilesCollection.Remove(bson.M{"ID": key})
+	filter := bson.M{"ID":key}
+	if orgId != "" {
+		filter["OrgID"] = orgId
+	}
+
+	err := profilesCollection.Remove(filter)
 	if err != nil {
 		mongoLogger.WithError(err).Error("removing profile")
 	}

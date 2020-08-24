@@ -60,7 +60,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	}
 
 	for _, profile := range profiles {
-		inputErr := store.SetKey(profile.ID, profile)
+		inputErr := store.SetKey(profile.ID,profile.OrgID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		}
@@ -74,7 +74,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
-	updatedSet := store.GetAll()
+	updatedSet := store.GetAll("")
 	profilesCollection := m.Db.C(ProfilesCollectionName)
 
 	//empty to store new changes
