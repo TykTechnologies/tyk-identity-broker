@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/tyk v1.9.2-0.20200715083850-7c48b5b185a2
+	github.com/TykTechnologies/tyk v1.9.2-0.20200824132103-a306c92f1b6c
 	github.com/crewjam/saml v0.4.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/go-redis/redis v6.15.6+incompatible
