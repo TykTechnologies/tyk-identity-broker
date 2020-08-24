@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"encoding/json"
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"gopkg.in/mgo.v2"
@@ -47,10 +48,25 @@ func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
 		filter["OrgID"] = orgId
 	}
 
-	err := profilesCollection.Find(filter).One(val)
+	p := tap.Profile{}
+	err := profilesCollection.Find(filter).One(&p)
 	if err != nil {
-		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
+		mongoLogger.WithError(err).Error("error reading profile from mongo")
 	}
+
+	// Mongo doesn't parse well the nested map[string]interface{} so, we need to use json marshal/unmarshal
+	// Mongo let those maps as bson.M
+	data, err := json.Marshal(p)
+	if err != nil {
+		mongoLogger.WithError(err).Error("error reading profile from mongo")
+		return err
+	}
+
+	if err := json.Unmarshal(data, &val); err != nil {
+		mongoLogger.WithError(err).Error("error reading profile from mongo ")
+		return err
+	}
+
 	return err
 }
 
