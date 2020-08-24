@@ -22,8 +22,9 @@ func (m MongoBackend) SetKey(key string,value interface{}) error {
 	profilesCollection := m.Db.C(m.Collection)
 
 	profile := value.(*tap.Profile)
+
 	// delete if exist, where matches the profile ID and org
-	err := profilesCollection.Remove(tap.Profile{ID:key,OrgID:profile.OrgID})
+	err := profilesCollection.Remove(bson.M{"ID":key,"OrgID":profile.OrgID})
 	if err != nil {
 		mongoLogger.WithError(err).Error("error setting profile in mongo: ")
 	}
