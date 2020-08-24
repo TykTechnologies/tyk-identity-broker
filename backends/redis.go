@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/TykTechnologies/tyk-identity-broker/log"
+	"strings"
+	"sync/atomic"
 
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
@@ -13,6 +15,10 @@ import (
 
 var redisLoggerTag = "TIB REDIS STORE"
 var redisLogger = logger.WithField("prefix", redisLoggerTag)
+
+var singlePool atomic.Value
+var singleCachePool atomic.Value
+var redisUp atomic.Value
 
 type RedisConfig struct {
 	MaxIdle               int
@@ -32,6 +38,7 @@ type RedisConfig struct {
 type RedisBackend struct {
 	db        redis.UniversalClient
 	config    *RedisConfig
+	HashKeys  bool
 	KeyPrefix string
 }
 
@@ -140,17 +147,157 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 func (r *RedisBackend) GetKey(key string, val interface{}) error {
 	db := r.ensureConnection()
 	var err error
-	val, err = db.Get(r.fixKey(key)).Result()
+	result, err := db.Get(r.fixKey(key)).Result()
 	if err != nil {
 		return err
 	}
+
+	// if AuthConfigStore is redis adapter, then redis return string
+	if err := json.Unmarshal([]byte(result), &val); err != nil {
+		return err
+	}
+
 	return nil
 }
 
+func (r *RedisBackend) hashKey(in string) string {
+	// missing implementation
+	return in
+}
+
+// GetKeys will return all keys according to the filter (filter is a prefix - e.g. tyk.keys.*)
+func (r *RedisBackend) GetKeys(filter string) []string {
+	db := r.db
+	client := db
+
+	searchStr := r.KeyPrefix + "*"
+	logger.Debug("[STORE] Getting list by: ", searchStr)
+
+	fnFetchKeys := func(client *redis.Client) ([]string, error) {
+		values := make([]string, 0)
+
+		iter := client.Scan(0, searchStr, 0).Iterator()
+		for iter.Next() {
+			values = append(values, iter.Val())
+		}
+
+		if err := iter.Err(); err != nil {
+			return nil, err
+		}
+
+		return values, nil
+	}
+
+	var err error
+	sessions := make([]string, 0)
+
+	switch v := client.(type) {
+	case *redis.ClusterClient:
+		ch := make(chan []string)
+
+		go func() {
+			err = v.ForEachMaster(func(client *redis.Client) error {
+				values, err := fnFetchKeys(client)
+				if err != nil {
+					return err
+				}
+
+				ch <- values
+				return nil
+			})
+			close(ch)
+		}()
+
+		for res := range ch {
+			sessions = append(sessions, res...)
+		}
+	case *redis.Client:
+		sessions, err = fnFetchKeys(v)
+	}
+
+	if err != nil {
+		logger.Error("Error while fetching keys:", err)
+		return nil
+	}
+
+	for i, v := range sessions {
+		sessions[i] = r.cleanKey(v)
+	}
+
+	return sessions
+}
+
 func (r *RedisBackend) GetAll() []interface{} {
-	target := make([]interface{}, 0)
-	redisLogger.Warning("GetAll() Not implemented")
-	return target
+	db := r.ensureConnection()
+	keys := r.GetKeys(r.KeyPrefix)
+	if keys == nil {
+		logger.Error("Error trying to get filtered client keys")
+		return nil
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	for i, v := range keys {
+		keys[i] = r.KeyPrefix + v
+	}
+
+	client := db
+	values := make([]interface{}, 0)
+
+	switch v := client.(type) {
+	case *redis.ClusterClient:
+		{
+			getCmds := make([]*redis.StringCmd, 0)
+			pipe := v.Pipeline()
+			for _, key := range keys {
+				getCmds = append(getCmds, pipe.Get(key))
+			}
+			_, err := pipe.Exec()
+			if err != nil && err != redis.Nil {
+				logger.Error("Error trying to get client keys: ", err)
+				return nil
+			}
+
+			for _, cmd := range getCmds {
+				values = append(values, cmd.Val())
+			}
+		}
+	case *redis.Client:
+		{
+			result, err := v.MGet(keys...).Result()
+			if err != nil {
+				logger.Error("Error trying to get client keys: ", err)
+				return nil
+			}
+
+			for _, val := range result {
+				values = append(values, val)
+			}
+		}
+	}
+
+	return values
+}
+
+func (r *RedisBackend) cleanKey(keyName string) string {
+	return strings.Replace(keyName, r.KeyPrefix, "", 1)
+}
+
+func singleton(cache bool) redis.UniversalClient {
+	if cache {
+		v := singleCachePool.Load()
+		if v != nil {
+			return v.(redis.UniversalClient)
+		}
+		return nil
+	}
+	v := singlePool.Load()
+	if v != nil {
+		return v.(redis.UniversalClient)
+	}
+	return nil
 }
 
 func (r *RedisBackend) DeleteKey(key string) error {
