@@ -17,7 +17,7 @@ type HttpError struct{
 func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 	dumpProfile := Profile{}
 	keyErr := AuthConfigStore.GetKey(profile.ID,profile.OrgID, &dumpProfile)
-	if keyErr == nil {
+	if keyErr == nil && dumpProfile.ID != "" {
 		return &HttpError{
 			Message: "Object ID already exists",
 			Code:    http.StatusBadRequest,
