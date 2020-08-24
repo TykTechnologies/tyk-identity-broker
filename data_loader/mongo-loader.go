@@ -11,7 +11,7 @@ import (
 )
 
 var mongoPrefix = "mongo"
-var profilesCollectionName = "profilesCollection"
+var ProfilesCollectionName = "profilesCollection"
 
 // MongoLoaderConf is the configuration struct for a MongoLoader
 type MongoLoaderConf struct {
@@ -22,6 +22,7 @@ type MongoLoaderConf struct {
 type MongoLoader struct {
 	config MongoLoaderConf
 	Db     *mgo.Database
+	SkipFlush bool
 }
 
 type ProfilesBackup struct {
@@ -52,7 +53,7 @@ func (m *MongoLoader) Init(conf interface{}) error {
 func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	var profiles []tap.Profile
 
-	err := m.Db.C(profilesCollectionName).Find(nil).All(&profiles)
+	err := m.Db.C(ProfilesCollectionName).Find(nil).All(&profiles)
 	if err != nil {
 		dataLogger.Error("error reading profiles from mongo: " + err.Error())
 		return err
@@ -74,7 +75,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
 	updatedSet := store.GetAll()
-	profilesCollection := m.Db.C(profilesCollectionName)
+	profilesCollection := m.Db.C(ProfilesCollectionName)
 
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
@@ -89,7 +90,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 		case string:
 			// we need to make this because redis return string instead objects
 			if err := json.Unmarshal([]byte(p.(string)), &profile); err != nil {
-				dataLogger.WithError(err).Error("unmarshaling interface for mongo flushing")
+				dataLogger.WithError(err).Error("un-marshaling interface for mongo flushing")
 				return err
 			}
 			updatedSet[i] =  profile
