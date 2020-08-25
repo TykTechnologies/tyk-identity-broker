@@ -48,6 +48,11 @@ Table of Contents
             * [JSON Data and Usernames](#json-data-and-usernames)
             * [Logging into the dashboard using a proxy provider](#logging-into-the-dashboard-using-a-proxy-provider)
             * [Generating a standard Auth Token using a Proxy Provider](#generating-a-standard-auth-token-using-a-proxy-provider)
+         * [SAML](#saml)
+            * [Logging into the dashboard using SAML](#logging-into-the-dashboard-using-saml)
+            * [Log into Tyk Portal using SAML](#logging-into-tyk-portal-using-saml)
+            * [Generating a standard Auth Token using SAML](#generating-a-standard-auth-token-using-saml``~~~~~~~~``)
+            * [Generate an OAuth Token using SAML](#generate-an-oauth-token-using-an-ldap-login-form)
       * [The Broker API](#the-broker-api)
          * [List profiles](#list-profiles)
          * [Add profile](#add-profile)
@@ -123,6 +128,7 @@ Identity providers can be anything, so long as they implement the `tap.TAProvide
 1. Social - Provides OAuth handlers for many popular social logins (such as Google, Github and Bitbucket), as well as general OpenID Connect support
 2. LDAP - A simple LDAP protocol binder that can validate a username and password against an LDAP server (tested against OpenLDAP)
 3. Proxy - A generic proxy handler that will forward a request to a third party and provides multiple "validators" to identify whether a response is successful or not (e.g. status code, content match and regex)
+4. SAML - Provides a way to authenticate against a SAML IDP.
 
 #### Identity Handlers
 
@@ -804,6 +810,64 @@ The Proxy provider can do some clever things, such as extract JSON data from the
 	"Type": "passthrough"
 }
 ```
+### SAML
+SAML authentication is a way for a service provider, such as the Tyk Dashboard or Portal, to assert the Identity of a User via a third party.
+
+Tyk Identity Broker can act as the go-between for the Tyk Dashboard and Portal and a third party identity provider. Tyk Identity broker can also interpret and pass along information about the user who is logging in such as Name, Email and group or role metadata for enforcing role based access control in the Tyk Dashboard.
+
+The provider config for SAML has the following values that can be configured in a Profile:
+
+`SAMLBaseURL`: The host of TIB that will be used in the metadata document for the Service Provider. This will form part of the metadata URL used as the Entity ID by the IDP. The redirects configured in the IDP must match the expected Host and URI configured in the metadata document made available by Tyk Identity Broker.
+
+`FailureRedirect`: Where to redirect failed login requests.
+
+`IDPMetaDataURL`: The metadata URL of your IDP which will provide Tyk Identity Broker with information about the IDP such as EntityID, Endpoints (Single Sign On Service Endpoint, Single Logout Service Endpoint), its public X.509 cert, NameId Format, Organization info and Contact info. This metadata XML can be signed providing a public X.509 cert and the private key.
+
+`CertLocation`: An X.509 certificate and the private key for signing your requests to the IDP, this should be one single file with the cert and key concatenated.
+
+`ForceAuthentication`: Ignore any session held by the IDP and force re-login every request.
+
+`SAMLEmailClaim`: Key for looking up the email claim in the SAML assertion form the IDP. Defaults to: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+
+`SAMLForenameClaim`: Key for looking up the forename claim in the SAML assertion form the IDP. Defaults to: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/forename
+
+`SAMLSurnameClaim`: Key for looking up the surname claim in the SAML assertion form the IDP. Defaults to: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname
+
+Example profile configuration:
+
+`
+{
+    "ActionType": "GenerateOrLoginUserProfile",
+    "ID": "saml-sso-login",
+    "OrgID": "{YOUR_ORGANISATION_ID}",
+    "CustomEmailField": "",
+    "IdentityHandlerConfig": {
+        "DashboardCredential": "{DASHBOARD_USER_API_KEY}"
+    },
+    "ProviderConfig": {
+        "SAMLBaseURL": "https://{HOST}",
+        "FailureRedirect": "http://{DASHBOARD_HOST}:{PORT}/?fail=true",
+        "IDPMetaDataURL": "{IDP_METADATA_URL}",
+        "CertLocation":"myservice.cert",
+        "ForceAuthentication": false,
+        "SAMLEmailClaim": "",
+        "SAMLForenameClaim": "",
+        "SAMLSurnameClaim": ""
+    },
+    "ProviderName": "SAMLProvider",
+    "ReturnURL": "http://{DASHBOARD_URL}:{PORT}/tap",
+    "Type": "redirect"
+}
+`
+
+#### Logging into the dashboard using SAML
+
+
+#### Logging into Tyk Portal using SAML
+
+#### Generating a Standard Auth Token using SAML
+
+#### Generate an OAuth Token using SAML
 
 #### User Group ID Support
 
