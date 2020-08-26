@@ -82,7 +82,7 @@ func IsAuthenticated(h http.Handler) http.Handler {
 // ------ End Middleware methods -------
 
 func HandleGetProfileList(w http.ResponseWriter, r *http.Request) {
-	profiles := AuthConfigStore.GetAll()
+	profiles := AuthConfigStore.GetAll("")
 
 	HandleAPIOK(profiles, "", 200, w, r)
 }
@@ -91,7 +91,7 @@ func HandleGetProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
 	thisProfile := tap.Profile{}
 
-	keyErr := AuthConfigStore.GetKey(key, &thisProfile)
+	keyErr := AuthConfigStore.GetKey(key,thisProfile.OrgID, &thisProfile)
 	if keyErr != nil {
 		HandleAPIError(APILogTag, "Profile not found", keyErr, 404, w, r)
 		return
@@ -157,7 +157,7 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
-	err := tap.DeleteProfile(key,AuthConfigStore, GlobalDataLoader.Flush)
+	err := tap.DeleteProfile(key,"",AuthConfigStore, GlobalDataLoader.Flush)
 	if err != nil {
 		HandleAPIError(APILogTag, err.Message, err.Error, err.Code, w, r)
 		return

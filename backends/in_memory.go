@@ -35,7 +35,7 @@ func (m *InMemoryBackend) Init(config interface{}) {
 }
 
 // SetKey will set the value of a key in the map
-func (m *InMemoryBackend) SetKey(key string, val interface{}) error {
+func (m *InMemoryBackend) SetKey(key string,orgId string, val interface{}) error {
 	if m.kv == nil {
 		return errors.New("store not initialised!")
 	}
@@ -52,7 +52,7 @@ func (m *InMemoryBackend) SetKey(key string, val interface{}) error {
 }
 
 // SetKey will set the value of a key in the map
-func (m *InMemoryBackend) DeleteKey(key string) error {
+func (m *InMemoryBackend) DeleteKey(key,orgId string) error {
 	m.lock.Lock()
 	delete(m.kv, key)
 	m.lock.Unlock()
@@ -60,7 +60,7 @@ func (m *InMemoryBackend) DeleteKey(key string) error {
 }
 
 // GetKey will retuyrn the value of a key as an interface
-func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
+func (m *InMemoryBackend) GetKey(key string, orgId string, target interface{}) error {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
@@ -78,7 +78,7 @@ func (m *InMemoryBackend) GetKey(key string, target interface{}) error {
 	return nil
 }
 
-func (m *InMemoryBackend) GetAll() []interface{} {
+func (m *InMemoryBackend) GetAll(orgId string) []interface{} {
 
 	m.lock.RLock()
 	defer m.lock.RUnlock()

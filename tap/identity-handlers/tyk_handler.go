@@ -330,7 +330,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	tykHandlerLogger.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
-		fErr := t.Store.GetKey(id_with_profile, &value)
+		fErr := t.Store.GetKey(id_with_profile,"", &value)
 		if fErr == nil {
 			// Key found
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
@@ -372,7 +372,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	if resp.AccessToken != "" {
 		tykHandlerLogger.Warning("--> Storing token reference")
-		t.Store.SetKey(id_with_profile, resp.AccessToken)
+		t.Store.SetKey(id_with_profile,"", resp.AccessToken)
 	}
 
 	if t.oauth.NoRedirect {
@@ -410,7 +410,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	tykHandlerLogger.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
-		fErr := t.Store.GetKey(id_with_profile, &value)
+		fErr := t.Store.GetKey(id_with_profile,"", &value)
 		if fErr == nil {
 			// Key found
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
@@ -451,7 +451,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	if resp.KeyID != "" {
 		tykHandlerLogger.Warning("--> Storing token reference")
-		t.Store.SetKey(id_with_profile, resp.KeyID)
+		t.Store.SetKey(id_with_profile,"", resp.KeyID)
 	}
 
 	// After login, we need to redirect this user

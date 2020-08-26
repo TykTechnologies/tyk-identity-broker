@@ -16,13 +16,13 @@ func TestInMemoryBackend_GetAndSetKey(t *testing.T) {
 	saveVal := aStruct{Thing: "Test"}
 	keyName := "test-key"
 
-	sErr := backend.SetKey(keyName, saveVal)
+	sErr := backend.SetKey(keyName,"", saveVal)
 	if sErr != nil {
 		t.Error("Error raised on set key: ", sErr)
 	}
 
 	target := aStruct{}
-	vErr := backend.GetKey(keyName, &target)
+	vErr := backend.GetKey(keyName,"", &target)
 
 	if vErr != nil {
 		t.Error("Error raised on get key: ", vErr)

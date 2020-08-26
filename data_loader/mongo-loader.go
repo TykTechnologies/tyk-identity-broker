@@ -2,6 +2,7 @@ package data_loader
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
@@ -10,7 +11,7 @@ import (
 )
 
 var mongoPrefix = "mongo"
-var profilesCollectionName = "profilesCollection"
+var ProfilesCollectionName = "profilesCollection"
 
 // MongoLoaderConf is the configuration struct for a MongoLoader
 type MongoLoaderConf struct {
@@ -21,6 +22,7 @@ type MongoLoaderConf struct {
 type MongoLoader struct {
 	config MongoLoaderConf
 	Db     *mgo.Database
+	SkipFlush bool
 }
 
 type ProfilesBackup struct {
@@ -51,14 +53,14 @@ func (m *MongoLoader) Init(conf interface{}) error {
 func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	var profiles []tap.Profile
 
-	err := m.Db.C(profilesCollectionName).Find(nil).All(&profiles)
+	err := m.Db.C(ProfilesCollectionName).Find(nil).All(&profiles)
 	if err != nil {
 		dataLogger.Error("error reading profiles from mongo: " + err.Error())
 		return err
 	}
 
 	for _, profile := range profiles {
-		inputErr := store.SetKey(profile.ID, profile)
+		inputErr := store.SetKey(profile.ID,profile.OrgID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		}
@@ -73,14 +75,29 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
 
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
-	updatedSet := store.GetAll()
-	profilesCollection := m.Db.C(profilesCollectionName)
+	updatedSet := store.GetAll("")
+	profilesCollection := m.Db.C(ProfilesCollectionName)
 
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
 	if err != nil {
-
+		dataLogger.WithError(err).Error("emptying profiles collection")
 		return err
+	}
+
+	for i , p := range updatedSet{
+		profile := tap.Profile{}
+		switch p.(type) {
+		case string:
+			// we need to make this because redis return string instead objects
+			if err := json.Unmarshal([]byte(p.(string)), &profile); err != nil {
+				dataLogger.WithError(err).Error("un-marshaling interface for mongo flushing")
+				return err
+			}
+			updatedSet[i] =  profile
+		default:
+			updatedSet[i] =  p
+		}
 	}
 
 	if len(updatedSet) > 0 {

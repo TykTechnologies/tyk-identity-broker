@@ -43,7 +43,7 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 
 	var loaded int
 	for _, profile := range profiles {
-		inputErr := store.SetKey(profile.ID, profile)
+		inputErr := store.SetKey(profile.ID,profile.OrgID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		} else {
@@ -78,7 +78,7 @@ func (f *FileLoader) Flush(store tap.AuthRegisterBackend) error {
 		return wErr
 	}
 
-	newSet := store.GetAll()
+	newSet := store.GetAll("")
 	asJson, encErr := json.Marshal(newSet)
 	if encErr != nil {
 		dataLogger.WithField("error", encErr).Error("Encoding failed!")
