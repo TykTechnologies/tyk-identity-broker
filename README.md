@@ -51,7 +51,7 @@ Table of Contents
          * [SAML](#saml)
             * [Logging into the dashboard using SAML](#logging-into-the-dashboard-using-saml)
             * [Log into Tyk Portal using SAML](#logging-into-tyk-portal-using-saml)
-            * [Generating a standard Auth Token using SAML](#generating-a-standard-auth-token-using-saml`)
+            * [Generating a standard Auth Token using SAML](#generating-a-standard-auth-token-using-saml)
       * [The Broker API](#the-broker-api)
          * [List profiles](#list-profiles)
          * [Add profile](#add-profile)
@@ -910,7 +910,6 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
 `
 
 #### Generating a Standard Auth Token using SAML
-
 
 `
   {
