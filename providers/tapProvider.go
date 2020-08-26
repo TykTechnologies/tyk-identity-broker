@@ -53,7 +53,7 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 
 	thisProfile := tap.Profile{}
 	log.WithField("prefix", constants.HandlerLogTag).Debug("--> Looking up profile ID: ", id)
-	foundProfileErr := AuthConfigStore.GetKey(id, &thisProfile)
+	foundProfileErr := AuthConfigStore.GetKey(id,thisProfile.OrgID, &thisProfile)
 
 	if foundProfileErr != nil {
 		errorMsg := "Profile " + id + " not found"
