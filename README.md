@@ -834,7 +834,7 @@ The provider config for SAML has the following values that can be configured in 
 
 Example profile configuration:
 
-`
+```
 {
     "ActionType": "GenerateOrLoginUserProfile",
     "ID": "saml-sso-login",
@@ -857,13 +857,13 @@ Example profile configuration:
     "ReturnURL": "http://{DASHBOARD_URL}:{PORT}/tap",
     "Type": "redirect"
 }
-`
+```
 
 #### Logging into the dashboard using SAML
 
 In order to have dashboard access using SAML we need to create a profile like the next:
 
-`
+```
 {
     "ID" : "saml-sso-dash-login",
     "OrgID" : {ORG-ID},
@@ -882,13 +882,13 @@ In order to have dashboard access using SAML we need to create a profile like th
     },
     "ReturnURL" : "http://tyk-dashboard:3000/tap"
 }
-`
+```
 
 #### Logging into Tyk Portal using SAML
 
 To obtain tyk portal access it's similar to the profile above, the minimum configuration to get this access is defined as the next profile:
 
-`
+```
 {
     "ID": "saml-sso-dev-portal-login",
     "ActionType": "GenerateOrLoginDeveloperProfile",
@@ -907,11 +907,11 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
     "ReturnURL": {PORTAL-HOST}/sso/},
     "Type": "redirect"
 }
-`
+```
 
 #### Generating a Standard Auth Token using SAML
 
-`
+```
   {
         "ID":"saml-for-auth-api-token",
         "OrgID": {ORG-ID},
@@ -932,7 +932,7 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
             }
         },
     }
-`
+```
 
 
 #### User Group ID Support
