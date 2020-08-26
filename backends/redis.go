@@ -132,7 +132,7 @@ func (r *RedisBackend) SetDb(db redis.UniversalClient) {
 	redisLogger.Info("Set DB")
 }
 
-func (r *RedisBackend) SetKey(key string, val interface{}) error {
+func (r *RedisBackend) SetKey(key string,orgId string, val interface{}) error {
 	db := r.ensureConnection()
 
 	redisLogger.Debug("Setting key=", key)
@@ -144,7 +144,7 @@ func (r *RedisBackend) SetKey(key string, val interface{}) error {
 	return nil
 }
 
-func (r *RedisBackend) GetKey(key string, val interface{}) error {
+func (r *RedisBackend) GetKey(key string,orgId string, val interface{}) error {
 	db := r.ensureConnection()
 	var err error
 	result, err := db.Get(r.fixKey(key)).Result()
@@ -227,7 +227,7 @@ func (r *RedisBackend) GetKeys(filter string) []string {
 	return sessions
 }
 
-func (r *RedisBackend) GetAll() []interface{} {
+func (r *RedisBackend) GetAll(orgId string) []interface{} {
 	db := r.ensureConnection()
 	keys := r.GetKeys(r.KeyPrefix)
 	if keys == nil {
@@ -300,7 +300,7 @@ func singleton(cache bool) redis.UniversalClient {
 	return nil
 }
 
-func (r *RedisBackend) DeleteKey(key string) error {
+func (r *RedisBackend) DeleteKey(key string, orgId string) error {
 	db := r.ensureConnection()
 	return db.Del(r.fixKey(key)).Err()
 }

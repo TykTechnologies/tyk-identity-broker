@@ -2,12 +2,14 @@ package initializer
 
 import (
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2"
 )
 
 var log = logger.Get()
@@ -45,6 +47,10 @@ func SetLogger(newLogger *logrus.Logger) {
 	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
+func SetCertManager(cm *certs.CertificateManager) {
+	providers.CertManager = cm
+}
+
 func CreateInMemoryBackend() tap.AuthRegisterBackend {
 	inMemoryBackend := &backends.InMemoryBackend{}
 	var config interface{}
@@ -52,6 +58,12 @@ func CreateInMemoryBackend() tap.AuthRegisterBackend {
 	return inMemoryBackend
 }
 
-func SetCertManager(cm *certs.CertificateManager) {
-	providers.CertManager = cm
+func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
+	mongoBackend := &backends.MongoBackend{
+		Db: db,
+		Collection: data_loader.ProfilesCollectionName,
+	}
+	var config interface{}
+	mongoBackend.Init(config)
+	return mongoBackend
 }

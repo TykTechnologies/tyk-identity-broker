@@ -16,8 +16,8 @@ type HttpError struct{
 
 func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(profile.ID, &dumpProfile)
-	if keyErr == nil {
+	keyErr := AuthConfigStore.GetKey(profile.ID,profile.OrgID, &dumpProfile)
+	if keyErr == nil && dumpProfile.ID != "" {
 		return &HttpError{
 			Message: "Object ID already exists",
 			Code:    http.StatusBadRequest,
@@ -25,7 +25,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 		}
 	}
 
-	saveErr := AuthConfigStore.SetKey(profile.ID, &profile)
+	saveErr := AuthConfigStore.SetKey(profile.ID,profile.OrgID, &profile)
 	if saveErr != nil {
 		return &HttpError{
 			Message: "Update failed",
@@ -58,7 +58,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	}
 
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
+	keyErr := AuthConfigStore.GetKey(key,profile.OrgID, &dumpProfile)
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist, operation not permitted",
@@ -67,7 +67,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 		}
 	}
 
-	saveErr := AuthConfigStore.SetKey(key, &profile)
+	saveErr := AuthConfigStore.SetKey(key,profile.OrgID, &profile)
 	if saveErr != nil {
 		return &HttpError{
 			Message: "Update failed",
@@ -88,10 +88,10 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	return nil
 }
 
-func DeleteProfile(key string,AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
+func DeleteProfile(key, orgID string,AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(key, &dumpProfile)
+	keyErr := AuthConfigStore.GetKey(key,orgID, &dumpProfile)
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist",
@@ -100,7 +100,7 @@ func DeleteProfile(key string,AuthConfigStore AuthRegisterBackend, flush func(ba
 		}
 	}
 
-	delErr := AuthConfigStore.DeleteKey(key)
+	delErr := AuthConfigStore.DeleteKey(key, orgID)
 	if delErr != nil {
 		return &HttpError{
 			Message: "Delete failed",
