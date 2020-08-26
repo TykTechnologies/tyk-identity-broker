@@ -834,7 +834,7 @@ The provider config for SAML has the following values that can be configured in 
 
 Example profile configuration:
 
-```
+```json
 {
     "ActionType": "GenerateOrLoginUserProfile",
     "ID": "saml-sso-login",
@@ -847,7 +847,7 @@ Example profile configuration:
         "SAMLBaseURL": "https://{HOST}",
         "FailureRedirect": "http://{DASHBOARD_HOST}:{PORT}/?fail=true",
         "IDPMetaDataURL": "{IDP_METADATA_URL}",
-        "CertLocation":"myservice.cert",
+        "CertLocation": "myservice.cert",
         "ForceAuthentication": false,
         "SAMLEmailClaim": "",
         "SAMLForenameClaim": "",
@@ -863,19 +863,19 @@ Example profile configuration:
 
 In order to have dashboard access using SAML we need to create a profile like the next:
 
-```
+```json
 {
-    "ID" : "saml-sso-dash-login",
-    "OrgID" : {ORG-ID},
-    "ActionType" : "GenerateOrLoginUserProfile",
-    "Type" : "redirect",
-    "ProviderName" : "SAMLProvider",
+    "ID": "saml-sso-dash-login",
+    "OrgID": {ORG-ID},
+    "ActionType": "GenerateOrLoginUserProfile",
+    "Type": "redirect",
+    "ProviderName": "SAMLProvider",
     "ProviderConfig" : {
         "CertLocation": {CERT-PATH-OR-ID},
         "SAMLBaseURL": {TIB-HOST},
         "ForceAuthentication": false,
         "FailureRedirect": "{DASH-HOST}/?fail=true",
-        "IDPMetaDataURL": {METADATA-URL-PROVIDED-BY-IDP},
+        "IDPMetaDataURL": {METADATA-URL-PROVIDED-BY-IDP}
     },
     "IdentityHandlerConfig" : {
         "DashboardCredential" : "{DASH-CREDENTIAL}"
@@ -888,7 +888,7 @@ In order to have dashboard access using SAML we need to create a profile like th
 
 To obtain tyk portal access it's similar to the profile above, the minimum configuration to get this access is defined as the next profile:
 
-```
+```json
 {
     "ID": "saml-sso-dev-portal-login",
     "ActionType": "GenerateOrLoginDeveloperProfile",
@@ -911,26 +911,26 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
 
 #### Generating a Standard Auth Token using SAML
 
-```
+```json
   {
-        "ID":"saml-for-auth-api-token",
+        "ID": "saml-for-auth-api-token",
         "OrgID": {ORG-ID},
-        "ActionType":"GenerateTemporaryAuthToken",
+        "ActionType": "GenerateTemporaryAuthToken",
         "MatchedPolicyID": {POLICY-ID},
-        "Type":"passthrough",
-        "ProviderName":"SAMLProvider",
-        "ProviderConfig":{
+        "Type": "passthrough",
+        "ProviderName": "SAMLProvider",
+        "ProviderConfig": {
             "CertLocation": {CERT-PATH-OR-ID},
-            "ForceAuthentication":false,
-            "IDPMetaDataURL":{METADATA-URL-PROVIDED-BY-IDP},
-            "SAMLBaseURL": {TIB-HOST},
+            "ForceAuthentication": false,
+            "IDPMetaDataURL": {METADATA-URL-PROVIDED-BY-IDP},
+            "SAMLBaseURL": {TIB-HOST}
         },
-        "IdentityHandlerConfig":{
+        "IdentityHandlerConfig": {
             "DashboardCredential": {DASH-CREDENTIAL},
             "TokenAuth":{
                 "BaseAPIID": {API-ID}
             }
-        },
+        }
     }
 ```
 
