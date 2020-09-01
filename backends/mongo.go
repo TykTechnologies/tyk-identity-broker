@@ -42,7 +42,7 @@ func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 
 	err = profilesCollection.Insert(value)
 	if err != nil {
-		mongoLogger.WithError(err).Error("setting inserting in mongo: ")
+		mongoLogger.WithError(err).Error("inserting profile in mongo")
 	}
 
 	return err
