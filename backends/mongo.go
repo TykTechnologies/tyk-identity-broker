@@ -19,8 +19,14 @@ func (m MongoBackend) Init(interface{}) {
 
 }
 
+func (m *MongoBackend) getCollection() *mgo.Collection {
+	session := m.Db.Session.Copy()
+	return session.DB("").C(m.Collection)
+}
+
 func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
@@ -41,7 +47,8 @@ func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 }
 
 func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
@@ -78,7 +85,9 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 		filter["OrgID"] = orgId
 	}
 
-	err := m.Db.C(m.Collection).Find(filter).All(&profiles)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
+	err := profilesCollection.Find(filter).All(&profiles)
 	if err != nil {
 		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
 	}
@@ -92,7 +101,8 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 }
 
 func (m MongoBackend) DeleteKey(key string, orgId string) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
