@@ -6,6 +6,7 @@ import (
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
@@ -66,4 +67,8 @@ func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
 	var config interface{}
 	mongoBackend.Init(config)
 	return mongoBackend
+}
+
+func SetConfigHandler(backend tap.AuthRegisterBackend){
+	tothic.SetParamsStoreHandler(backend)
 }

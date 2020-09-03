@@ -9,7 +9,9 @@ package tothic
 
 import (
 	"errors"
+	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
@@ -24,7 +26,9 @@ const EnvPrefix = "TYK_IB"
 
 var log = logger.Get()
 
-var pathParams map[string]string
+// var pathParams map[string]string
+var pathParams tap.AuthRegisterBackend
+
 
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 
@@ -34,6 +38,10 @@ var Store sessions.Store
 func init() {
 	key := KeyFromEnv()
 	Store = sessions.NewCookieStore([]byte(key))
+
+	pathParams = new(backends.InMemoryBackend)
+	var config interface{}
+	pathParams.Init(config)
 }
 
 func KeyFromEnv() (key string) {
@@ -55,7 +63,10 @@ func KeyFromEnv() (key string) {
 }
 
 func SetPathParams(newPathParams map[string]string){
-	pathParams = newPathParams
+	for k, v := range newPathParams{
+		err:=pathParams.SetKey(k,"",v)
+		log.Error(err)
+	}
 }
 /*
 BeginAuthHandler is a convienence handler for starting the authentication process.
@@ -182,13 +193,26 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 var GetProviderName = getProviderName
 
 func getProviderName() (string, error) {
-
-	provider := pathParams["provider"]
+	var provider string
+	err := pathParams.GetKey("provider","",&provider)
+	if err != nil {
+		log.Error(err)
+	}
+	log.Info("PP:", pathParams)
 	if provider == "" {
-		provider = pathParams[":provider"]
+		err := pathParams.GetKey(":provider","",provider)
+		if err != nil {
+			return provider, errors.New("1you must select a provider")
+		}
 	}
 	if provider == "" {
 		return provider, errors.New("you must select a provider")
 	}
+
+	log.Info("Provider:", provider)
 	return provider, nil
+}
+
+func SetParamsStoreHandler(newParamsStore tap.AuthRegisterBackend){
+	pathParams = newParamsStore
 }
