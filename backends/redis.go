@@ -152,16 +152,8 @@ func (r *RedisBackend) GetKey(key string,orgId string, val interface{}) error {
 		return err
 	}
 
-	// need to marshal so in case that val is string, int, etc we will not have troubles un-marshaling the data
-	// from redis to val
-	data, err := json.Marshal(result)
-	if err != nil {
-		redisLogger.WithError(err).Error("marshalling result from redis")
-		return err
-	}
-
 	// if AuthConfigStore is redis adapter, then redis return string
-	if err = json.Unmarshal(data, &val); err != nil {
+	if err = json.Unmarshal([]byte(result), &val); err != nil {
 		redisLogger.WithError(err).Error("unmarshalling redis result into interface")
 	}
 

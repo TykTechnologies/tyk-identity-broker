@@ -63,8 +63,8 @@ func KeyFromEnv() (key string) {
 }
 
 type PathParam struct {
-	Id       string `json:"id,string"`
-	Provider string `json:"provider,string"`
+	Id       string `json:"id"`
+	Provider string `json:"provider"`
 }
 
 func (p PathParam) UnmarshalBinary(data []byte) error {
@@ -95,6 +95,7 @@ func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
 func GetParams(profile tap.Profile) PathParam{
 	params := PathParam{}
 	pathParams.GetKey(profile.GetPrefix(),profile.OrgID,&params)
+	log.Infof("params: %+v",params)
 	return params
 }
 
