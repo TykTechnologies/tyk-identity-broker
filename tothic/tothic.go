@@ -8,6 +8,7 @@ See https://github.com/markbates/goth/examples/main.go to see this in action.
 package tothic
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -28,7 +29,6 @@ var log = logger.Get()
 
 // var pathParams map[string]string
 var pathParams tap.AuthRegisterBackend
-
 
 var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http.Request)
 
@@ -62,15 +62,42 @@ func KeyFromEnv() (key string) {
 	return
 }
 
-func SetPathParams(newPathParams map[string]string){
-
-	pathParams.SetKey("=================something","",newPathParams)
-	logger.Get().Info("setted from here")
-	/*for k, v := range newPathParams{
-		err:=pathParams.SetKey(k,"",v)
-		log.Error(err)
-	}*/
+type pathParam struct {
+	Id       string `json:"id"`
+	Provider string `json:"provider"`
 }
+
+func (p pathParam) UnmarshalBinary(data []byte) error {
+	// convert data to yours, let's assume its json data
+	return json.Unmarshal(data, p)
+}
+
+func (p pathParam) MarshalBinary() ([]byte, error) {
+	return json.Marshal(p)
+}
+
+func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
+
+	jsonbody, err := json.Marshal(newPathParams)
+	if err != nil {
+		return
+	}
+
+	params := pathParam{}
+	if err := json.Unmarshal(jsonbody, &params); err != nil {
+		return
+	}
+
+	pathParams.SetKey(profile.GetPrefix(), profile.OrgID, params)
+
+}
+
+func GetParams(profile tap.Profile) pathParam{
+	params := pathParam{}
+	pathParams.GetKey(profile.GetPrefix(),profile.OrgID,&params)
+	return params
+}
+
 /*
 BeginAuthHandler is a convienence handler for starting the authentication process.
 It expects to be able to get the name of the provider from the query parameters
@@ -81,11 +108,11 @@ for the requested provider.
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, pathParams map[string]string) {
+func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, pathParams map[string]string, profile tap.Profile) {
 
-	SetPathParams(pathParams)
+	SetPathParams(pathParams, profile)
 
-	url, err := GetAuthURL(res, req, toth)
+	url, err := GetAuthURL(res, req, toth, profile)
 	if err != nil {
 		//res.WriteHeader(http.StatusBadRequest)
 		//fmt.Fprintln(res, err)
@@ -113,9 +140,9 @@ as either "provider" or ":provider".
 I would recommend using the BeginAuthHandler instead of doing all of these steps
 yourself, but that's entirely up to you.
 */
-func GetAuthURL(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) (string, error) {
+func GetAuthURL(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile) (string, error) {
 
-	providerName, err := GetProviderName()
+	providerName, err := GetProviderName(profile)
 	if err != nil {
 		return "", err
 	}
@@ -153,9 +180,9 @@ as either "provider" or ":provider".
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance) (goth.User, error) {
+var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile) (goth.User, error) {
 
-	providerName, err := GetProviderName()
+	providerName, err := GetProviderName(profile)
 	if err != nil {
 		return goth.User{}, err
 	}
@@ -166,7 +193,7 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	}
 
 	session, err := Store.Get(req, SessionName)
-	if err !=  nil {
+	if err != nil {
 		return goth.User{}, errors.New("cannot get session store")
 	}
 
@@ -195,19 +222,10 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 // name for your request.
 var GetProviderName = getProviderName
 
-func getProviderName() (string, error) {
-	var provider string
-	err := pathParams.GetKey("provider","",&provider)
-	if err != nil {
-		log.Error(err)
-	}
+func getProviderName(profile tap.Profile) (string, error) {
+	params := GetParams(profile)
 
-	if provider == "" {
-		err := pathParams.GetKey(":provider","",provider)
-		if err != nil {
-			return provider, errors.New("1you must select a provider")
-		}
-	}
+	provider := params.Provider
 	if provider == "" {
 		return provider, errors.New("you must select a provider")
 	}
@@ -216,6 +234,6 @@ func getProviderName() (string, error) {
 	return provider, nil
 }
 
-func SetParamsStoreHandler(newParamsStore tap.AuthRegisterBackend){
+func SetParamsStoreHandler(newParamsStore tap.AuthRegisterBackend) {
 	pathParams = newParamsStore
 }

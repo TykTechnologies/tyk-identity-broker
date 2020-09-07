@@ -49,7 +49,7 @@ func getIdentityHandler(name tap.Action, handler tyk.TykAPI, identityKeyStore ta
 	return thisIdentityHandler
 }
 
-func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string, tykHandler tyk.TykAPI) (tap.TAProvider, *tap.HttpError) {
+func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id string, tykHandler tyk.TykAPI) (tap.TAProvider, tap.Profile, *tap.HttpError) {
 
 	thisProfile := tap.Profile{}
 	log.WithField("prefix", constants.HandlerLogTag).Debug("--> Looking up profile ID: ", id)
@@ -57,7 +57,7 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 
 	if foundProfileErr != nil {
 		errorMsg := "Profile " + id + " not found"
-		return nil, &tap.HttpError{
+		return nil,thisProfile, &tap.HttpError{
 			Message: errorMsg,
 			Code:    404,
 			Error:   foundProfileErr,
@@ -66,14 +66,14 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 
 	thisIdentityProvider, providerErr := GetTAProvider(thisProfile, tykHandler, identityKeyStore)
 	if providerErr != nil {
-		return nil, &tap.HttpError{
+		return nil,thisProfile, &tap.HttpError{
 			Message: "Could not initialise provider",
 			Code:    400,
 			Error:   providerErr,
 		}
 	}
 
-	return thisIdentityProvider, nil
+	return thisIdentityProvider,thisProfile, nil
 }
 
 // A hack to marshal a provider conf from map[string]interface{} into a type without type checking, ugly, but effective
