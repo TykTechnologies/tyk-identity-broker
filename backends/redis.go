@@ -135,7 +135,6 @@ func (r *RedisBackend) SetDb(db redis.UniversalClient) {
 func (r *RedisBackend) SetKey(key string,orgId string, val interface{}) error {
 	db := r.ensureConnection()
 
-	redisLogger.Debug("Setting key=", key)
 	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err

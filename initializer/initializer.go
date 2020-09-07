@@ -16,7 +16,7 @@ import (
 var log = logger.Get()
 var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
-// initBackend: Get our backend to use from configs files, new backends must be registered here
+// initBackend: Get our backend to use from configs files, new back-ends must be registered here
 func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) (tap.AuthRegisterBackend, tap.AuthRegisterBackend) {
 
 	AuthConfigStore := &backends.InMemoryBackend{}

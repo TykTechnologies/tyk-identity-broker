@@ -10,7 +10,6 @@ package tothic
 import (
 	"encoding/json"
 	"errors"
-	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
@@ -35,13 +34,23 @@ var TothErrorHandler func(string, string, error, int, http.ResponseWriter, *http
 // Store can/should be set by applications using gothic. The default is a cookie store.
 var Store sessions.Store
 
+type PathParam struct {
+	Id       string `json:"id"`
+	Provider string `json:"provider"`
+}
+
+func (p PathParam) UnmarshalBinary(data []byte) error {
+	// convert data to yours, let's assume its json data
+	return json.Unmarshal(data, p)
+}
+
+func (p PathParam) MarshalBinary() ([]byte, error) {
+	return json.Marshal(p)
+}
+
 func init() {
 	key := KeyFromEnv()
 	Store = sessions.NewCookieStore([]byte(key))
-
-	pathParams = new(backends.InMemoryBackend)
-	var config interface{}
-	pathParams.Init(config)
 }
 
 func KeyFromEnv() (key string) {
@@ -62,40 +71,36 @@ func KeyFromEnv() (key string) {
 	return
 }
 
-type PathParam struct {
-	Id       string `json:"id"`
-	Provider string `json:"provider"`
-}
-
-func (p PathParam) UnmarshalBinary(data []byte) error {
-	// convert data to yours, let's assume its json data
-	return json.Unmarshal(data, p)
-}
-
-func (p PathParam) MarshalBinary() ([]byte, error) {
-	return json.Marshal(p)
-}
-
 func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
+
+	val, ok := newPathParams[":provider"]
+	if ok {
+		newPathParams["provider"] = val
+		delete(newPathParams,":provider")
+	}
 
 	jsonbody, err := json.Marshal(newPathParams)
 	if err != nil {
+		log.WithError(err).Error("saving path params")
 		return
 	}
 
 	params := PathParam{}
 	if err := json.Unmarshal(jsonbody, &params); err != nil {
+		log.WithError(err).Error("saving path params")
 		return
 	}
 
-	pathParams.SetKey(profile.GetPrefix(), profile.OrgID, params)
+	err = pathParams.SetKey(profile.GetPrefix(), profile.OrgID, params)
+	if err != nil {
+		log.WithError(err).Error("saving path params")
+	}
 
 }
 
 func GetParams(profile tap.Profile) PathParam{
 	params := PathParam{}
 	pathParams.GetKey(profile.GetPrefix(),profile.OrgID,&params)
-	log.Infof("params: %+v",params)
 	return params
 }
 
