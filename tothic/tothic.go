@@ -63,8 +63,8 @@ func KeyFromEnv() (key string) {
 }
 
 type pathParam struct {
-	Id       string `json:"id"`
-	Provider string `json:"provider"`
+	Id       string `json:"id,string"`
+	Provider string `json:"provider,string"`
 }
 
 func (p pathParam) UnmarshalBinary(data []byte) error {

@@ -156,13 +156,13 @@ func (r *RedisBackend) GetKey(key string,orgId string, val interface{}) error {
 	// from redis to val
 	data, err := json.Marshal(result)
 	if err != nil {
-		mongoLogger.WithError(err).Error("marshalling result from redis")
+		redisLogger.WithError(err).Error("marshalling result from redis")
 		return err
 	}
 
 	// if AuthConfigStore is redis adapter, then redis return string
 	if err = json.Unmarshal(data, &val); err != nil {
-		log.Get().Error("error:", err)
+		redisLogger.WithError(err).Error("unmarshalling redis result into interface")
 	}
 
 	return err
