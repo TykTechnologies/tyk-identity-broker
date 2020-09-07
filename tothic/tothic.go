@@ -63,10 +63,13 @@ func KeyFromEnv() (key string) {
 }
 
 func SetPathParams(newPathParams map[string]string){
-	for k, v := range newPathParams{
+
+	pathParams.SetKey("=================something","",newPathParams)
+	logger.Get().Info("setted from here")
+	/*for k, v := range newPathParams{
 		err:=pathParams.SetKey(k,"",v)
 		log.Error(err)
-	}
+	}*/
 }
 /*
 BeginAuthHandler is a convienence handler for starting the authentication process.
@@ -198,7 +201,7 @@ func getProviderName() (string, error) {
 	if err != nil {
 		log.Error(err)
 	}
-	log.Info("PP:", pathParams)
+
 	if provider == "" {
 		err := pathParams.GetKey(":provider","",provider)
 		if err != nil {
