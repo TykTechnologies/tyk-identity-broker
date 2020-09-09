@@ -19,8 +19,14 @@ func (m MongoBackend) Init(interface{}) {
 
 }
 
+func (m *MongoBackend) getCollection() *mgo.Collection {
+	session := m.Db.Session.Copy()
+	return session.DB("").C(m.Collection)
+}
+
 func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
@@ -36,14 +42,15 @@ func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 
 	err = profilesCollection.Insert(value)
 	if err != nil {
-		mongoLogger.WithError(err).Error("error setting profile in mongo: ")
+		mongoLogger.WithError(err).Error("inserting profile in mongo")
 	}
 
 	return err
 }
 
 func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
@@ -54,7 +61,7 @@ func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
 	err := profilesCollection.Find(filter).One(&p)
 	if err != nil {
 		if err.Error() != "not found" {
-			mongoLogger.WithError(err).Error("error reading profile from mongo")
+			mongoLogger.WithError(err).Error("error reading profile from mongo, key:", key)
 		}
 	}
 
@@ -62,12 +69,12 @@ func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
 	// Mongo let those maps as bson.M
 	data, err := json.Marshal(p)
 	if err != nil {
-		mongoLogger.WithError(err).Error("error reading profile from mongo")
+		mongoLogger.WithError(err).Error("error marshaling profile")
 		return err
 	}
 
 	if err := json.Unmarshal(data, &val); err != nil {
-		mongoLogger.WithError(err).Error("error reading profile from mongo ")
+		mongoLogger.WithError(err).Error("error un-marshaling profile ")
 		return err
 	}
 
@@ -82,7 +89,9 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 		filter["OrgID"] = orgId
 	}
 
-	err := m.Db.C(m.Collection).Find(filter).All(&profiles)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
+	err := profilesCollection.Find(filter).All(&profiles)
 	if err != nil {
 		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
 	}
@@ -96,7 +105,8 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 }
 
 func (m MongoBackend) DeleteKey(key string, orgId string) error {
-	profilesCollection := m.Db.C(m.Collection)
+	profilesCollection := m.getCollection()
+	defer profilesCollection.Database.Session.Close()
 
 	filter := bson.M{"ID":key}
 	if orgId != "" {
