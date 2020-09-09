@@ -157,7 +157,10 @@ func SetHttpClient(c *http.Client){
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	//if user set custom dispatcher then lets use it (internal tib)
 	if t.CustomDispatcher != nil{
+		tykAPILogger.Info("Using custom regular dispatcher")
 		return t.CustomDispatcher(target,method,usercode,body)
+	}else{
+		tykAPILogger.Info("using regular dispatcher")
 	}
 
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
@@ -206,7 +209,10 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, int, error) {
 	//if user set custom super dispatcher then lets use it (internal tib)
 	if t.CustomSuperDispatcher != nil{
+		tykAPILogger.Info("using custom super dispatcher")
 		return t.CustomSuperDispatcher(target, method, body)
+	}else{
+		tykAPILogger.Info("using super dispatcher")
 	}
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
 
