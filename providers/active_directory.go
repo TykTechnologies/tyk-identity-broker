@@ -262,7 +262,7 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 
 // Handle is a delegate for the Http Handler used by the generic inbound handler, it will extract the username
 // and password from the request and atempt to bind tot he AD host.
-func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+func (s *ADProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string,profile tap.Profile) {
 	s.connect()
 
 	username := r.FormValue("username")
@@ -337,7 +337,7 @@ func (s *ADProvider) checkConstraints(user interface{}) error {
 }
 
 // HandleCallback is not used
-func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+func (s *ADProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 
 	ADLogger.Warning("Callback not implemented for provider")
 
