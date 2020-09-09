@@ -77,7 +77,7 @@ func (p *ProxyProvider) respondFailure(rw http.ResponseWriter, r *http.Request) 
 	fmt.Fprintf(rw, "Authentication Failed")
 }
 
-func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
 	// copy the request to a target
 
 	target, tErr := url.Parse(p.config.TargetHost)
@@ -187,7 +187,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
 }
 
-func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request),tap.Profile) {
 	return
 }
 

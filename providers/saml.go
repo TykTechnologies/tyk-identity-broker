@@ -162,11 +162,8 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 }
 
-func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-	if middleware == nil {
-		SAMLLogger.Error("cannot process request, middleware not loaded")
-		return
-	}
+
+func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
 	s.m = middleware
 	// If we try to redirect when the original request is the ACS URL we'll
 	// end up in a loop so just fail and error instead
@@ -225,7 +222,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	}
 }
 
-func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request)) {
+func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 	s.m = middleware
 
 	err := r.ParseForm()

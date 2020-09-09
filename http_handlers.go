@@ -33,13 +33,13 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider,thisProfile, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
 
 	pathParams := mux.Vars(r)
-	thisIdentityProvider.Handle(w, r, pathParams)
+	thisIdentityProvider.Handle(w, r, pathParams, thisProfile)
 	return
 }
 
@@ -52,12 +52,12 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider,thisProfile, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
 	}
-	thisIdentityProvider.HandleCallback(w, r, tykerrors.HandleError)
+	thisIdentityProvider.HandleCallback(w, r, tykerrors.HandleError, thisProfile)
 	return
 }
 
@@ -72,7 +72,7 @@ func HandleMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider,_, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return

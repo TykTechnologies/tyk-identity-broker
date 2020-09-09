@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"github.com/TykTechnologies/tyk-identity-broker/initializer"
@@ -46,6 +47,10 @@ func init() {
 
 	configuration.LoadConfig(*confFile, &config)
 	AuthConfigStore, IdentityKeyStore = initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
+
+	configStore := &backends.RedisBackend{KeyPrefix: "tib-provider-config-"}
+	configStore.Init(config.BackEnd.IdentityBackendSettings)
+	initializer.SetConfigHandler(configStore)
 
 	TykAPIHandler = config.TykAPISettings
 
