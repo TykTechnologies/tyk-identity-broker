@@ -29,7 +29,9 @@ func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 	// delete if exist, where matches the profile ID and org
 	err := profilesCollection.Remove(filter)
 	if err != nil {
-		mongoLogger.WithError(err).Error("error setting profile in mongo: ")
+		if err.Error() != "not found" {
+			mongoLogger.WithError(err).Error("error setting profile in mongo: ")
+		}
 	}
 
 	err = profilesCollection.Insert(value)
@@ -51,7 +53,9 @@ func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
 	p := tap.Profile{}
 	err := profilesCollection.Find(filter).One(&p)
 	if err != nil {
-		mongoLogger.WithError(err).Error("error reading profile from mongo")
+		if err.Error() != "not found" {
+			mongoLogger.WithError(err).Error("error reading profile from mongo")
+		}
 	}
 
 	// Mongo doesn't parse well the nested map[string]interface{} so, we need to use json marshal/unmarshal
