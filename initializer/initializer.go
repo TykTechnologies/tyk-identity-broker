@@ -6,6 +6,7 @@ import (
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
@@ -15,7 +16,7 @@ import (
 var log = logger.Get()
 var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
-// initBackend: Get our backend to use from configs files, new backends must be registered here
+// initBackend: Get our backend to use from configs files, new back-ends must be registered here
 func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) (tap.AuthRegisterBackend, tap.AuthRegisterBackend) {
 
 	AuthConfigStore := &backends.InMemoryBackend{}
@@ -66,4 +67,8 @@ func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
 	var config interface{}
 	mongoBackend.Init(config)
 	return mongoBackend
+}
+
+func SetConfigHandler(backend tap.AuthRegisterBackend){
+	tothic.SetParamsStoreHandler(backend)
 }

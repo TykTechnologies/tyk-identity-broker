@@ -135,7 +135,6 @@ func (r *RedisBackend) SetDb(db redis.UniversalClient) {
 func (r *RedisBackend) SetKey(key string,orgId string, val interface{}) error {
 	db := r.ensureConnection()
 
-	redisLogger.Debug("Setting key=", key)
 	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
@@ -153,11 +152,11 @@ func (r *RedisBackend) GetKey(key string,orgId string, val interface{}) error {
 	}
 
 	// if AuthConfigStore is redis adapter, then redis return string
-	if err := json.Unmarshal([]byte(result), &val); err != nil {
-		return err
+	if err = json.Unmarshal([]byte(result), &val); err != nil {
+		redisLogger.WithError(err).Error("unmarshalling redis result into interface")
 	}
 
-	return nil
+	return err
 }
 
 func (r *RedisBackend) hashKey(in string) string {

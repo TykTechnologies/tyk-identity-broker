@@ -28,7 +28,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 	saveErr := AuthConfigStore.SetKey(profile.ID,profile.OrgID, &profile)
 	if saveErr != nil {
 		return &HttpError{
-			Message: "Update failed",
+			Message: "insert failed",
 			Code:    http.StatusInternalServerError,
 			Error:   saveErr,
 		}
