@@ -13,7 +13,7 @@ type TAProvider interface {
 	Name() string
 	ProviderType() ProviderType
 	UseCallback() bool
-	Handle(http.ResponseWriter, *http.Request, map[string]string)
-	HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request))
+	Handle(http.ResponseWriter, *http.Request, map[string]string, Profile)
+	HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), Profile)
 	HandleMetadata(http.ResponseWriter, *http.Request)
 }
