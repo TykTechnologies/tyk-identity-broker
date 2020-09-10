@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/tyk/certs v0.0.1 // indirect
+	github.com/TykTechnologies/tyk/certs v0.0.1
 	github.com/crewjam/saml v0.4.0
 	github.com/go-ldap/ldap v3.0.3+incompatible
 	github.com/go-redis/redis v6.15.6+incompatible
@@ -19,7 +19,6 @@ require (
 	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.3-0.20191026113918-67a7fdcf741f
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899 // indirect
