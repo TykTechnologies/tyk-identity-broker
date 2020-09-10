@@ -162,7 +162,6 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 }
 
-<<<<<<< HEAD
 func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
 	if middleware == nil {
 		SAMLLogger.Error("cannot process request, middleware not loaded")
