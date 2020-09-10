@@ -114,6 +114,10 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 
 		SAMLLogger.Debugf("Root URL: %v", rootURL.String())
+		if keyPair == nil {
+			SAMLLogger.Error("profile certificate was not loaded")
+			return
+		}
 		var key *rsa.PrivateKey
 		if keyPair.PrivateKey == nil {
 			SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
@@ -159,6 +163,10 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 }
 
 func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	if middleware == nil {
+		SAMLLogger.Error("cannot process request, middleware not loaded")
+		return
+	}
 	s.m = middleware
 	// If we try to redirect when the original request is the ACS URL we'll
 	// end up in a loop so just fail and error instead
