@@ -45,6 +45,8 @@ github.com/TykTechnologies/tyk v1.9.2-0.20200824132103-a306c92f1b6c h1:CiJ2DkTEr
 github.com/TykTechnologies/tyk v1.9.2-0.20200824132103-a306c92f1b6c/go.mod h1:oULeP2ojQ0fzr+9qbJ3J6qI6vci53bi4epPaW66jfZU=
 github.com/TykTechnologies/tyk v2.9.4+incompatible h1:0tJU158xdHtXWDHsrof02WYSvzTeVWshysANJzT0HS8=
 github.com/TykTechnologies/tyk v2.9.4+incompatible/go.mod h1:nxwFUruz4s0jpVPenamR0htf03p8M6ZIl8mKc76k/Tw=
+github.com/TykTechnologies/tyk/certs v0.0.1 h1:dhRT7HeKS5zHMbmNHuulBdC0pN90kdUxmQ6UB4RpmOk=
+github.com/TykTechnologies/tyk/certs v0.0.1/go.mod h1:Xq3wD9z699ZujmiGvndoOPi3ElE46pmiiHrHSUjpqb0=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 h1:JYp7IbQjafoB+tBA3gMyHYHrpOtNuDiK/uB5uXxq5wM=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d h1:UQZhZ2O0vMHr2cI+DC1Mbh0TJxzA3RcLoMsFw+aXw7E=
