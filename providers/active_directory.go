@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap/v3"
 	"github.com/markbates/goth"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"

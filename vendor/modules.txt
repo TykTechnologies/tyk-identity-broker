@@ -1,3 +1,5 @@
+# github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
+github.com/Azure/go-ntlmssp
 # github.com/Jeffail/gabs v1.4.0
 github.com/Jeffail/gabs
 # github.com/TykTechnologies/tyk/certs v0.0.1
@@ -13,8 +15,10 @@ github.com/crewjam/saml/logger
 github.com/crewjam/saml/xmlenc
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
-# github.com/go-ldap/ldap v3.0.3+incompatible
-github.com/go-ldap/ldap
+# github.com/go-asn1-ber/asn1-ber v1.5.1
+github.com/go-asn1-ber/asn1-ber
+# github.com/go-ldap/ldap/v3 v3.2.3
+github.com/go-ldap/ldap/v3
 # github.com/go-redis/redis v6.15.6+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
@@ -73,6 +77,7 @@ github.com/x-cray/logrus-prefixed-formatter
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ripemd160
+golang.org/x/crypto/md4
 # golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context

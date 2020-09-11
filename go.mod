@@ -6,9 +6,10 @@ require (
 	github.com/Jeffail/gabs v1.4.0
 	github.com/TykTechnologies/tyk/certs v0.0.1
 	github.com/crewjam/saml v0.4.0
-	github.com/go-ldap/ldap v3.0.3+incompatible
+	github.com/go-ldap/ldap/v3 v3.2.3
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/google/go-cmp v0.5.0 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/sessions v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
