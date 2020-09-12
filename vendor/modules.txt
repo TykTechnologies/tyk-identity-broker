@@ -1,6 +1,8 @@
+# github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
+github.com/Azure/go-ntlmssp
 # github.com/Jeffail/gabs v1.4.0
 github.com/Jeffail/gabs
-# github.com/TykTechnologies/tyk v1.9.2-0.20200824132103-a306c92f1b6c
+# github.com/TykTechnologies/tyk/certs v0.0.1
 github.com/TykTechnologies/tyk/certs
 # github.com/beevik/etree v1.1.0
 github.com/beevik/etree
@@ -8,13 +10,15 @@ github.com/beevik/etree
 github.com/crewjam/httperr
 # github.com/crewjam/saml v0.4.0
 github.com/crewjam/saml
-github.com/crewjam/saml/logger
 github.com/crewjam/saml/samlsp
+github.com/crewjam/saml/logger
 github.com/crewjam/saml/xmlenc
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
-# github.com/go-ldap/ldap v3.0.3+incompatible
-github.com/go-ldap/ldap
+# github.com/go-asn1-ber/asn1-ber v1.5.1
+github.com/go-asn1-ber/asn1-ber
+# github.com/go-ldap/ldap/v3 v3.2.3
+github.com/go-ldap/ldap/v3
 # github.com/go-redis/redis v6.15.6+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
@@ -35,7 +39,7 @@ github.com/gorilla/sessions
 github.com/jonboulle/clockwork
 # github.com/kelseyhightower/envconfig v1.4.0
 github.com/kelseyhightower/envconfig
-# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/markbates/goth v1.64.2
 github.com/markbates/goth
@@ -71,62 +75,61 @@ github.com/sirupsen/logrus
 # github.com/x-cray/logrus-prefixed-formatter v0.5.2
 github.com/x-cray/logrus-prefixed-formatter
 # golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
-golang.org/x/crypto/ripemd160
 golang.org/x/crypto/ssh/terminal
+golang.org/x/crypto/ripemd160
+golang.org/x/crypto/md4
 # golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
-golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/context
 # golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20200519105757-fe76b779f299
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.3
-golang.org/x/text/transform
 golang.org/x/text/unicode/norm
-# google.golang.org/appengine v1.6.1
+golang.org/x/text/transform
+# google.golang.org/appengine v1.4.0
+google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
+google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
-google.golang.org/appengine/internal/urlfetch
-google.golang.org/appengine/urlfetch
 # google.golang.org/protobuf v1.23.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
-google.golang.org/protobuf/internal/descfmt
-google.golang.org/protobuf/internal/descopts
-google.golang.org/protobuf/internal/detrand
-google.golang.org/protobuf/internal/encoding/defval
-google.golang.org/protobuf/internal/encoding/messageset
-google.golang.org/protobuf/internal/encoding/tag
-google.golang.org/protobuf/internal/encoding/text
-google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
-google.golang.org/protobuf/internal/fieldsort
-google.golang.org/protobuf/internal/filedesc
-google.golang.org/protobuf/internal/filetype
-google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
-google.golang.org/protobuf/internal/impl
-google.golang.org/protobuf/internal/mapsort
-google.golang.org/protobuf/internal/pragma
-google.golang.org/protobuf/internal/set
-google.golang.org/protobuf/internal/strs
-google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
-# gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
-gopkg.in/asn1-ber.v1
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/fieldnum
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/fieldsort
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/genname
 # gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 gopkg.in/mgo.v2
 gopkg.in/mgo.v2/bson
-gopkg.in/mgo.v2/internal/json
 gopkg.in/mgo.v2/internal/sasl
 gopkg.in/mgo.v2/internal/scram
+gopkg.in/mgo.v2/internal/json
