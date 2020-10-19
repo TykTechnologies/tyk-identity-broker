@@ -8,9 +8,9 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk/certs"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 )
 
 var log = logger.Get()
@@ -61,7 +61,7 @@ func CreateInMemoryBackend() tap.AuthRegisterBackend {
 
 func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
 	mongoBackend := &backends.MongoBackend{
-		Db: db,
+		Db:         db,
 		Collection: data_loader.ProfilesCollectionName,
 	}
 	var config interface{}
@@ -69,6 +69,6 @@ func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
 	return mongoBackend
 }
 
-func SetConfigHandler(backend tap.AuthRegisterBackend){
+func SetConfigHandler(backend tap.AuthRegisterBackend) {
 	tothic.SetParamsStoreHandler(backend)
 }

@@ -1,16 +1,19 @@
 package backends
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"strings"
 	"sync/atomic"
 
-	"github.com/go-redis/redis"
-	"github.com/sirupsen/logrus"
+	"github.com/TykTechnologies/tyk-identity-broker/log"
+
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 )
 
 var redisLoggerTag = "TIB REDIS STORE"
@@ -19,6 +22,7 @@ var redisLogger = logger.WithField("prefix", redisLoggerTag)
 var singlePool atomic.Value
 var singleCachePool atomic.Value
 var redisUp atomic.Value
+var ctx = context.Background()
 
 type RedisConfig struct {
 	MaxIdle               int
@@ -132,10 +136,10 @@ func (r *RedisBackend) SetDb(db redis.UniversalClient) {
 	redisLogger.Info("Set DB")
 }
 
-func (r *RedisBackend) SetKey(key string,orgId string, val interface{}) error {
+func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
 	db := r.ensureConnection()
 
-	if err := db.Set(r.fixKey(key), val, 0).Err(); err != nil {
+	if err := db.Set(ctx, r.fixKey(key), val, 0).Err(); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
@@ -143,10 +147,10 @@ func (r *RedisBackend) SetKey(key string,orgId string, val interface{}) error {
 	return nil
 }
 
-func (r *RedisBackend) GetKey(key string,orgId string, val interface{}) error {
+func (r *RedisBackend) GetKey(key string, orgId string, val interface{}) error {
 	db := r.ensureConnection()
 	var err error
-	result, err := db.Get(r.fixKey(key)).Result()
+	result, err := db.Get(ctx, r.fixKey(key)).Result()
 	if err != nil {
 		return err
 	}
@@ -175,8 +179,8 @@ func (r *RedisBackend) GetKeys(filter string) []string {
 	fnFetchKeys := func(client *redis.Client) ([]string, error) {
 		values := make([]string, 0)
 
-		iter := client.Scan(0, searchStr, 0).Iterator()
-		for iter.Next() {
+		iter := client.Scan(ctx, 0, searchStr, 0).Iterator()
+		for iter.Next(ctx) {
 			values = append(values, iter.Val())
 		}
 
@@ -195,7 +199,7 @@ func (r *RedisBackend) GetKeys(filter string) []string {
 		ch := make(chan []string)
 
 		go func() {
-			err = v.ForEachMaster(func(client *redis.Client) error {
+			err = v.ForEachMaster(ctx, func(context context.Context, client *redis.Client) error {
 				values, err := fnFetchKeys(client)
 				if err != nil {
 					return err
@@ -251,9 +255,9 @@ func (r *RedisBackend) GetAll(orgId string) []interface{} {
 			getCmds := make([]*redis.StringCmd, 0)
 			pipe := v.Pipeline()
 			for _, key := range keys {
-				getCmds = append(getCmds, pipe.Get(key))
+				getCmds = append(getCmds, pipe.Get(ctx, key))
 			}
-			_, err := pipe.Exec()
+			_, err := pipe.Exec(ctx)
 			if err != nil && err != redis.Nil {
 				logger.Error("Error trying to get client keys: ", err)
 				return nil
@@ -265,7 +269,7 @@ func (r *RedisBackend) GetAll(orgId string) []interface{} {
 		}
 	case *redis.Client:
 		{
-			result, err := v.MGet(keys...).Result()
+			result, err := v.MGet(ctx, keys...).Result()
 			if err != nil {
 				logger.Error("Error trying to get client keys: ", err)
 				return nil
@@ -301,7 +305,7 @@ func singleton(cache bool) redis.UniversalClient {
 
 func (r *RedisBackend) DeleteKey(key string, orgId string) error {
 	db := r.ensureConnection()
-	return db.Del(r.fixKey(key)).Err()
+	return db.Del(ctx, r.fixKey(key)).Err()
 }
 
 func (r *RedisBackend) getDB() redis.UniversalClient {
