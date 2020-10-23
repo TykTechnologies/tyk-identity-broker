@@ -28,7 +28,9 @@ type RedisConfig struct {
 	MaxIdle               int
 	MaxActive             int
 	MasterName            string
+	SentinelPassword      string
 	Database              int
+	Username              string
 	Password              string
 	EnableCluster         bool
 	Hosts                 map[string]string
@@ -84,27 +86,29 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 	}
 
 	var client redis.UniversalClient
-	opts := &RedisOpts{
-		MasterName:   r.config.MasterName,
-		Addrs:        address,
-		DB:           r.config.Database,
-		Password:     r.config.Password,
-		IdleTimeout:  240 * time.Second,
-		ReadTimeout:  timeout,
-		WriteTimeout: timeout,
-		DialTimeout:  timeout,
-		TLSConfig:    tlsConfig,
+	opts := &redis.UniversalOptions{
+		MasterName:       r.config.MasterName,
+		SentinelPassword: r.config.SentinelPassword,
+		Addrs:            address,
+		DB:               r.config.Database,
+		Username:         r.config.Username,
+		Password:         r.config.Password,
+		IdleTimeout:      240 * time.Second,
+		ReadTimeout:      timeout,
+		WriteTimeout:     timeout,
+		DialTimeout:      timeout,
+		TLSConfig:        tlsConfig,
 	}
 
 	if opts.MasterName != "" {
 		redisLogger.Info("Creating sentinel-backed fail-over client")
-		client = redis.NewFailoverClient(opts.failover())
+		client = redis.NewFailoverClient(opts.Failover())
 	} else if r.config.EnableCluster {
 		redisLogger.Info("Creating cluster client")
-		client = redis.NewClusterClient(opts.cluster())
+		client = redis.NewClusterClient(opts.Cluster())
 	} else {
 		redisLogger.Info("Creating single-node client")
-		client = redis.NewClient(opts.simple())
+		client = redis.NewClient(opts.Simple())
 	}
 
 	return client
@@ -330,107 +334,4 @@ func (r *RedisBackend) ensureConnection() redis.UniversalClient {
 
 func (r *RedisBackend) fixKey(keyName string) string {
 	return r.KeyPrefix + keyName
-}
-
-// RedisOpts is the overriden type of redis.UniversalOptions. simple() and cluster() functions are not public
-// in redis library. Therefore, they are redefined in here to use in creation of new redis cluster logic.
-// We don't want to use redis.NewUniversalClient() logic.
-type RedisOpts redis.UniversalOptions
-
-func (o *RedisOpts) failover() *redis.FailoverOptions {
-	if len(o.Addrs) == 0 {
-		o.Addrs = []string{"127.0.0.1:6379"}
-	}
-
-	return &redis.FailoverOptions{
-		SentinelAddrs: o.Addrs,
-		MasterName:    o.MasterName,
-		OnConnect:     o.OnConnect,
-
-		DB:       o.DB,
-		Password: o.Password,
-
-		MaxRetries:      o.MaxRetries,
-		MinRetryBackoff: o.MinRetryBackoff,
-		MaxRetryBackoff: o.MaxRetryBackoff,
-
-		DialTimeout:  o.DialTimeout,
-		ReadTimeout:  o.ReadTimeout,
-		WriteTimeout: o.WriteTimeout,
-
-		PoolSize:           o.PoolSize,
-		MinIdleConns:       o.MinIdleConns,
-		MaxConnAge:         o.MaxConnAge,
-		PoolTimeout:        o.PoolTimeout,
-		IdleTimeout:        o.IdleTimeout,
-		IdleCheckFrequency: o.IdleCheckFrequency,
-
-		TLSConfig: o.TLSConfig,
-	}
-}
-
-func (o *RedisOpts) cluster() *redis.ClusterOptions {
-	if len(o.Addrs) == 0 {
-		o.Addrs = []string{"127.0.0.1:6379"}
-	}
-
-	return &redis.ClusterOptions{
-		Addrs:     o.Addrs,
-		OnConnect: o.OnConnect,
-
-		Password: o.Password,
-
-		MaxRedirects:   o.MaxRedirects,
-		ReadOnly:       o.ReadOnly,
-		RouteByLatency: o.RouteByLatency,
-		RouteRandomly:  o.RouteRandomly,
-
-		MaxRetries:      o.MaxRetries,
-		MinRetryBackoff: o.MinRetryBackoff,
-		MaxRetryBackoff: o.MaxRetryBackoff,
-
-		DialTimeout:        o.DialTimeout,
-		ReadTimeout:        o.ReadTimeout,
-		WriteTimeout:       o.WriteTimeout,
-		PoolSize:           o.PoolSize,
-		MinIdleConns:       o.MinIdleConns,
-		MaxConnAge:         o.MaxConnAge,
-		PoolTimeout:        o.PoolTimeout,
-		IdleTimeout:        o.IdleTimeout,
-		IdleCheckFrequency: o.IdleCheckFrequency,
-
-		TLSConfig: o.TLSConfig,
-	}
-}
-
-func (o *RedisOpts) simple() *redis.Options {
-	addr := "127.0.0.1:6379"
-	if len(o.Addrs) > 0 {
-		addr = o.Addrs[0]
-	}
-
-	return &redis.Options{
-		Addr:      addr,
-		OnConnect: o.OnConnect,
-
-		DB:       o.DB,
-		Password: o.Password,
-
-		MaxRetries:      o.MaxRetries,
-		MinRetryBackoff: o.MinRetryBackoff,
-		MaxRetryBackoff: o.MaxRetryBackoff,
-
-		DialTimeout:  o.DialTimeout,
-		ReadTimeout:  o.ReadTimeout,
-		WriteTimeout: o.WriteTimeout,
-
-		PoolSize:           o.PoolSize,
-		MinIdleConns:       o.MinIdleConns,
-		MaxConnAge:         o.MaxConnAge,
-		PoolTimeout:        o.PoolTimeout,
-		IdleTimeout:        o.IdleTimeout,
-		IdleCheckFrequency: o.IdleCheckFrequency,
-
-		TLSConfig: o.TLSConfig,
-	}
 }
