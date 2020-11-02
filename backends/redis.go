@@ -33,7 +33,8 @@ type RedisConfig struct {
 	Username              string
 	Password              string
 	EnableCluster         bool
-	Hosts                 map[string]string
+	Hosts                 map[string]string // Deprecated: Use Addrs instead.
+	Addrs                 []string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
 	Timeout               int
@@ -70,26 +71,11 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 		}
 	}
 
-	var address []string
-	if len(r.config.Hosts) > 0 {
-		for h, p := range r.config.Hosts {
-			addr := h + ":" + p
-			address = append(address, addr)
-		}
-	} else {
-		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
-		address = append(address, addr)
-	}
-
-	if !r.config.EnableCluster {
-		address = address[:1]
-	}
-
 	var client redis.UniversalClient
 	opts := &redis.UniversalOptions{
 		MasterName:       r.config.MasterName,
 		SentinelPassword: r.config.SentinelPassword,
-		Addrs:            address,
+		Addrs:            r.getRedisAddrs(),
 		DB:               r.config.Database,
 		Username:         r.config.Username,
 		Password:         r.config.Password,
@@ -112,6 +98,24 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 	}
 
 	return client
+}
+
+func (r *RedisBackend) getRedisAddrs() (addrs []string) {
+	if len(r.config.Addrs) != 0 {
+		addrs = r.config.Addrs
+	} else {
+		for h, p := range r.config.Hosts {
+			addr := h + ":" + p
+			addrs = append(addrs, addr)
+		}
+	}
+
+	if len(addrs) == 0 && r.config.Port != 0 {
+		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
+		addrs = append(addrs, addr)
+	}
+
+	return addrs
 }
 
 func (r *RedisBackend) Connect() bool {

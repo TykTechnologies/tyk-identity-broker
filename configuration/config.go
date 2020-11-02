@@ -2,15 +2,15 @@ package configuration
 
 import (
 	"encoding/json"
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"io/ioutil"
 
-	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+
+	tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
 )
-
 
 var failCount int
 var log = logger.Get()
@@ -26,12 +26,15 @@ type IdentityBackendSettings struct {
 	MaxIdle               int
 	MaxActive             int
 	Database              int
+	Username              string
 	Password              string
 	EnableCluster         bool
-	Hosts                 map[string]string
+	Hosts                 map[string]string // Deprecated: Use Addrs instead.
+	Addrs                 []string
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
 	MasterName            string
+	SentinelPassword      string
 }
 
 type MongoConf struct {
@@ -70,9 +73,9 @@ type Configuration struct {
 	BackEnd           Backend
 	TykAPISettings    tyk.TykAPI
 	HttpServerOptions struct {
-		UseSSL   bool
-		CertFile string
-		KeyFile  string
+		UseSSL                bool
+		CertFile              string
+		KeyFile               string
 		SSLInsecureSkipVerify bool
 	}
 	SSLInsecureSkipVerify bool
@@ -83,7 +86,7 @@ type Configuration struct {
 func LoadConfig(filePath string, conf *Configuration) {
 
 	log = logger.Get()
-	mainLogger = &logrus.Entry{Logger:log}
+	mainLogger = &logrus.Entry{Logger: log}
 	mainLogger = mainLogger.Logger.WithField("prefix", mainLoggerTag)
 
 	configuration, err := ioutil.ReadFile(filePath)

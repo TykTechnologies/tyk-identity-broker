@@ -2,16 +2,18 @@ package backends
 
 import (
 	"encoding/json"
+
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 var mongoPrefix = "mongo-backend"
 var mongoLogger = log.Get().WithField("prefix", mongoPrefix).Logger
-type MongoBackend struct{
-	Db *mgo.Database
+
+type MongoBackend struct {
+	Db         *mgo.Database
 	Collection string
 }
 
@@ -24,11 +26,11 @@ func (m *MongoBackend) getCollection() *mgo.Collection {
 	return session.DB("").C(m.Collection)
 }
 
-func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
+func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error {
 	profilesCollection := m.getCollection()
 	defer profilesCollection.Database.Session.Close()
 
-	filter := bson.M{"ID":key}
+	filter := bson.M{"ID": key}
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
@@ -48,11 +50,11 @@ func (m MongoBackend) SetKey(key string,orgId string,value interface{}) error {
 	return err
 }
 
-func (m MongoBackend) GetKey(key string,orgId string, val interface{}) error {
+func (m MongoBackend) GetKey(key string, orgId string, val interface{}) error {
 	profilesCollection := m.getCollection()
 	defer profilesCollection.Database.Session.Close()
 
-	filter := bson.M{"ID":key}
+	filter := bson.M{"ID": key}
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
@@ -108,7 +110,7 @@ func (m MongoBackend) DeleteKey(key string, orgId string) error {
 	profilesCollection := m.getCollection()
 	defer profilesCollection.Database.Session.Close()
 
-	filter := bson.M{"ID":key}
+	filter := bson.M{"ID": key}
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
