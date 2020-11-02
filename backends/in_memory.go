@@ -26,7 +26,7 @@ type InMemoryBackend struct {
 // Init will create the initial in-memory store structures
 func (m *InMemoryBackend) Init(config interface{}) {
 	logger = log.Get()
-	inMemoryLogger = &logrus.Entry{Logger:logger}
+	inMemoryLogger = &logrus.Entry{Logger: logger}
 	inMemoryLogger = inMemoryLogger.Logger.WithField("prefix", inMemoryLogTag)
 
 	inMemoryLogger.Info("Initialised")
@@ -35,7 +35,7 @@ func (m *InMemoryBackend) Init(config interface{}) {
 }
 
 // SetKey will set the value of a key in the map
-func (m *InMemoryBackend) SetKey(key string,orgId string, val interface{}) error {
+func (m *InMemoryBackend) SetKey(key string, orgId string, val interface{}) error {
 	if m.kv == nil {
 		return errors.New("store not initialised!")
 	}
@@ -52,7 +52,7 @@ func (m *InMemoryBackend) SetKey(key string,orgId string, val interface{}) error
 }
 
 // SetKey will set the value of a key in the map
-func (m *InMemoryBackend) DeleteKey(key,orgId string) error {
+func (m *InMemoryBackend) DeleteKey(key, orgId string) error {
 	m.lock.Lock()
 	delete(m.kv, key)
 	m.lock.Unlock()

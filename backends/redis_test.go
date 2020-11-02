@@ -1,0 +1,71 @@
+package backends
+
+import (
+	"testing"
+
+	"github.com/go-redis/redis/v8"
+)
+
+func TestRedisAddressConfiguration(t *testing.T) {
+	r := RedisBackend{config: &RedisConfig{}}
+
+	t.Run("Host but no port", func(t *testing.T) {
+
+		r.config.Host = "host"
+		r.config.Port = 0
+
+		if len(r.getRedisAddrs()) != 0 {
+			t.Fatal("Port is 0, there is no valid addr")
+		}
+	})
+
+	t.Run("Port but no host", func(t *testing.T) {
+		r.config.Host = ""
+		r.config.Port = 30000
+
+		addrs := r.getRedisAddrs()
+		if addrs[0] != ":30000" || len(addrs) != 1 {
+			t.Fatal("Port is valid, it is a valid addr")
+		}
+	})
+
+	t.Run("addrs parameter should have precedence", func(t *testing.T) {
+		r.config.Host = "host"
+		r.config.Port = 30000
+
+		addrs := r.getRedisAddrs()
+		if addrs[0] != "host:30000" || len(addrs) != 1 {
+			t.Fatal("Wrong address")
+		}
+
+		r.config.Addrs = []string{"override:30000"}
+
+		addrs = r.getRedisAddrs()
+		if addrs[0] != "override:30000" || len(addrs) != 1 {
+			t.Fatal("Wrong address")
+		}
+	})
+
+	t.Run("Default addresses", func(t *testing.T) {
+		opts := &redis.UniversalOptions{}
+		simpleOpts := opts.Simple()
+
+		if simpleOpts.Addr != "127.0.0.1:6379" {
+			t.Fatal("Wrong default single node address")
+		}
+
+		opts.Addrs = []string{}
+		clusterOpts := opts.Cluster()
+
+		if clusterOpts.Addrs[0] != "127.0.0.1:6379" || len(clusterOpts.Addrs) != 1 {
+			t.Fatal("Wrong default cluster mode address")
+		}
+
+		opts.Addrs = []string{}
+		failoverOpts := opts.Failover()
+
+		if failoverOpts.SentinelAddrs[0] != "127.0.0.1:26379" || len(failoverOpts.SentinelAddrs) != 1 {
+			t.Fatal("Wrong default sentinel mode address")
+		}
+	})
+}
