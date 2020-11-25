@@ -92,6 +92,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 	// intercept the response
 	recorder := httptest.NewRecorder()
 	r.URL.Path = ""
+	r.Host = target.Host
 	thisProxy.ServeHTTP(recorder, r)
 
 	if recorder.Code >= 400 {
