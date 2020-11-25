@@ -99,7 +99,6 @@ func main() {
 		mainLogger.Info("--> Using SSL (https) for TIB")
 		cert, err := tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
 
-		log.Info("key file:", config.HttpServerOptions.KeyFile)
 		if err != nil {
 			mainLogger.WithError(err).Error("loading cert file")
 			return
