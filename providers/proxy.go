@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"regexp"
 	"sync"
-	"strings
+	"strings"
 
 	"github.com/Jeffail/gabs"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
