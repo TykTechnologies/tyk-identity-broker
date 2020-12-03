@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"regexp"
 	"sync"
+	"strings
 
 	"github.com/Jeffail/gabs"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -179,6 +180,13 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 		UserID:      uName,
 		Provider:    p.Name(),
 		AccessToken: AccessToken,
+	}
+	
+	// If it is already email
+	if strings.Contains(uName, "@") {
+		thisUser.Email = uName
+	} else {
+		thisUser.Email = uName + "@soSession.com"
 	}
 
 	proxyLogger.Info("Username: ", thisUser.UserID)
