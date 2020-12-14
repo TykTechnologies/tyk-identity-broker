@@ -16,7 +16,8 @@ var failCount int
 var log = logger.Get()
 var mainLoggerTag = "CONFIG"
 var mainLogger = log.WithField("prefix", mainLoggerTag)
-
+//  Config is the system-wide configuration
+var Config Configuration
 const (
 	MONGO = "mongo"
 	FILE  = "file"
@@ -108,5 +109,6 @@ func LoadConfig(filePath string, conf *Configuration) {
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
 	}
+	Config = *conf
 	mainLogger.Debug("Settings Struct: ", conf.TykAPISettings)
 }

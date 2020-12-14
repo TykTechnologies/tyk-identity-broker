@@ -3,9 +3,11 @@ extending TAP to use more providers, add them to this section */
 package providers
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"sync"
 
 	"net/http"
@@ -138,7 +140,9 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 			}
 
 			gProv.SkipUserInfoRequest = provider.SkipUserInfoRequest
-
+			gProv.HTTPClient.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: configuration.Config.HttpServerOptions.SSLInsecureSkipVerify},
+			}
 			// See https://godoc.org/golang.org/x/oauth2#RegisterBrokenAuthHeaderProvider
 			if provider.DisableAuthHeaderProviderDomain != "" {
 				oauth2.RegisterBrokenAuthHeaderProvider(provider.DisableAuthHeaderProviderDomain)
