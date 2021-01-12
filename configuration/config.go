@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tothic"
-
-	tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tothic"
+	tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 var failCount int
@@ -82,9 +82,8 @@ type Configuration struct {
 	Storage               *Storage
 }
 
-//LoadConfig will load the config from a file
+// LoadConfig will load the config from a file
 func LoadConfig(filePath string, conf *Configuration) {
-
 	log = logger.Get()
 	mainLogger = &logrus.Entry{Logger: log}
 	mainLogger = mainLogger.Logger.WithField("prefix", mainLoggerTag)

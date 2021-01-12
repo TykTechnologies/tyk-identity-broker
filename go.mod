@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/sessions v1.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/markbates/goth v1.64.2
+	github.com/matryer/is v1.4.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
