@@ -95,7 +95,7 @@ func main() {
 	}
 
 	var tibServer net.Listener
-	if config.HttpServerOptions.UseSSL{
+	if config.HttpServerOptions.UseSSL {
 		mainLogger.Info("--> Using SSL (https) for TIB")
 		cert, err := tls.LoadX509KeyPair(config.HttpServerOptions.CertFile, config.HttpServerOptions.KeyFile)
 
@@ -105,11 +105,11 @@ func main() {
 		}
 
 		cfg := tls.Config{
-			Certificates:             []tls.Certificate{cert},
-			InsecureSkipVerify:       config.HttpServerOptions.SSLInsecureSkipVerify,
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: config.HttpServerOptions.SSLInsecureSkipVerify,
 		}
 		tibServer = createListener(listenPort, &cfg)
-	}else{
+	} else {
 		mainLogger.Info("--> Standard listener (http) for TIB")
 		tibServer = createListener(listenPort, nil)
 	}

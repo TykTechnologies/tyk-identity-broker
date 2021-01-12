@@ -2,9 +2,9 @@ package data_loader
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
 	"strconv"
@@ -43,7 +43,7 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 
 	var loaded int
 	for _, profile := range profiles {
-		inputErr := store.SetKey(profile.ID,profile.OrgID, profile)
+		inputErr := store.SetKey(profile.ID, profile.OrgID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		} else {

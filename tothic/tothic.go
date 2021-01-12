@@ -76,7 +76,7 @@ func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
 	val, ok := newPathParams[":provider"]
 	if ok {
 		newPathParams["provider"] = val
-		delete(newPathParams,":provider")
+		delete(newPathParams, ":provider")
 	}
 
 	jsonbody, err := json.Marshal(newPathParams)
@@ -98,9 +98,9 @@ func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
 
 }
 
-func GetParams(profile tap.Profile) PathParam{
+func GetParams(profile tap.Profile) PathParam {
 	params := PathParam{}
-	pathParams.GetKey(profile.GetPrefix(),profile.OrgID,&params)
+	pathParams.GetKey(profile.GetPrefix(), profile.OrgID, &params)
 	return params
 }
 

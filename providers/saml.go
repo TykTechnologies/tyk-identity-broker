@@ -121,7 +121,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		var key *rsa.PrivateKey
 		if keyPair.PrivateKey == nil {
 			SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
-		}else{
+		} else {
 			key = keyPair.PrivateKey.(*rsa.PrivateKey)
 		}
 

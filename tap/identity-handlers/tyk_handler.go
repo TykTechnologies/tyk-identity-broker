@@ -156,7 +156,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	displayName := ""
 	groupID := ""
 	if ok {
-		email = GetEmail(gUser,t.profile.CustomEmailField)
+		email = GetEmail(gUser, t.profile.CustomEmailField)
 
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
@@ -171,7 +171,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			displayName = email
 		}
 
-		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField,t.profile.DefaultUserGroupID,t.profile.UserGroupMapping)
+		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField, t.profile.DefaultUserGroupID, t.profile.UserGroupMapping)
 	}
 
 	tykHandlerLogger.Debugf("The GroupID %s is used for SSO: ", groupID)
@@ -249,7 +249,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	}
 
 	user := i.(goth.User)
-	user.UserID = GetUserID(user,t.profile.CustomUserIDField)
+	user.UserID = GetUserID(user, t.profile.CustomUserIDField)
 
 	// Check if user exists
 	sso_key := tap.GenerateSSOKey(user)
@@ -330,7 +330,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	tykHandlerLogger.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
-		fErr := t.Store.GetKey(id_with_profile,"", &value)
+		fErr := t.Store.GetKey(id_with_profile, "", &value)
 		if fErr == nil {
 			// Key found
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
@@ -372,7 +372,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	if resp.AccessToken != "" {
 		tykHandlerLogger.Warning("--> Storing token reference")
-		t.Store.SetKey(id_with_profile,"", resp.AccessToken)
+		t.Store.SetKey(id_with_profile, "", resp.AccessToken)
 	}
 
 	if t.oauth.NoRedirect {
@@ -410,7 +410,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	tykHandlerLogger.Debug("ID IS: ", id_with_profile)
 
 	if !t.disableOneTokenPerAPI {
-		fErr := t.Store.GetKey(id_with_profile,"", &value)
+		fErr := t.Store.GetKey(id_with_profile, "", &value)
 		if fErr == nil {
 			// Key found
 			tykHandlerLogger.Warning("--> Token exists, invalidating")
@@ -451,7 +451,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	if resp.KeyID != "" {
 		tykHandlerLogger.Warning("--> Storing token reference")
-		t.Store.SetKey(id_with_profile,"", resp.KeyID)
+		t.Store.SetKey(id_with_profile, "", resp.KeyID)
 	}
 
 	// After login, we need to redirect this user
@@ -493,7 +493,7 @@ func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *ht
 }
 
 // GetEmail returns the email to be used for SSO
-func GetEmail(gUser goth.User, customEmailField string)string{
+func GetEmail(gUser goth.User, customEmailField string) string {
 	email := ""
 
 	if customEmailField != "" {
@@ -511,7 +511,7 @@ func GetEmail(gUser goth.User, customEmailField string)string{
 	return email
 }
 
-func GetUserID(gUser goth.User,CustomUserIDField string) string {
+func GetUserID(gUser goth.User, CustomUserIDField string) string {
 	if CustomUserIDField != "" {
 		if gUser.RawData[CustomUserIDField] != nil {
 			return gUser.RawData[CustomUserIDField].(string)
@@ -520,7 +520,7 @@ func GetUserID(gUser goth.User,CustomUserIDField string) string {
 	return gUser.UserID
 }
 
-func GetGroupId(gUser goth.User,CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string) string{
+func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string) string {
 	groupID := DefaultUserGroup
 	if CustomUserGroupField != "" {
 		groups := make([]string, 0)

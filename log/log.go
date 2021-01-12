@@ -40,7 +40,7 @@ func Get() *logrus.Logger {
 	return log
 }
 
-func SetLogger(logger *logrus.Logger){
+func SetLogger(logger *logrus.Logger) {
 	log = logger
 }
 
