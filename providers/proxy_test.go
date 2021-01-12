@@ -2,15 +2,18 @@ package providers
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/matryer/is"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	identityHandlers "github.com/TykTechnologies/tyk-identity-broker/tap/identity-handlers"
 )
 
-var proxyConfig_CODE string = `
+const proxyConfig_CODE = `
 	{
 		"TargetHost" : "http://lonelycode.com/doesnotexist",
 		"OKCode"     : 200,
@@ -23,7 +26,7 @@ var proxyConfig_CODE string = `
 	}
 `
 
-var proxyConfig_BODY string = `
+const proxyConfig_BODY = `
 	{
 		"TargetHost" : "http://lonelycode.com",
 		"OKCode"     : 0,
@@ -36,12 +39,12 @@ var proxyConfig_BODY string = `
 	}
 `
 
-var proxyConfig_REGEX string = `
+const proxyConfig_REGEX = `
 	{
-		"TargetHost" : "http://lonelycode.com",
+		"TargetHost" : "https://lonelycode.com",
 		"OKCode"     : 0,
 		"OKResponse" : "",
-		"OKRegex"    : "Code, for one",
+		"OKRegex"    : "digital hippie",
 		"ResponseIsJson": false,
 		"AccessTokenField": "",
 		"UsernameField": "",
@@ -49,11 +52,15 @@ var proxyConfig_REGEX string = `
 	}
 `
 
-var BODYFAILURE_STR string = "Authentication Failed"
+const BODYFAILURE_STR = "Authentication Failed"
 
-func getProfile(profileConfig string) tap.Profile {
+func getProfile(t *testing.T, profileConfig string) tap.Profile {
+	t.Helper()
+
+	is := is.New(t)
+
 	provConf := ProxyHandlerConfig{}
-	json.Unmarshal([]byte(profileConfig), &provConf)
+	is.NoErr(json.Unmarshal([]byte(profileConfig), &provConf))
 
 	thisProfile := tap.Profile{
 		ID:                    "1",
@@ -69,80 +76,79 @@ func getProfile(profileConfig string) tap.Profile {
 }
 
 func TestProxyProvider_BadCode(t *testing.T) {
+	is := is.New(t)
 
 	thisConf := proxyConfig_CODE
-	thisProfile := getProfile(thisConf)
+	thisProfile := getProfile(t, thisConf)
 	thisProvider := ProxyProvider{}
 
-	thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf))
+	is.NoErr(thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf)))
 
 	recorder := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	thisProvider.Handle(recorder, req)
+	thisProvider.Handle(recorder, req, nil, thisProfile)
 	thisBody, err := ioutil.ReadAll(recorder.Body)
+	is.NoErr(err)
 
 	if recorder.Code != 401 {
-		t.Error("Expected 401 as key val, got: ", recorder.Code)
+		t.Fatalf("Expected 401 response code, got '%d'", recorder.Code)
 	}
 
 	if string(thisBody) != BODYFAILURE_STR {
-		t.Error("Body string incorrect, is: ", thisBody)
+		t.Fatalf("Body string '%s' is incorrect", thisBody)
 	}
-
 }
 
 func TestProxyProvider_BadBody(t *testing.T) {
+	is := is.New(t)
 
 	thisConf := proxyConfig_BODY
-	thisProfile := getProfile(thisConf)
+	thisProfile := getProfile(t, thisConf)
 	thisProvider := ProxyProvider{}
 
-	thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf))
+	is.NoErr(thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf)))
 
 	recorder := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	thisProvider.Handle(recorder, req)
+	thisProvider.Handle(recorder, req, nil, thisProfile)
 	thisBody, err := ioutil.ReadAll(recorder.Body)
+	is.NoErr(err)
 
 	if recorder.Code != 401 {
-		t.Error("Expected 401 as key val, got: ", recorder.Code)
+		t.Fatalf("Expected 401 response code, got '%d'", recorder.Code)
 	}
 
 	if string(thisBody) != BODYFAILURE_STR {
-		t.Error("Body string incorrect, is: ", thisBody)
+		t.Fatalf("Body string '%s' is incorrect", thisBody)
 	}
-
 }
 
 func TestProxyProvider_GoodRegex(t *testing.T) {
+	is := is.New(t)
 
 	thisConf := proxyConfig_REGEX
-	thisProfile := getProfile(thisConf)
+	thisProfile := getProfile(t, thisConf)
 	thisProvider := ProxyProvider{}
 
-	thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf))
+	is.NoErr(thisProvider.Init(identityHandlers.DummyIdentityHandler{}, thisProfile, []byte(thisConf)))
 
 	recorder := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/", nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	thisProvider.Handle(recorder, req)
+	thisProvider.Handle(recorder, req, nil, thisProfile)
 
 	if recorder.Code != 200 {
-		t.Error("Expected 200 as key val, got: ", recorder.Code)
+		t.Fatalf("Expected 200 response code, got '%v'", recorder.Code)
 	}
-
 }
