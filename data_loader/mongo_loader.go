@@ -3,15 +3,18 @@ package data_loader
 import (
 	"crypto/tls"
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2"
 	"net"
 	"time"
+
+	"gopkg.in/mgo.v2"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
-var mongoPrefix = "mongo"
-var ProfilesCollectionName = "profilesCollection"
+var (
+	mongoPrefix            = "mongo"
+	ProfilesCollectionName = "profilesCollection"
+)
 
 // MongoLoaderConf is the configuration struct for a MongoLoader
 type MongoLoaderConf struct {
@@ -20,8 +23,8 @@ type MongoLoaderConf struct {
 
 // MongoLoader implements DataLoader and will load TAP Profiles from a file
 type MongoLoader struct {
-	config MongoLoaderConf
-	Db     *mgo.Database
+	config    MongoLoaderConf
+	Db        *mgo.Database
 	SkipFlush bool
 }
 
@@ -37,14 +40,11 @@ func (m *MongoLoader) Init(conf interface{}) error {
 	var err error
 	session, err := mgo.DialWithInfo(m.config.DialInfo)
 	if err != nil {
-		dataLogger.WithFields(logrus.Fields{
-			"prefix": mongoPrefix,
-			"error":  "Mongo connection failed:",
-		}).Error("load failed!")
-
+		dataLogger.WithError(err).WithField("prefix", mongoPrefix).Error("failed to init MongoDB connection")
 		time.Sleep(5 * time.Second)
 		m.Init(conf)
 	}
+
 	m.Db = session.DB("")
 	return err
 }
@@ -60,7 +60,7 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	}
 
 	for _, profile := range profiles {
-		inputErr := store.SetKey(profile.ID,profile.OrgID, profile)
+		inputErr := store.SetKey(profile.ID, profile.OrgID, profile)
 		if inputErr != nil {
 			dataLogger.WithField("error", inputErr).Error("Couldn't encode configuration")
 		}
@@ -84,18 +84,18 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 		return err
 	}
 
-	for i , p := range updatedSet{
+	for i, p := range updatedSet {
 		profile := tap.Profile{}
-		switch p.(type) {
+		switch p := p.(type) {
 		case string:
 			// we need to make this because redis return string instead objects
-			if err := json.Unmarshal([]byte(p.(string)), &profile); err != nil {
+			if err := json.Unmarshal([]byte(p), &profile); err != nil {
 				dataLogger.WithError(err).Error("un-marshaling interface for mongo flushing")
 				return err
 			}
-			updatedSet[i] =  profile
+			updatedSet[i] = profile
 		default:
-			updatedSet[i] =  p
+			updatedSet[i] = p
 		}
 	}
 
@@ -111,7 +111,6 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 }
 
 func MongoDialInfo(mongoURL string, useSSL bool, SSLInsecureSkipVerify bool) (dialInfo *mgo.DialInfo, err error) {
-
 	if dialInfo, err = mgo.ParseURL(mongoURL); err != nil {
 		return dialInfo, err
 	}

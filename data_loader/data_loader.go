@@ -1,11 +1,12 @@
 package data_loader
 
 import (
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2"
+
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2"
 )
 
 var log = logger.Get()
@@ -19,13 +20,13 @@ type DataLoader interface {
 	Flush(tap.AuthRegisterBackend) error
 }
 
-func reloadDataLoaderLogger(){
+func reloadDataLoaderLogger() {
 	log = logger.Get()
-	dataLogger = &logrus.Entry{Logger:log}
+	dataLogger = &logrus.Entry{Logger: log}
 	dataLogger = dataLogger.Logger.WithField("prefix", dataLoaderLoggerTag)
 }
 
-func CreateMongoLoaderFromConnection(db *mgo.Database)DataLoader{
+func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
 	var dataLoader DataLoader
 
 	reloadDataLoaderLogger()
