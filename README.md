@@ -940,7 +940,7 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
 
 #### User Group ID Support
 
-You can specify IDP User Groups within a TIB Profile. This can either be a static or dynamic setting. You will first need to create a matching group within the Tyk Dashboard to correspond to the group coming form the IDP. Use the id of the group created within Tyk to map it to the IDP group name. In the example below the "admin" and "analytics" are the group names being passed by the IDP and <admin-group-id> as well as <analytics-group-id> are the id from the groups you have already created in Tyk to correspond to the groups being passed.
+You can specify IDP User Groups within a TIB Profile. This can either be a static or dynamic setting. You will first need to create a matching group within the Tyk Dashboard to correspond to the group coming form the IDP. Use the id of the group created within Tyk to map it to the IDP group name. In the example below the `"admin"` and `"analytics"` are the group names being passed by the IDP and `<admin-group-id>` as well as `<analytics-group-id>` are the id from the groups you have already created in Tyk to correspond to the groups being passed.
 
 If you wish to map users via email make sure you have `"sso_enable_user_lookup": true,` within your tyk_analytics.conf file.
 
