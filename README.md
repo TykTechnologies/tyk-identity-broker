@@ -208,17 +208,17 @@ The path to the certificate file for this server, required for SSL
 The path to the key file for this server, required for SSL
 
 #### `SSLInsecureSkipVerify`
- 
+
 If you run a local IDP, like Ping, with an untrusted SSL certificate, you can now turn off the client SSL verification by setting `SSLInsecureSkipVerify` to `true`.
 This is useful when using OpenID Connect (OIDC). During the authorization there are calls to the `https://{IDP-DOMAIN}/.well-know/openid-configuration` and other endpoints to avoid error in case the certificate was signed by unknown authority
 
 #### `BackEnd`
 
-TIB is quite modular and different back-ends can be generated quite easily, out of the Box, TIB will store profile configurations in memory, which does not require any new configuration. 
+TIB is quite modular and different back-ends can be generated quite easily, out of the Box, TIB will store profile configurations in memory, which does not require any new configuration.
 
-For Identity Handlers that provide token-based access, it is possible to enforce a "One token per provider, per user" policy, which keeps a cache of tokens assigned to identities in Redis, this is so that the broker can be scaled and share the cache across instances. 
+For Identity Handlers that provide token-based access, it is possible to enforce a "One token per provider, per user" policy, which keeps a cache of tokens assigned to identities in Redis, this is so that the broker can be scaled and share the cache across instances.
 
-Since profiles are unlikely to change often, profiles are kept in-memory, but can be added, removed and modified using an API for automated setups if required. 
+Since profiles are unlikely to change often, profiles are kept in-memory, but can be added, removed and modified using an API for automated setups if required.
 
 #### `BackEnd.Hosts`
 
@@ -496,18 +496,18 @@ Similar to Google or Twitter auth, you can configure TIB to work with any OpenID
 	},
 ```
 
-By default, TIB uses the value of the subject field, returned by UserInfo Endpoint, to generate userId for Dashboard SSO. 
+By default, TIB uses the value of the subject field, returned by UserInfo Endpoint, to generate userId for Dashboard SSO.
 Please ensure that your Identity Provider is not returning `URL` in subject field. If that's the case you should specify another field which uniquely identifies the user. You can specify the field name by setting `CustomUserIDField` in profile.json file.
 
 TIB can also be configured to use the `openid email` claim.  This claim must be requested for Portal SSO to work, but it can also be used for Dashboard SSO.  Some OpenID providers return this claim by default, but not all, in which case the `openid email` claim needs to be included, as per the example above.
 
 If you are getting 403 error, it can be that your OpenID provider requires providing client_id and secret_id via token url instead of basic http auth, and you need to add `"DisableAuthHeader": true` option to your provider configuration in "UseProviders" section.
 
-Some Identity providers do not have support for `userinfo` endpoint, so you can optionally disable it using `SkipUserInfoRequest` flag, and rely only on information inside the ID token. 
+Some Identity providers do not have support for `userinfo` endpoint, so you can optionally disable it using `SkipUserInfoRequest` flag, and rely only on information inside the ID token.
 
 #### Salesforce
 
-Similar to other social accounts, you can add support of Salesforce by specifying Provider Name as `salesforce`. 
+Similar to other social accounts, you can add support of Salesforce by specifying Provider Name as `salesforce`.
 
 ```
 {
@@ -543,11 +543,11 @@ SSO for Salesforce Community is handled differently. Instead of using `salesforc
 
 #### Create an OAuth token (with redirect) for users logging into your webapp or iOS app via Google:
 
-A common use case for Tyk Gateway users is to enable users to log into a web app or mobile app using a social provider such as Google, but have that user use a token in the app that is time-delimited and issued by their own API (or in this case, Tyk). 
+A common use case for Tyk Gateway users is to enable users to log into a web app or mobile app using a social provider such as Google, but have that user use a token in the app that is time-delimited and issued by their own API (or in this case, Tyk).
 
-Tyk can act as an OAuth provider, but requires some glue code to work, in particular, generating a token based on the authentication of a third party, which needs to run on a server hosted by the owner of the application. This is not ideal in many scenarios where authentication has been delegated to a third-party provider (such as Google or GitHub). 
+Tyk can act as an OAuth provider, but requires some glue code to work, in particular, generating a token based on the authentication of a third party, which needs to run on a server hosted by the owner of the application. This is not ideal in many scenarios where authentication has been delegated to a third-party provider (such as Google or GitHub).
 
-In this case, we can enable this flow with Tyk Gateway by Using TIB. 
+In this case, we can enable this flow with Tyk Gateway by Using TIB.
 
 What the broker will do is essentially the final leg of the authentication process without any new code, simply sending the user via TIB to the provider will suffice for them to be granted an OAuth token once they have authenticated in a standard, expected OAuth pattern.
 
@@ -811,6 +811,12 @@ SAML authentication is a way for a service provider, such as the Tyk Dashboard o
 
 Tyk Identity Broker can act as the go-between for the Tyk Dashboard and Portal and a third party identity provider. Tyk Identity broker can also interpret and pass along information about the user who is logging in such as Name, Email and group or role metadata for enforcing role based access control in the Tyk Dashboard.
 
+###### Gateway & Dashboard pre-requisites
+The Gateway will encode the certificate being used for SAML at the time of upload. In order for the dashboard to be able to use this certificate you will need to match the `secret` within tyk.conf with the `tyk_api_config.secret` tyk_analytics.conf. Alternatively you can enable `security.private_certificate_encoding_secret` in both tyk.conf for the gateway and tyk_analytics.conf for the dashboard.
+
+###### SAML Glossary
+SAML metadata is an XML document which contains information necessary for interaction with SAML-enabled identity or service providers. The document contains e.g. URLs of endpoints, information about supported bindings, identifiers and public keys. Once you create your TIB profile you can find the SP metadata file under `{Dashboard HOST}/auth/{TIB Profile Name}/saml/metadata`  
+
 The provider config for SAML has the following values that can be configured in a Profile:
 
 `SAMLBaseURL`: The host of TIB that will be used in the metadata document for the Service Provider. This will form part of the metadata URL used as the Entity ID by the IDP. The redirects configured in the IDP must match the expected Host and URI configured in the metadata document made available by Tyk Identity Broker.
@@ -858,7 +864,7 @@ Example profile configuration:
 
 #### Logging into the dashboard using SAML
 
-In order to have dashboard access using SAML we need to create a profile like the next:
+In order to have dashboard access using SAML we need to create a TIB profile within our Tyk dashboard. You can find this under Identity Management on the left control pane. You can then select create profile, and use the raw editor to copy the example below:
 
 ```json
 {
@@ -934,7 +940,9 @@ To obtain tyk portal access it's similar to the profile above, the minimum confi
 
 #### User Group ID Support
 
-You can specify User Groups within a TIB Profile. This can either be a static or dynamic setting.
+You can specify IDP User Groups within a TIB Profile. This can either be a static or dynamic setting. You will first need to create a matching group within the Tyk Dashboard to correspond to the group coming form the IDP. Use the id of the group created within Tyk to map it to the IDP group name. In the example below the "admin" and "analytics" are the group names being passed by the IDP and <admin-group-id> as well as <analytics-group-id> are the id from the groups you have already created in Tyk to correspond to the groups being passed.
+
+If you wish to map users via email make sure you have `"sso_enable_user_lookup": true,` within your tyk_analytics.conf file.
 
 ```
 {
@@ -946,7 +954,7 @@ You can specify User Groups within a TIB Profile. This can either be a static or
   }
 }
 ```
-When doing SSO for a user, you need to think about the user's permissions once they are logged into the application. During the SSO flow of a user, TIB can request Tyk-Dashboard to login that user with certain user group permissions. In order to configure the user's permission you need to create a group in the Dashboard and use this group object ID as a value for these fields: 
+When doing SSO for a user, you need to think about the user's permissions once they are logged into the application. During the SSO flow of a user, TIB can request Tyk-Dashboard to login that user with certain user group permissions. In order to configure the user's permission you need to create a group in the Dashboard and use this group object ID as a value for these fields:
 * For a static setting  set `DefaultUserGroupID` with a Dashboard group id. TIB will use it as the default user permissions when requesting a nonce from the dashboard. **Note:** If you don't set this field, the user will be logged in as an admin dashboard user.
 * For a dynamic setting based on OAuth/OpenID scope, use `CustomUserGroupField` with  `UserGroupMapping` listing your User Groups names from the scopes to user group IDs in the dashboard, in the following format - `"<user-group-name>": "<user-group-id>"`
 
@@ -954,9 +962,9 @@ When doing SSO for a user, you need to think about the user's permissions once t
 
 Tyk Identity Broker has a simple API to allow policies to be created, updated, removed and listed for programmatic and automated access. TIB also has a "flush" feature that enables you to flush the current configuration to disk for use when the client starts again.
 
-TIB does not store profiles in shared store, so if you have multiple TIB instances, they need to be configured individually (for now), since we don't expect TIB stores to change often, this is acceptable. 
+TIB does not store profiles in shared store, so if you have multiple TIB instances, they need to be configured individually (for now), since we don't expect TIB stores to change often, this is acceptable.
 
-### List profiles 
+### List profiles
 
 ```
 GET /api/profiles/
