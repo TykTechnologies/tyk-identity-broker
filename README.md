@@ -75,6 +75,9 @@ Tyk Identity Broker (TIB)
 
 The Tyk Identity Broker provides a service-level component that enables delegated identities to be authorized and provide authenticated access to various Tyk-powered components such as the Tyk Dashboard, the Tyk Developer Portal and Tyk Gateway API flows such as OAuth access tokens, and regular API tokens.
 
+![image](https://user-images.githubusercontent.com/14009/109294803-bbdc1400-783e-11eb-8d5c-640a2d944399.png)
+
+
 ### Requirements and dependencies
 
 TIB requires:
