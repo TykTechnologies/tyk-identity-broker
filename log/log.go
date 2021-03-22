@@ -29,18 +29,18 @@ func init() {
 func Get() *logrus.Logger {
 	switch strings.ToLower(os.Getenv("TYK_LOGLEVEL")) {
 	case "error":
-		log.Level = logrus.ErrorLevel
+		log.SetLevel(logrus.ErrorLevel)
 	case "warn":
-		log.Level = logrus.WarnLevel
+		log.SetLevel(logrus.WarnLevel)
 	case "debug":
-		log.Level = logrus.DebugLevel
+		log.SetLevel(logrus.DebugLevel)
 	default:
-		log.Level = logrus.InfoLevel
+		log.SetLevel(logrus.InfoLevel)
 	}
 	return log
 }
 
-func SetLogger(logger *logrus.Logger){
+func SetLogger(logger *logrus.Logger) {
 	log = logger
 }
 
