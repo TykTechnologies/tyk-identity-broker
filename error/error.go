@@ -36,4 +36,3 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 	w.WriteHeader(code)
 	fmt.Fprintf(w, string(responseMsg))
 }
-

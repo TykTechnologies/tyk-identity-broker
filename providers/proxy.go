@@ -10,14 +10,15 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
-	"sync"
 	"strings"
+	"sync"
 
 	"github.com/Jeffail/gabs"
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
 var onceReloadProxyLogger sync.Once
@@ -78,7 +79,8 @@ func (p *ProxyProvider) respondFailure(rw http.ResponseWriter, r *http.Request) 
 	fmt.Fprintf(rw, "Authentication Failed")
 }
 
-func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
+func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathParams map[string]string,
+	profile tap.Profile) {
 	// copy the request to a target
 
 	target, tErr := url.Parse(p.config.TargetHost)
@@ -181,7 +183,7 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 		Provider:    p.Name(),
 		AccessToken: AccessToken,
 	}
-	
+
 	// If it is already email
 	if strings.Contains(uName, "@") {
 		thisUser.Email = uName
@@ -196,8 +198,8 @@ func (p *ProxyProvider) Handle(rw http.ResponseWriter, r *http.Request, pathPara
 	p.handler.CompleteIdentityAction(rw, r, thisUser, p.profile)
 }
 
-func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request),tap.Profile) {
-	return
+func (p *ProxyProvider) HandleCallback(http.ResponseWriter, *http.Request, func(tag string, errorMsg string,
+	rawErr error, code int, w http.ResponseWriter, r *http.Request), tap.Profile) {
 }
 
 func (s *ProxyProvider) HandleMetadata(http.ResponseWriter, *http.Request) {

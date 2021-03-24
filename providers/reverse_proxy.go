@@ -19,7 +19,7 @@ import (
 )
 
 var onceReloadReverseProxyLogger sync.Once
-var reverseProxyLogTag =  "Reverse proxy"
+var reverseProxyLogTag = "Reverse proxy"
 var reverseProxyLogger = log.WithField("prefix", reverseProxyLogTag)
 
 // onExitFlushLoop is a callback set by tests to detect the state of the
@@ -130,7 +130,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadReverseProxyLogger.Do(func() {
 		log = logger.Get()
-		reverseProxyLogger = &logrus.Entry{Logger:log}
+		reverseProxyLogger = &logrus.Entry{Logger: log}
 		reverseProxyLogger = reverseProxyLogger.Logger.WithField("prefix", reverseProxyLogTag)
 	})
 

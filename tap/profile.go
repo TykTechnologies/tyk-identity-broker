@@ -33,7 +33,7 @@ type ProfileConstraint struct {
 	Group  string
 }
 
-func(p Profile)UnmarshalBinary(data []byte) error{
+func (p Profile) UnmarshalBinary(data []byte) error {
 	// convert data to yours, let's assume its json data
 	return json.Unmarshal(data, p)
 }
@@ -44,5 +44,5 @@ func (p Profile) MarshalBinary() ([]byte, error) {
 
 // GetPrefix return prefix for redis
 func (p Profile) GetPrefix() string {
-	return p.OrgID+"-"+p.ID
+	return p.OrgID + "-" + p.ID
 }

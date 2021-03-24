@@ -24,7 +24,7 @@ func (d DummyIdentityHandler) Init(conf interface{}) error {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadDummyLogger.Do(func() {
 		log = logger.Get()
-		dummyLogger = &logrus.Entry{Logger:log}
+		dummyLogger = &logrus.Entry{Logger: log}
 		dummyLogger = dummyLogger.Logger.WithField("prefix", DummyLogTag)
 	})
 	return nil

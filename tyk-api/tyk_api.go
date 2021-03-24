@@ -47,9 +47,9 @@ type TokenResponse struct {
 
 // TykAPI is the main object (and configuration) of the Tyk API wrapper
 type TykAPI struct {
-	GatewayConfig   EndpointConfig
-	DashboardConfig EndpointConfig
-	CustomDispatcher func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
+	GatewayConfig         EndpointConfig
+	DashboardConfig       EndpointConfig
+	CustomDispatcher      func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
 	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error)
 }
 
@@ -140,26 +140,26 @@ const (
 )
 
 // ReloadLogger in case that user set an external logger
-func ReloadLogger(){
+func ReloadLogger() {
 	//if an external logger was set, then lets reload it to inherit those configs
 	onceReloadTykApiLogger.Do(func() {
 		log = logger.Get()
-		tykAPILogger = &logrus.Entry{Logger:log}
+		tykAPILogger = &logrus.Entry{Logger: log}
 		tykAPILogger = tykAPILogger.Logger.WithField("prefix", tykApiLogTag)
 	})
 }
 
-func SetHttpClient(c *http.Client){
+func SetHttpClient(c *http.Client) {
 	httpClient = c
 }
 
 // DispatchDashboard dispatches a request to the dashboard API and handles the response
 func (t *TykAPI) DispatchDashboard(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) {
 	//if user set custom dispatcher then lets use it (internal tib)
-	if t.CustomDispatcher != nil{
+	if t.CustomDispatcher != nil {
 		tykAPILogger.Info("Using custom regular dispatcher")
-		return t.CustomDispatcher(target,method,usercode,body)
-	}else{
+		return t.CustomDispatcher(target, method, usercode, body)
+	} else {
 		tykAPILogger.Info("using regular dispatcher")
 	}
 
@@ -208,10 +208,10 @@ func (t *TykAPI) readBody(response *http.Response) ([]byte, error) {
 // DispatchDashboardSuper will dispatch a request to the dashbaord super-user API (admin)
 func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.Reader) ([]byte, int, error) {
 	//if user set custom super dispatcher then lets use it (internal tib)
-	if t.CustomSuperDispatcher != nil{
+	if t.CustomSuperDispatcher != nil {
 		tykAPILogger.Info("using custom super dispatcher")
 		return t.CustomSuperDispatcher(target, method, body)
-	}else{
+	} else {
 		tykAPILogger.Info("using super dispatcher")
 	}
 	preparedEndpoint := t.DashboardConfig.Endpoint + ":" + t.DashboardConfig.Port + string(target)
@@ -219,7 +219,7 @@ func (t *TykAPI) DispatchDashboardSuper(target Endpoint, method string, body io.
 	tykAPILogger.Debug("Calling: ", preparedEndpoint)
 	newRequest, err := http.NewRequest(method, preparedEndpoint, body)
 	if err != nil {
-		tykAPILogger.WithField("error",err).Error("Failed to create request")
+		tykAPILogger.WithField("error", err).Error("Failed to create request")
 		return []byte{}, http.StatusInternalServerError, err
 	}
 
@@ -361,7 +361,7 @@ func (t *TykAPI) CreateAdminSSONonce(data interface{}) (interface{}, Endpoint, e
 
 	if dErr == nil && retCode == http.StatusOK {
 		tykAPILogger.Info("Single Sign-On nonce created successfully via Admin API!")
-	}else{
+	} else {
 		tykAPILogger.Error("could not create nonce for admin api:", dErr.Error())
 	}
 

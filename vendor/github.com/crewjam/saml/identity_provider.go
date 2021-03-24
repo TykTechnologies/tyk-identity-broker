@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/beevik/etree"
+	xrv "github.com/mattermost/xml-roundtrip-validator"
 	dsig "github.com/russellhaering/goxmldsig"
 
 	"github.com/crewjam/saml/logger"
@@ -43,6 +44,8 @@ type Session struct {
 	UserSurname           string
 	UserGivenName         string
 	UserScopedAffiliation string
+
+	CustomAttributes []Attribute
 }
 
 // SessionProvider is an interface used by IdentityProvider to determine the
@@ -359,6 +362,7 @@ func NewIdpAuthnRequest(idp *IdentityProvider, r *http.Request) (*IdpAuthnReques
 	default:
 		return nil, fmt.Errorf("method not allowed")
 	}
+
 	return req, nil
 }
 
@@ -366,6 +370,10 @@ func NewIdpAuthnRequest(idp *IdentityProvider, r *http.Request) (*IdpAuthnReques
 // the AuthnRequest and Metadata properties. Returns a non-nil error if the
 // request is not valid.
 func (req *IdpAuthnRequest) Validate() error {
+	if err := xrv.Validate(bytes.NewReader(req.RequestBuffer)); err != nil {
+		return err
+	}
+
 	if err := xml.Unmarshal(req.RequestBuffer, &req.Request); err != nil {
 		return err
 	}
@@ -640,6 +648,10 @@ func (DefaultAssertionMaker) MakeAssertion(req *IdpAuthnRequest, session *Sessio
 				Value: session.UserScopedAffiliation,
 			}},
 		})
+	}
+
+	for _, ca := range session.CustomAttributes {
+		attributes = append(attributes, ca)
 	}
 
 	if len(session.Groups) != 0 {

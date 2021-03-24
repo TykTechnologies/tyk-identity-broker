@@ -8,15 +8,15 @@ import (
 
 var log = logger.Get()
 
-type HttpError struct{
+type HttpError struct {
 	Message string
-	Code int
-	Error error
+	Code    int
+	Error   error
 }
 
 func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(profile.ID,profile.OrgID, &dumpProfile)
+	keyErr := AuthConfigStore.GetKey(profile.ID, profile.OrgID, &dumpProfile)
 	if keyErr == nil && dumpProfile.ID != "" {
 		return &HttpError{
 			Message: "Object ID already exists",
@@ -25,7 +25,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 		}
 	}
 
-	saveErr := AuthConfigStore.SetKey(profile.ID,profile.OrgID, &profile)
+	saveErr := AuthConfigStore.SetKey(profile.ID, profile.OrgID, &profile)
 	if saveErr != nil {
 		return &HttpError{
 			Message: "insert failed",
@@ -46,7 +46,7 @@ func AddProfile(profile Profile, AuthConfigStore AuthRegisterBackend, flush func
 	return nil
 }
 
-func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBackend,flush func(backend AuthRegisterBackend) error) *HttpError {
+func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 
 	// Shenanigans
 	if profile.ID != key {
@@ -58,7 +58,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	}
 
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(key,profile.OrgID, &dumpProfile)
+	keyErr := AuthConfigStore.GetKey(key, profile.OrgID, &dumpProfile)
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist, operation not permitted",
@@ -67,7 +67,7 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 		}
 	}
 
-	saveErr := AuthConfigStore.SetKey(key,profile.OrgID, &profile)
+	saveErr := AuthConfigStore.SetKey(key, profile.OrgID, &profile)
 	if saveErr != nil {
 		return &HttpError{
 			Message: "Update failed",
@@ -88,15 +88,15 @@ func UpdateProfile(key string, profile Profile, AuthConfigStore AuthRegisterBack
 	return nil
 }
 
-func DeleteProfile(key, orgID string,AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
+func DeleteProfile(key, orgID string, AuthConfigStore AuthRegisterBackend, flush func(backend AuthRegisterBackend) error) *HttpError {
 
 	dumpProfile := Profile{}
-	keyErr := AuthConfigStore.GetKey(key,orgID, &dumpProfile)
+	keyErr := AuthConfigStore.GetKey(key, orgID, &dumpProfile)
 	if keyErr != nil {
 		return &HttpError{
 			Message: "Object ID does not exist",
 			Code:    http.StatusNotFound,
-			Error:  keyErr,
+			Error:   keyErr,
 		}
 	}
 
@@ -119,5 +119,3 @@ func DeleteProfile(key, orgID string,AuthConfigStore AuthRegisterBackend, flush 
 	}
 	return nil
 }
-
-
