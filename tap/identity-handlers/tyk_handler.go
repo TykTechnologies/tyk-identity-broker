@@ -36,11 +36,12 @@ const (
 
 // SSOAccessData is the data type used for speaking to the SSO endpoint in the advanced API
 type SSOAccessData struct {
-	ForSection   ModuleName
-	OrgID        string
-	EmailAddress string
-	DisplayName  string
-	GroupID      string
+	ForSection                ModuleName
+	OrgID                     string
+	EmailAddress              string
+	DisplayName               string
+	GroupID                   string
+	SSOOnlyForRegisteredUsers bool
 }
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
@@ -177,11 +178,12 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	tykHandlerLogger.Debugf("The GroupID %s is used for SSO: ", groupID)
 
 	accessRequest := SSOAccessData{
-		ForSection:   thisModule,
-		OrgID:        t.profile.OrgID,
-		EmailAddress: email,
-		DisplayName:  displayName,
-		GroupID:      groupID,
+		ForSection:                thisModule,
+		OrgID:                     t.profile.OrgID,
+		EmailAddress:              email,
+		DisplayName:               displayName,
+		GroupID:                   groupID,
+		SSOOnlyForRegisteredUsers: t.profile.SSOOnlyForRegisteredUsers,
 	}
 
 	returnVal, ssoEndpoint, retErr := t.API.CreateSSONonce(t.dashboardUserAPICred, accessRequest)
