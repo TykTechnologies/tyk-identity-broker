@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo This is deprecated. Use the goreleaser based automation
+
 : ${ORGDIR:="/src/github.com/TykTechnologies"}
 : ${SIGNKEY:="12B5D62C28F57592D1575BD51ED14C59E37DAC20"}
 : ${BUILDPKGS:="1"}

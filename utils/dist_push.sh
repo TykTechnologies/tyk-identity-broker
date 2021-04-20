@@ -1,4 +1,7 @@
 #!/bin/bash
+
+echo This is deprecated. Use the goreleaser based automation
+
 : ${ORGDIR:="/src/github.com/TykTechnologies"}
 : ${SOURCEBINPATH:="${ORGDIR}/tyk-identity-broker"}
 : ${DEBVERS:="ubuntu/trusty ubuntu/xenial ubuntu/bionic debian/jessie debian/stretch debian/buster"}
