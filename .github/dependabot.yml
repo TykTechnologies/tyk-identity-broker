@@ -5,12 +5,10 @@
 # ./pr.zsh -title arm64 docker -branch releng/install -repos tyk,tyk-analytics,tyk-pump,tyk-identity-broker -base releng/install -p
 # m4 -E -DxREPO=tyk-identity-broker
 
-FROM gcr.io/distroless/static-debian10
-WORKDIR /opt/tyk-identity-broker
-COPY tyk-identity-broker .
-
-ARG PORTS
-EXPOSE $PORTS
-
-ENTRYPOINT ["/opt/tyk-identity-broker/tyk-identity-broker" ]
-CMD [ "--conf=/opt/tyk-identity-broker/tyk-identity-broker.conf" ]
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
