@@ -196,6 +196,11 @@ jobs:
 
       - uses: docker/setup-buildx-action@v1
 
+      - name: Where is the deb?
+        run: |
+          ls -l
+          find . -name \*.deb -name \*.zip
+
       # TODO: add plugin-compiler 
       - name: CI build
         uses: docker/build-push-action@v2
