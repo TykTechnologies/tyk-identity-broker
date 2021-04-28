@@ -8,7 +8,7 @@ release/
 build/
 build_tools/
 tyk-identity-broker
-
+tyk.io.signing.key
 # IDEA
 .idea
 *.iml
