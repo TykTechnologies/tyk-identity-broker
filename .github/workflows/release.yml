@@ -71,6 +71,8 @@ jobs:
           PKG_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: |
           /unlock-agent.sh
+          DOCKER_CFG_PATH="${DOCKER_CONFIG:-$HOME/.docker}/config.json"
+          jq '. + {"experimental": "enabled"}' "$DOCKER_CFG_PATH" > c.json && mv c.json "$DOCKER_CFG_PATH"
           current_tag=${GITHUB_REF##*/}
           echo "::set-output name=tag::${current_tag}"
           if [[ $current_tag =~ .+-(qa|rc).* ]]; then
