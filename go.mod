@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/tyk v1.9.2-0.20210112201019-11dba25d812b
+	github.com/TykTechnologies/tyk v1.9.2-0.20210405195208-f304b6be66fa
 	github.com/crewjam/saml v0.4.5
 	github.com/go-ldap/ldap/v3 v3.2.3
 	github.com/go-redis/redis/v8 v8.3.1
@@ -28,6 +28,7 @@ require (
 	golang.org/x/text v0.3.3
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+	gorm.io/gorm v1.21.9 // indirect
 )
 
 replace github.com/jeffail/tunny => github.com/Jeffail/tunny v0.0.0-20171107125207-452a8e97d6a3

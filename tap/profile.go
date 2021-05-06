@@ -2,13 +2,20 @@
 proxy */
 package tap
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/TykTechnologies/tyk/apidef"
+)
+
+// I know it is not correct convention for table naming but it needs to be backward compatible :(
+const ProfilesCollectionName = "profilesCollection"
 
 // Profile is the configuration objct for an authentication session, it
 // combines an Action (what to do with the identity once confirmed, this is
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
-	ID                        string                 `bson:"ID" json:"ID"`
+	ID                        string                 `bson:"ID" json:"ID" gorm:"primaryKey;column:ID"`
 	Name                      string                 `bson:"Name" json:"Name"`
 	OrgID                     string                 `bson:"OrgID" json:"OrgID"`
 	ActionType                Action                 `bson:"ActionType" json:"ActionType"`
@@ -25,6 +32,17 @@ type Profile struct {
 	CustomUserGroupField      string                 `bson:"CustomUserGroupField" json:"CustomUserGroupField"`
 	UserGroupMapping          map[string]string      `bson:"UserGroupMapping" json:"UserGroupMapping"`
 	SSOOnlyForRegisteredUsers bool                   `bson:"SSOOnlyForRegisteredUsers" json:"SSOOnlyForRegisteredUsers"`
+}
+
+func (p Profile) TableName() string {
+	return ProfilesCollectionName
+}
+
+func (p *Profile) DBID() apidef.ObjectId {
+	return ""
+}
+
+func (p *Profile) SetDBID(id apidef.ObjectId) {
 }
 
 // ProfileConstraint Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
