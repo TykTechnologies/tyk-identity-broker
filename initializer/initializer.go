@@ -2,7 +2,7 @@ package initializer
 
 import (
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
-	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
+
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -62,7 +62,7 @@ func CreateInMemoryBackend() tap.AuthRegisterBackend {
 func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
 	mongoBackend := &backends.MongoBackend{
 		Db:         db,
-		Collection: data_loader.ProfilesCollectionName,
+		Collection: tap.ProfilesCollectionName,
 	}
 	var config interface{}
 	mongoBackend.Init(config)

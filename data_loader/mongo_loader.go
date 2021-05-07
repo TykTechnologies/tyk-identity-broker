@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	mongoPrefix            = "mongo"
-	ProfilesCollectionName = "profilesCollection"
+	mongoPrefix = "mongo"
 )
 
 // MongoLoaderConf is the configuration struct for a MongoLoader
@@ -53,7 +52,7 @@ func (m *MongoLoader) Init(conf interface{}) error {
 func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	var profiles []tap.Profile
 
-	err := m.Db.C(ProfilesCollectionName).Find(nil).All(&profiles)
+	err := m.Db.C(tap.ProfilesCollectionName).Find(nil).All(&profiles)
 	if err != nil {
 		dataLogger.Error("error reading profiles from mongo: " + err.Error())
 		return err
@@ -75,7 +74,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
 	//save the changes in the main profiles collection, so empty and store as we dont know what was removed, updated or added
 	updatedSet := store.GetAll("")
-	profilesCollection := m.Db.C(ProfilesCollectionName)
+	profilesCollection := m.Db.C(tap.ProfilesCollectionName)
 
 	//empty to store new changes
 	_, err := profilesCollection.RemoveAll(nil)
