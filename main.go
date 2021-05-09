@@ -7,6 +7,7 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"github.com/TykTechnologies/tyk-identity-broker/initializer"
+	"github.com/TykTechnologies/tyk-identity-broker/version"
 	"net"
 	"net/http"
 	"strconv"
@@ -38,7 +39,7 @@ var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename *string
 
 func init() {
-	mainLogger.Info("Tyk Identity Broker ", VERSION)
+	mainLogger.Info("Tyk Identity Broker ", version.VERSION)
 	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
 
 	confFile := flag.String("c", "tib.conf", "Path to the config file")
