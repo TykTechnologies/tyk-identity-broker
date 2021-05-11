@@ -36,7 +36,7 @@ func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
 	return dataLoader
 }
 
-func CreateDataLoader(config configuration.Configuration, ProfileFilename *string) (DataLoader, error) {
+func CreateDataLoader(config configuration.Configuration, ProfileFilename string) (DataLoader, error) {
 	var dataLoader DataLoader
 	var loaderConf interface{}
 	reloadDataLoaderLogger()
@@ -66,7 +66,7 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename *strin
 		dataLoader = &FileLoader{}
 		//pDir := path.Join(config.ProfileDir, *ProfileFilename)
 		loaderConf = configuration.FileLoaderConf{
-			FileName:   *ProfileFilename,
+			FileName:   ProfileFilename,
 			ProfileDir: config.ProfileDir,
 		}
 	}
