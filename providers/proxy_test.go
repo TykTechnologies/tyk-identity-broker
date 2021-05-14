@@ -69,7 +69,7 @@ func getProfile(t *testing.T, profileConfig string) tap.Profile {
 		Type:                  "passthrough",
 		ProviderName:          "ProxyProvider",
 		ProviderConfig:        provConf,
-		IdentityHandlerConfig: new(interface{}),
+		IdentityHandlerConfig: make(map[string]interface{}),
 	}
 
 	return thisProfile

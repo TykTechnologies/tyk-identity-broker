@@ -97,7 +97,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {
-		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})
+		theseConfs := conf.(tap.Profile).IdentityHandlerConfig
 		if theseConfs["DashboardCredential"] != nil {
 			t.dashboardUserAPICred = theseConfs["DashboardCredential"].(string)
 		}
