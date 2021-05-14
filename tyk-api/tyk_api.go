@@ -49,8 +49,8 @@ type TokenResponse struct {
 type TykAPI struct {
 	GatewayConfig         EndpointConfig
 	DashboardConfig       EndpointConfig
-	CustomDispatcher      func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error)
-	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error)
+	CustomDispatcher      func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) `json:"-"`
+	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error) `json:"-"`
 }
 
 // PortalDeveloper represents a portal developer

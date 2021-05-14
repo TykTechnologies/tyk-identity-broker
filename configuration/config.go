@@ -48,10 +48,12 @@ type MongoConf struct {
 	CollectionCapEnable        bool   `json:"collection_cap_enable" mapstructure:"collection_cap_enable"`
 }
 
+// Storage object to configure the storage where the profiles lives in
+// it can be extended to work with other loaders. As file Loader is the default
+// then we dont read the file path from here
 type Storage struct {
-	StorageType string          `json:"storage_type" mapstructure:"storage_type"`
-	MongoConf   *MongoConf      `json:"mongo" mapstructure:"mongo"`
-	FileConf    *FileLoaderConf `json:"file" mapstructure:"file"`
+	StorageType string     `json:"storage_type" mapstructure:"storage_type"`
+	MongoConf   *MongoConf `json:"mongo" mapstructure:"mongo"`
 }
 
 // FileLoaderConf is the configuration struct for a FileLoader, takes a filename as main init
@@ -67,8 +69,8 @@ type Backend struct {
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
-	Secret            string
-	Port              int
+	Secret string
+	Port   int
 	ProfileDir        string
 	BackEnd           Backend
 	TykAPISettings    tyk.TykAPI
@@ -107,5 +109,7 @@ func LoadConfig(filePath string, conf *Configuration) {
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
 	}
+	mainLogger.Debugf("\nConfig Loaded: %+v \n", conf)
+	mainLogger.Debugf("\n Storage conf: %+v \n", conf.Storage)
 	mainLogger.Debug("Settings Struct: ", conf.TykAPISettings)
 }
