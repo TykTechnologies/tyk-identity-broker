@@ -84,7 +84,7 @@ func (s *SAMLProvider) UseCallback() bool {
 }
 
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
-	if middleware == nil {
+//	if middleware == nil {
 
 		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
@@ -158,7 +158,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 			Session:         samlsp.DefaultSessionProvider(opts),
 		}
 		middleware.RequestTracker = samlsp.DefaultRequestTracker(opts, &middleware.ServiceProvider)
-	}
+//	}
 
 }
 
