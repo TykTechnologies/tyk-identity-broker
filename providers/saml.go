@@ -84,82 +84,79 @@ func (s *SAMLProvider) UseCallback() bool {
 }
 
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
-	if middleware == nil {
 
-		SAMLLogger.Debug("Initialising middleware SAML")
-		//needs to match the signing cert if IDP
-		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
+	SAMLLogger.Debug("Initialising middleware SAML")
+	//needs to match the signing cert if IDP
+	certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
 
-		if len(certs) == 0 {
-			SAMLLogger.Error("certificate was not loaded")
-		}
-
-		keyPair := certs[0]
-		idpMetadataURL, err := url.Parse(s.config.IDPMetadataURL)
-		if err != nil {
-			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
-		}
-
-		SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
-		rootURL, err := url.Parse(s.config.SAMLBaseURL)
-		if err != nil {
-			SAMLLogger.Errorf("Error parsing SAMLBaseURL: %v", err)
-		}
-
-		httpClient := http.DefaultClient
-
-		metadata, err := samlsp.FetchMetadata(context.TODO(), httpClient, *idpMetadataURL)
-		if err != nil {
-			SAMLLogger.Errorf("Error retrieving IDP Metadata: %v", err)
-		}
-
-		SAMLLogger.Debugf("Root URL: %v", rootURL.String())
-		if keyPair == nil {
-			SAMLLogger.Error("profile certificate was not loaded")
-			return
-		}
-		var key *rsa.PrivateKey
-		if keyPair.PrivateKey == nil {
-			SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
-		}else{
-			key = keyPair.PrivateKey.(*rsa.PrivateKey)
-		}
-
-		opts := samlsp.Options{
-			URL: *rootURL,
-			Key: key,
-		}
-
-		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
-		acsURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/callback"})
-		sloURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/slo"})
-
-		SAMLLogger.Debugf("SP metadata URL: %v", metadataURL.String())
-		SAMLLogger.Debugf("SP acs URL: %v", acsURL.String())
-
-		var forceAuthn = s.config.ForceAuthentication
-
-		sp := saml.ServiceProvider{
-			EntityID:          metadataURL.String(),
-			Key:               key,
-			Certificate:       keyPair.Leaf,
-			MetadataURL:       *metadataURL,
-			AcsURL:            *acsURL,
-			SloURL:            *sloURL,
-			IDPMetadata:       metadata,
-			ForceAuthn:        &forceAuthn,
-			AllowIDPInitiated: true,
-		}
-
-		middleware = &samlsp.Middleware{
-			ServiceProvider: sp,
-			Binding:         s.config.SAMLBinding,
-			OnError:         samlsp.DefaultOnError,
-			Session:         samlsp.DefaultSessionProvider(opts),
-		}
-		middleware.RequestTracker = samlsp.DefaultRequestTracker(opts, &middleware.ServiceProvider)
+	if len(certs) == 0 {
+		SAMLLogger.Error("certificate was not loaded")
 	}
 
+	keyPair := certs[0]
+	idpMetadataURL, err := url.Parse(s.config.IDPMetadataURL)
+	if err != nil {
+		SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
+	}
+
+	SAMLLogger.Debugf("IDPmetadataURL is: %v", idpMetadataURL.String())
+	rootURL, err := url.Parse(s.config.SAMLBaseURL)
+	if err != nil {
+		SAMLLogger.Errorf("Error parsing SAMLBaseURL: %v", err)
+	}
+
+	httpClient := http.DefaultClient
+
+	metadata, err := samlsp.FetchMetadata(context.TODO(), httpClient, *idpMetadataURL)
+	if err != nil {
+		SAMLLogger.Errorf("Error retrieving IDP Metadata: %v", err)
+	}
+
+	SAMLLogger.Debugf("Root URL: %v", rootURL.String())
+	if keyPair == nil {
+		SAMLLogger.Error("profile certificate was not loaded")
+		return
+	}
+	var key *rsa.PrivateKey
+	if keyPair.PrivateKey == nil {
+		SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
+	}else{
+		key = keyPair.PrivateKey.(*rsa.PrivateKey)
+	}
+
+	opts := samlsp.Options{
+		URL: *rootURL,
+		Key: key,
+	}
+
+	metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
+	acsURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/callback"})
+	sloURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/slo"})
+
+	SAMLLogger.Debugf("SP metadata URL: %v", metadataURL.String())
+	SAMLLogger.Debugf("SP acs URL: %v", acsURL.String())
+
+	var forceAuthn = s.config.ForceAuthentication
+
+	sp := saml.ServiceProvider{
+		EntityID:          metadataURL.String(),
+		Key:               key,
+		Certificate:       keyPair.Leaf,
+		MetadataURL:       *metadataURL,
+		AcsURL:            *acsURL,
+		SloURL:            *sloURL,
+		IDPMetadata:       metadata,
+		ForceAuthn:        &forceAuthn,
+		AllowIDPInitiated: true,
+	}
+
+	middleware = &samlsp.Middleware{
+		ServiceProvider: sp,
+		Binding:         s.config.SAMLBinding,
+		OnError:         samlsp.DefaultOnError,
+		Session:         samlsp.DefaultSessionProvider(opts),
+	}
+	middleware.RequestTracker = samlsp.DefaultRequestTracker(opts, &middleware.ServiceProvider)
 }
 
 func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
