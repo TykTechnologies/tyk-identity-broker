@@ -33,23 +33,24 @@ type ADProvider struct {
 
 // ADConfig is the configuration object for an LDAP connector
 type ADConfig struct {
-	LDAPUseSSL             bool
-	LDAPServer             string
-	LDAPPort               string
-	LDAPUserDN             string
-	LDAPBaseDN             string
-	LDAPFilter             string
-	LDAPEmailAttribute     string
-	LDAPFirstNameAttribute string
-	LDAPLastNameAttribute  string
-	LDAPAdminUser          string
-	LDAPAdminPassword      string
-	LDAPAttributes         []string
-	LDAPSearchScope        int
-	FailureRedirect        string
-	DefaultDomain          string
-	GetAuthFromBAHeader    bool
-	SlugifyUserName        bool
+	LDAPUseSSL                   bool
+	LDAPServer                   string
+	LDAPPort                     string
+	LDAPUserDN                   string
+	LDAPBaseDN                   string
+	LDAPFilter                   string
+	LDAPEmailAttribute           string
+	LDAPFirstNameAttribute       string
+	LDAPLastNameAttribute        string
+	LDAPGroupMembershipAttribute string
+	LDAPAdminUser                string
+	LDAPAdminPassword            string
+	LDAPAttributes               []string
+	LDAPSearchScope              int
+	FailureRedirect              string
+	DefaultDomain                string
+	GetAuthFromBAHeader          bool
+	SlugifyUserName              bool
 }
 
 // Name provides the name of the ID provider
@@ -243,9 +244,13 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		if j.Name == s.config.LDAPLastNameAttribute {
 			thisUser.LastName = j.Values[0]
 		}
+		if j.Name == s.config.LDAPGroupMembershipAttribute {
+			thisUser.RawData[j.Name] = j.Values
+
+			continue
+		}
 
 		thisUser.RawData[j.Name] = j.Values[0]
-
 	}
 
 	if !emailFound {

@@ -202,6 +202,12 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 //this lets us deal with odd inputs from other IDPs in future
 func groupsStringer(i interface{}) []string {
 	switch v := i.(type) {
+	case []string:
+		groups := make([]string, 0)
+		for _, str := range v {
+			groups = append(groups, str)
+		}
+		return groups
 	case []interface{}:
 		groups := make([]string, 0)
 		for _, str := range v {
