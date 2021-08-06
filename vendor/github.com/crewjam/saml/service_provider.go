@@ -516,6 +516,7 @@ func (sp *ServiceProvider) validateDestination(response []byte, responseDom *Res
 // ParseResponse extracts the SAML IDP response received in req, validates
 // it, and returns the verified assertion.
 func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs []string) (*Assertion, error) {
+	
 	now := TimeNow()
 	retErr := &InvalidResponseError{
 		Now:      now,
@@ -524,12 +525,15 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 
 	rawResponseBuf, err := base64.StdEncoding.DecodeString(req.PostForm.Get("SAMLResponse"))
 	if err != nil {
+		fmt.Printf("\n What?\n")
 		retErr.PrivateErr = fmt.Errorf("cannot parse base64: %s", err)
 		return nil, retErr
 	}
 	retErr.Response = string(rawResponseBuf)
+	fmt.Printf("\nRawResponse: %+v\n", string(rawResponseBuf))
 	assertion, err := sp.ParseXMLResponse(rawResponseBuf, possibleRequestIDs)
 	if err != nil {
+		fmt.Printf("\nParse XML response\n")
 		return nil, err
 	}
 
@@ -558,6 +562,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 	// ensure that the response XML is well formed before we parse it
 	if err := xrv.Validate(bytes.NewReader(decodedResponseXML)); err != nil {
+		fmt.Printf("\naja?\n")
 		retErr.PrivateErr = fmt.Errorf("invalid xml: %s", err)
 		return nil, retErr
 	}
@@ -566,10 +571,12 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 	resp := Response{}
 	if err := xml.Unmarshal(decodedResponseXML, &resp); err != nil {
 		retErr.PrivateErr = fmt.Errorf("cannot unmarshal response: %s", err)
+		fmt.Printf("\naja2\n")
 		return nil, retErr
 	}
 
 	if err := sp.validateDestination(decodedResponseXML, &resp); err != nil {
+		fmt.Printf("\naja3\n")
 		retErr.PrivateErr = err
 		return nil, retErr
 	}
@@ -587,19 +594,23 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 	}
 
 	if !requestIDvalid {
+		fmt.Printf("\naja4\n")
 		retErr.PrivateErr = fmt.Errorf("`InResponseTo` does not match any of the possible request IDs (expected %v)", possibleRequestIDs)
 		return nil, retErr
 	}
 
 	if resp.IssueInstant.Add(MaxIssueDelay).Before(now) {
+		fmt.Printf("\naja5\n")
 		retErr.PrivateErr = fmt.Errorf("response IssueInstant expired at %s", resp.IssueInstant.Add(MaxIssueDelay))
 		return nil, retErr
 	}
 	if resp.Issuer.Value != sp.IDPMetadata.EntityID {
+		fmt.Printf("\naja6\n")
 		retErr.PrivateErr = fmt.Errorf("response Issuer does not match the IDP metadata (expected %q)", sp.IDPMetadata.EntityID)
 		return nil, retErr
 	}
 	if resp.Status.StatusCode.Value != StatusSuccess {
+		fmt.Printf("\naja7\n")
 		retErr.PrivateErr = ErrBadStatus{Status: resp.Status.StatusCode.Value}
 		return nil, retErr
 	}
@@ -609,6 +620,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 		doc := etree.NewDocument()
 		if err := doc.ReadFromBytes(decodedResponseXML); err != nil {
+			fmt.Printf("\naja8\n")
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -616,12 +628,14 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// TODO(ross): verify that the namespace is urn:oasis:names:tc:SAML:2.0:protocol
 		responseEl := doc.Root()
 		if responseEl.Tag != "Response" {
+			fmt.Printf("\naja9\n")
 			retErr.PrivateErr = fmt.Errorf("expected to find a response object, not %s", doc.Root().Tag)
 			return nil, retErr
 		}
 
 		if err = sp.validateSigned(responseEl); err != nil {
 			retErr.PrivateErr = err
+			fmt.Printf("\naja10\n")
 			return nil, retErr
 		}
 
@@ -633,6 +647,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		doc := etree.NewDocument()
 		if err := doc.ReadFromBytes(decodedResponseXML); err != nil {
 			retErr.PrivateErr = err
+			fmt.Printf("\naja11\n")
 			return nil, retErr
 		}
 
@@ -641,11 +656,13 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		responseSigned, err := responseIsSigned(doc)
 		if err != nil {
 			retErr.PrivateErr = err
+			fmt.Printf("\naja12\n")
 			return nil, retErr
 		}
 		if responseSigned {
 			if err := sp.validateSigned(doc.Root()); err != nil {
 				retErr.PrivateErr = err
+				fmt.Printf("\naja13\n")
 				return nil, retErr
 			}
 		}
@@ -655,6 +672,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		if keyEl != nil {
 			key, err = xmlenc.Decrypt(sp.Key, keyEl)
 			if err != nil {
+				fmt.Printf("\naja14\n")
 				retErr.PrivateErr = fmt.Errorf("failed to decrypt key from response: %s", err)
 				return nil, retErr
 			}
@@ -663,6 +681,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		el := doc.FindElement("//EncryptedAssertion/EncryptedData")
 		plaintextAssertion, err := xmlenc.Decrypt(key, el)
 		if err != nil {
+			fmt.Printf("\naja15\n")
 			retErr.PrivateErr = fmt.Errorf("failed to decrypt response: %s", err)
 			return nil, retErr
 		}
@@ -670,12 +689,14 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 		// TODO(ross): add test case for this
 		if err := xrv.Validate(bytes.NewReader(plaintextAssertion)); err != nil {
+			fmt.Printf("\naja16\n")
 			retErr.PrivateErr = fmt.Errorf("plaintext response contains invalid XML: %s", err)
 			return nil, retErr
 		}
 
 		doc = etree.NewDocument()
 		if err := doc.ReadFromBytes(plaintextAssertion); err != nil {
+			fmt.Printf("\naja17\n")
 			retErr.PrivateErr = fmt.Errorf("cannot parse plaintext response %v", err)
 			return nil, retErr
 		}
@@ -683,6 +704,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// the decrypted assertion may be signed too
 		// otherwise, a signed response is sufficient
 		if err := sp.validateSigned(doc.Root()); err != nil && !responseSigned {
+			fmt.Printf("\naja18\n")
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -691,12 +713,14 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// Note: plaintextAssertion is known to be safe to parse because
 		// plaintextAssertion is unmodified from when xrv.Validate() was called above.
 		if err := xml.Unmarshal(plaintextAssertion, assertion); err != nil {
+			fmt.Printf("\naja19\n")
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
 	}
 
 	if err := sp.validateAssertion(assertion, possibleRequestIDs, now); err != nil {
+		fmt.Printf("\naja20\n")
 		retErr.PrivateErr = fmt.Errorf("assertion invalid: %s", err)
 		return nil, retErr
 	}

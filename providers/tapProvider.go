@@ -78,6 +78,7 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 
 // A hack to marshal a provider conf from map[string]interface{} into a type without type checking, ugly, but effective
 func hackProviderConf(conf interface{}) []byte {
+	log.Infof("conf: %+v", conf)
 	thisConf, err := json.Marshal(conf)
 	if err != nil {
 		log.WithFields(logrus.Fields{
