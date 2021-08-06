@@ -5,9 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"github.com/TykTechnologies/tyk/certs"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -28,50 +26,6 @@ import (
 var onceReloadSAMLLogger sync.Once
 var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
-
-type FileLoader struct{}
-
-func (f FileLoader) GetKey(key string) (string, error) {
-	id := strings.Trim(key, "raw-")
-	log.Infof("\n Will read: %+v \n", id)
-	rawCert, err := ioutil.ReadFile(id)
-	if err != nil {
-		panic(err)
-	}
-	return string(rawCert), err
-}
-
-func (f FileLoader) SetKey(string, string, int64) error {
-	panic("implement me")
-}
-
-func (f FileLoader) GetKeys(string) []string {
-	panic("implement me")
-}
-
-func (f FileLoader) DeleteKey(string) bool {
-	panic("implement me")
-}
-
-func (f FileLoader) DeleteScanMatch(string) bool {
-	panic("implement me")
-}
-
-func (f FileLoader) GetListRange(string, int64, int64) ([]string, error) {
-	panic("implement me")
-}
-
-func (f FileLoader) RemoveFromList(string, string) error {
-	panic("implement me")
-}
-
-func (f FileLoader) AppendToSet(string, string) {
-	panic("implement me")
-}
-
-func (f FileLoader) Exists(string) (bool, error) {
-	panic("implement me")
-}
 
 // certManager will fallback as files as default
 var CertManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
@@ -134,7 +88,8 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
-		s.config.CertLocation = "/Users/sredny/fullcert.pem"
+	//	s.config.CertLocation = "/Users/sredny/fullcert.pem"
+
 		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
 
 		if len(certs) == 0 {
@@ -292,7 +247,6 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	for _, tr := range trackedRequests {
 		possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
 	}
-fmt.Printf("\n Possible requests ids: %+v", possibleRequestIDs)
 
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
