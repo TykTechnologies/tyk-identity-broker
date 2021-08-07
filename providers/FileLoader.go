@@ -7,7 +7,7 @@ import (
 
 type FileLoader struct{}
 var FileLoaderLogTag = "CERT FILE LOADER"
-var FileLoaderLogger = log.WithField("prefix", SAMLLogTag)
+var FileLoaderLogger = log.WithField("prefix", FileLoaderLogTag)
 
 func (f FileLoader) GetKey(key string) (string, error) {
 	id := strings.Trim(key, "raw-")
