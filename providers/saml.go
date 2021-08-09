@@ -28,7 +28,7 @@ var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
 
 // certManager will fallback as files as default
-var CertManager = certs.NewCertificateManager(nil, "", nil, false)
+var CertManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
@@ -36,8 +36,6 @@ type SAMLProvider struct {
 	profile tap.Profile
 	m       *samlsp.Middleware
 }
-
-var middleware *samlsp.Middleware
 
 type SAMLConfig struct {
 	IDPMetadataURL      string
@@ -58,7 +56,6 @@ func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, co
 		SAMLLogger = &logrus.Entry{Logger: log}
 		SAMLLogger = SAMLLogger.Logger.WithField("prefix", SAMLLogTag)
 	})
-
 	s.handler = handler
 	s.profile = profile
 	unmarshalErr := json.Unmarshal(config, &s.config)
@@ -84,8 +81,8 @@ func (s *SAMLProvider) UseCallback() bool {
 }
 
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
-	if middleware == nil {
 
+	if s.m == nil {
 		SAMLLogger.Debug("Initialising middleware SAML")
 		//needs to match the signing cert if IDP
 		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
@@ -151,24 +148,23 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 			AllowIDPInitiated: true,
 		}
 
-		middleware = &samlsp.Middleware{
+		s.m = &samlsp.Middleware{
 			ServiceProvider: sp,
 			Binding:         s.config.SAMLBinding,
 			OnError:         samlsp.DefaultOnError,
 			Session:         samlsp.DefaultSessionProvider(opts),
 		}
-		middleware.RequestTracker = samlsp.DefaultRequestTracker(opts, &middleware.ServiceProvider)
+		s.m.RequestTracker = samlsp.DefaultRequestTracker(opts, &s.m.ServiceProvider)
 	}
 
 }
 
 func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
-	if middleware == nil {
+	if s.m == nil {
 		SAMLLogger.Error("cannot process request, middleware not loaded")
 		return
 	}
 
-	s.m = middleware
 	// If we try to redirect when the original request is the ACS URL we'll
 	// end up in a loop so just fail and error instead
 	if r.URL.Path == s.m.ServiceProvider.AcsURL.Path {
@@ -195,6 +191,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation, binding)
 
 	if err != nil {
+		SAMLLogger.Error("Making authentication request: %+v",err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
@@ -205,6 +202,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	// against the SAML response when we get it.
 	relayState, err := s.m.RequestTracker.TrackRequest(w, r, authReq.ID)
 	if err != nil {
+		SAMLLogger.Error("Tracking request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
@@ -236,7 +234,6 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 }
 
 func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
-	s.m = middleware
 
 	err := r.ParseForm()
 	if err != nil {
@@ -244,6 +241,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 
 	var possibleRequestIDs = make([]string, 0)
+
 	if s.m.ServiceProvider.AllowIDPInitiated {
 		SAMLLogger.Debug("allowing IDP initiated ID")
 		possibleRequestIDs = append(possibleRequestIDs, "")
@@ -253,8 +251,10 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	for _, tr := range trackedRequests {
 		possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
 	}
+
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
+		SAMLLogger.Error(err)
 		s.provideErrorRedirect(w, r)
 		return
 	}
@@ -310,7 +310,6 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 }
 
 func (s *SAMLProvider) HandleMetadata(w http.ResponseWriter, r *http.Request) {
-	s.m = middleware
 
 	buf, _ := xml.MarshalIndent(s.m.ServiceProvider.Metadata(), "", "  ")
 	w.Header().Set("Content-Type", "application/samlmetadata+xml")
