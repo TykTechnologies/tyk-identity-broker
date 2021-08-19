@@ -64,7 +64,6 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename string
 	default:
 		//default: FILE
 		dataLoader = &FileLoader{}
-		//pDir := path.Join(config.ProfileDir, *ProfileFilename)
 		loaderConf = configuration.FileLoaderConf{
 			FileName:   ProfileFilename,
 			ProfileDir: config.ProfileDir,

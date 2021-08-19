@@ -59,9 +59,11 @@ func init() {
 	// In OIDC there are calls to the https://{IDP-DOMAIN}/.well-know/openid-configuration and other endpoints
 	// We set the http client's Transport to do InsecureSkipVerify to avoid error in case the certificate
 	// was signed by unknown authority, trusting the user to set up his profile with the correct .well-know URL.
-	http.DefaultClient.Transport =
-		&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.SSLInsecureSkipVerify}}
-
+	http.DefaultClient.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: config.SSLInsecureSkipVerify,
+		},
+	}
 	var err error
 	GlobalDataLoader, err = data_loader.CreateDataLoader(config, ProfileFilename)
 	if err != nil {
