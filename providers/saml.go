@@ -8,6 +8,7 @@ import (
 	"github.com/TykTechnologies/tyk/certs"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -254,11 +255,12 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 }
 
 func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
-	SAMLLogger.Debugf("HandleCallback called, req details: %+v", r)
 	err := r.ParseForm()
 	if err != nil {
 		SAMLLogger.Errorf("Error parsing form: %v", err)
 	}
+	SAMLLogger.Debugf("HandleCallback called, req details: %+v", r)
+
 
 	var possibleRequestIDs = make([]string, 0)
 
@@ -280,6 +282,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
+		PrintErrorStruct(err)
 		SAMLLogger.Error(err)
 		s.provideErrorRedirect(w, r)
 		return
@@ -347,7 +350,17 @@ func (s *SAMLProvider) HandleMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *SAMLProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Request) {
-	SAMLLogger.Debug("provideErrorRedirect called... req details:%+v", r)
+	SAMLLogger.Debugf("provideErrorRedirect called... req details:\n%+v\n", r)
 	http.Redirect(w, r, s.config.FailureRedirect, 301)
 	return
+}
+
+func PrintErrorStruct(err error){
+	e := reflect.ValueOf(err).Elem()
+	typeOfT := e.Type()
+
+	for i := 0; i < e.NumField(); i++ {
+		f := e.Field(i)
+		SAMLLogger.Debugf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
+	}
 }
