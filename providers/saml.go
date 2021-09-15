@@ -48,6 +48,7 @@ type SAMLConfig struct {
 	SAMLForenameClaim   string
 	SAMLSurnameClaim    string
 	FailureRedirect     string
+	EntityId            string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -92,16 +93,16 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 
 		if len(certs) == 0 {
 			SAMLLogger.Error("certificate was not loaded")
-		}else{
+		} else {
 			SAMLLogger.Debug("Certificate Loaded")
 		}
 
 		keyPair := certs[0]
-		log.Debugf("KeyPair: %+v",keyPair)
+		log.Debugf("KeyPair: %+v", keyPair)
 		idpMetadataURL, err := url.Parse(s.config.IDPMetadataURL)
 		if err != nil {
 			SAMLLogger.Errorf("Error parsing IDP metadata URL: %v", err)
-		}else{
+		} else {
 			SAMLLogger.Debug("Parsing IDP metadata URL successful")
 		}
 
@@ -109,8 +110,8 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		rootURL, err := url.Parse(s.config.SAMLBaseURL)
 		if err != nil {
 			SAMLLogger.Errorf("Error parsing SAMLBaseURL: %v", err)
-		}else{
-			SAMLLogger.Debugf("Parsing SAML Base URL successful, Root URL: %+v",rootURL)
+		} else {
+			SAMLLogger.Debugf("Parsing SAML Base URL successful, Root URL: %+v", rootURL)
 		}
 
 		httpClient := http.DefaultClient
@@ -118,7 +119,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		metadata, err := samlsp.FetchMetadata(context.TODO(), httpClient, *idpMetadataURL)
 		if err != nil {
 			SAMLLogger.Errorf("Error retrieving IDP Metadata: %v", err)
-		}else{
+		} else {
 			SAMLLogger.Debug("IDP Metadata retrieved successfully")
 			SAMLLogger.Debugf("IDP Metadata: %+v", metadata)
 		}
@@ -127,7 +128,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		if keyPair == nil {
 			SAMLLogger.Error("profile certificate was not loaded")
 			return
-		}else{
+		} else {
 			SAMLLogger.Debug("Profile Certificate was loaded")
 		}
 		var key *rsa.PrivateKey
@@ -139,9 +140,9 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 
 		opts := samlsp.Options{
-			URL: *rootURL,
-			Key: key,
-			AllowIDPInitiated:true,
+			URL:               *rootURL,
+			Key:               key,
+			AllowIDPInitiated: true,
 		}
 
 		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
@@ -154,7 +155,8 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		var forceAuthn = s.config.ForceAuthentication
 
 		sp := saml.ServiceProvider{
-			EntityID:          metadataURL.String(),
+			// if s.config.EntityId is empty, it will default to metadataUrl
+			EntityID:          s.config.EntityId,
 			Key:               key,
 			Certificate:       keyPair.Leaf,
 			MetadataURL:       *metadataURL,
@@ -181,7 +183,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	if s.m == nil {
 		SAMLLogger.Error("cannot process request, middleware not loaded")
 		return
-	}else{
+	} else {
 		SAMLLogger.Debug("Using saml middleware already initialized")
 	}
 
@@ -215,7 +217,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation)
 	if err != nil {
-		SAMLLogger.Error("Making authentication request: %+v",err.Error())
+		SAMLLogger.Error("Making authentication request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
@@ -261,24 +263,22 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 	SAMLLogger.Debugf("HandleCallback called, req details: %+v", r)
 
-
 	var possibleRequestIDs = make([]string, 0)
 
 	if s.m.ServiceProvider.AllowIDPInitiated {
 		SAMLLogger.Debug("allowing IDP initiated ID")
 		possibleRequestIDs = append(possibleRequestIDs, "")
 		SAMLLogger.Debugf("Possible Requests Ids: %+v", possibleRequestIDs)
-	}else{
+	} else {
 		SAMLLogger.Debug("IDP Initiated flow not allowed")
 	}
-
 
 	trackedRequests := s.m.RequestTracker.GetTrackedRequests(r)
 	SAMLLogger.Debugf("Tracked Requests: %+v", trackedRequests)
 	for _, tr := range trackedRequests {
 		possibleRequestIDs = append(possibleRequestIDs, tr.SAMLRequestID)
 	}
-	SAMLLogger.Debugf("Possible requests IDs: %+v",possibleRequestIDs)
+	SAMLLogger.Debugf("Possible requests IDs: %+v", possibleRequestIDs)
 
 	assertion, err := s.m.ServiceProvider.ParseResponse(r, possibleRequestIDs)
 	if err != nil {
@@ -286,7 +286,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 		SAMLLogger.Error(err)
 		s.provideErrorRedirect(w, r)
 		return
-	}else{
+	} else {
 		SAMLLogger.Debugf("Assertion: %+v", assertion)
 	}
 	rawData := make(map[string]interface{}, 0)
@@ -355,7 +355,7 @@ func (s *SAMLProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Reque
 	return
 }
 
-func PrintErrorStruct(err error){
+func PrintErrorStruct(err error) {
 	e := reflect.ValueOf(err).Elem()
 	typeOfT := e.Type()
 
