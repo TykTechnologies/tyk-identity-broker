@@ -47,6 +47,7 @@ type SAMLConfig struct {
 	SAMLForenameClaim   string
 	SAMLSurnameClaim    string
 	FailureRedirect     string
+	EntityId          string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -125,6 +126,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		opts := samlsp.Options{
 			URL: *rootURL,
 			Key: key,
+			AllowIDPInitiated:true,
 		}
 
 		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
@@ -135,9 +137,9 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		SAMLLogger.Debugf("SP acs URL: %v", acsURL.String())
 
 		var forceAuthn = s.config.ForceAuthentication
-
 		sp := saml.ServiceProvider{
-			EntityID:          metadataURL.String(),
+			// if s.config.EntityId is empty, it will default to metadataUrl
+			EntityID:          s.config.EntityId,
 			Key:               key,
 			Certificate:       keyPair.Leaf,
 			MetadataURL:       *metadataURL,
