@@ -243,9 +243,13 @@ func (s *ADProvider) getUserData(username string, password string) (goth.User, e
 		if j.Name == s.config.LDAPLastNameAttribute {
 			thisUser.LastName = j.Values[0]
 		}
+		if j.Name == s.profile.CustomUserGroupField {
+			thisUser.RawData[j.Name] = j.Values
+
+			continue
+		}
 
 		thisUser.RawData[j.Name] = j.Values[0]
-
 	}
 
 	if !emailFound {
