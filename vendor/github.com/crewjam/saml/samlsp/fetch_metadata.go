@@ -1,7 +1,6 @@
 package samlsp
 
 import (
-	"bytes"
 	"context"
 	"encoding/xml"
 	"errors"
@@ -10,7 +9,6 @@ import (
 	"net/url"
 
 	"github.com/crewjam/httperr"
-	xrv "github.com/mattermost/xml-roundtrip-validator"
 
 	"github.com/crewjam/saml"
 )
@@ -22,11 +20,6 @@ import (
 // <EntityDescriptor>.
 func ParseMetadata(data []byte) (*saml.EntityDescriptor, error) {
 	entity := &saml.EntityDescriptor{}
-
-	if err := xrv.Validate(bytes.NewBuffer(data)); err != nil {
-		return nil, err
-	}
-
 	err := xml.Unmarshal(data, entity)
 
 	// this comparison is ugly, but it is how the error is generated in encoding/xml

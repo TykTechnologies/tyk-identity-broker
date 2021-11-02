@@ -10,7 +10,7 @@ github.com/beevik/etree
 github.com/cespare/xxhash/v2
 # github.com/crewjam/httperr v0.0.0-20190612203328-a946449404da
 github.com/crewjam/httperr
-# github.com/crewjam/saml v0.4.5
+# github.com/crewjam/saml v0.4.0
 github.com/crewjam/saml
 github.com/crewjam/saml/logger
 github.com/crewjam/saml/samlsp
@@ -58,8 +58,6 @@ github.com/markbates/goth/providers/salesforce
 github.com/markbates/goth/providers/twitter
 # github.com/matryer/is v1.4.0
 github.com/matryer/is
-# github.com/mattermost/xml-roundtrip-validator v0.0.0-20201219040909-8fd2afad43d1
-github.com/mattermost/xml-roundtrip-validator
 # github.com/mattn/go-colorable v0.1.7
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12

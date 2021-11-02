@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"time"
 
-	dsig "github.com/russellhaering/goxmldsig"
-
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/logger"
 )
@@ -24,9 +22,7 @@ type Options struct {
 	Intermediates     []*x509.Certificate
 	AllowIDPInitiated bool
 	IDPMetadata       *saml.EntityDescriptor
-	SignRequest       bool
 	ForceAuthn        bool // TODO(ross): this should be *bool
-	CookieSameSite    http.SameSite
 
 	// The following fields exist <= 0.3.0, but are superceded by the new
 	// SessionProvider and RequestTracker interfaces.
@@ -42,6 +38,7 @@ type Options struct {
 // DefaultSessionCodec returns the default SessionCodec for the provided options,
 // a JWTSessionCodec configured to issue signed tokens.
 func DefaultSessionCodec(opts Options) JWTSessionCodec {
+
 	// for backwards compatibility, support CookieMaxAge
 	maxAge := defaultSessionMaxAge
 	if opts.CookieMaxAge > 0 {
@@ -90,7 +87,6 @@ func DefaultSessionProvider(opts Options) CookieSessionProvider {
 		MaxAge:   maxAge,
 		HTTPOnly: true,
 		Secure:   cookieSecure,
-		SameSite: opts.CookieSameSite,
 		Codec:    DefaultSessionCodec(opts),
 	}
 }
@@ -115,7 +111,6 @@ func DefaultRequestTracker(opts Options, serviceProvider *saml.ServiceProvider) 
 		NamePrefix:      "saml_",
 		Codec:           DefaultTrackedRequestCodec(opts),
 		MaxAge:          saml.MaxIssueDelay,
-		SameSite:        opts.CookieSameSite,
 	}
 }
 
@@ -130,10 +125,6 @@ func DefaultServiceProvider(opts Options) saml.ServiceProvider {
 	if opts.ForceAuthn {
 		forceAuthn = &opts.ForceAuthn
 	}
-	signatureMethod := dsig.RSASHA1SignatureMethod
-	if !opts.SignRequest {
-		signatureMethod = ""
-	}
 
 	return saml.ServiceProvider{
 		EntityID:          opts.EntityID,
@@ -145,7 +136,6 @@ func DefaultServiceProvider(opts Options) saml.ServiceProvider {
 		SloURL:            *sloURL,
 		IDPMetadata:       opts.IDPMetadata,
 		ForceAuthn:        forceAuthn,
-		SignatureMethod:   signatureMethod,
 		AllowIDPInitiated: opts.AllowIDPInitiated,
 	}
 }
