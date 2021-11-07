@@ -51,10 +51,6 @@ func (f FileLoader) Exists(string) (bool, error) {
 	panic("implement me")
 }
 
-func (f FileLoader) Exists(string) (bool, error) {
-	panic("implement me")
-}
-
 func (f FileLoader) AddToSet(string, string) {
 	panic("implement me")
 }
