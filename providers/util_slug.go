@@ -4,9 +4,10 @@ package providers
 
 import (
 	"encoding/hex"
-	"golang.org/x/text/unicode/norm"
 	"unicode"
 	"unicode/utf8"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // This lib nabbed from https://github.com/extemporalgenome/slug/blob/master/slug.go
