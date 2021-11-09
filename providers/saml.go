@@ -5,11 +5,12 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"encoding/xml"
-	"github.com/TykTechnologies/tyk/certs"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+
+	"github.com/TykTechnologies/tyk/certs"
 
 	"github.com/markbates/goth"
 
@@ -47,7 +48,7 @@ type SAMLConfig struct {
 	SAMLForenameClaim   string
 	SAMLSurnameClaim    string
 	FailureRedirect     string
-	EntityId          string
+	EntityId            string
 }
 
 func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, config []byte) error {
@@ -124,9 +125,9 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 
 		opts := samlsp.Options{
-			URL: *rootURL,
-			Key: key,
-			AllowIDPInitiated:true,
+			URL:               *rootURL,
+			Key:               key,
+			AllowIDPInitiated: true,
 		}
 
 		metadataURL := rootURL.ResolveReference(&url.URL{Path: "auth/" + s.profile.ID + "/saml/metadata"})
@@ -191,7 +192,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation)
 	if err != nil {
-		SAMLLogger.Error("Making authentication request: %+v",err.Error())
+		SAMLLogger.Error("Making authentication request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
