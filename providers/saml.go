@@ -190,7 +190,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	SAMLLogger.Debugf("Binding: %v", binding)
 	SAMLLogger.Debugf("BindingLocation: %v", bindingLocation)
 
-	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation)
+	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation, binding)
 	if err != nil {
 		SAMLLogger.Error("Making authentication request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
@@ -209,7 +209,13 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	}
 
 	if binding == saml.HTTPRedirectBinding {
-		redirectURL := authReq.Redirect(relayState)
+		redirectURL, err := authReq.Redirect(relayState,&s.m.ServiceProvider)
+		if err != nil {
+			SAMLLogger.Error("Redirecting auth request: %+v", err.Error())
+			s.provideErrorRedirect(w, r)
+			return
+		}
+
 		w.Header().Add("Location", redirectURL.String())
 		w.WriteHeader(http.StatusFound)
 		return
