@@ -7,8 +7,6 @@
 package providers
 
 import (
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/sirupsen/logrus"
 )
 
 var onceReloadReverseProxyLogger sync.Once
