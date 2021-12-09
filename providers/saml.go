@@ -356,6 +356,9 @@ func (s *SAMLProvider) provideErrorRedirect(w http.ResponseWriter, r *http.Reque
 }
 
 func PrintErrorStruct(err error) {
+	if err == nil {
+		return
+	}
 	e := reflect.ValueOf(err).Elem()
 	typeOfT := e.Type()
 
