@@ -29,7 +29,9 @@ func GetTAProvider(conf tap.Profile, handler tyk.TykAPI, identityKeyStore tap.Au
 	}
 
 	thisIdentityHandler := getIdentityHandler(conf.ActionType, handler, identityKeyStore)
+	log.Debugf("Initializing Identity Handler with config: %+v", conf)
 	thisIdentityHandler.Init(conf)
+	log.Debug("Initializing Provider")
 	err := thisProvider.Init(thisIdentityHandler, conf, hackProviderConf(conf.ProviderConfig))
 
 	return thisProvider, err
@@ -66,6 +68,7 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 
 	thisIdentityProvider, providerErr := GetTAProvider(thisProfile, tykHandler, identityKeyStore)
 	if providerErr != nil {
+		log.WithError(providerErr).Error("Getting Tap Provider")
 		return nil, thisProfile, &tap.HttpError{
 			Message: "Could not initialise provider",
 			Code:    400,
