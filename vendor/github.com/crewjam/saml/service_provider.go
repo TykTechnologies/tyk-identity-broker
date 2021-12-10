@@ -19,6 +19,7 @@ import (
 
 	xrv "github.com/mattermost/xml-roundtrip-validator"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/beevik/etree"
 	dsig "github.com/russellhaering/goxmldsig"
 	"github.com/russellhaering/goxmldsig/etreeutils"
@@ -550,6 +551,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 // information, the Error() method returns a static string.
 func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleRequestIDs []string) (*Assertion, error) {
 	now := TimeNow()
+	log.Debugf("\nInside ParseXMLResponse, the decodedResponseXML is: \n %v\n", string(decodedResponseXML))
 	var err error
 	retErr := &InvalidResponseError{
 		Now:      now,
@@ -558,6 +560,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 	// ensure that the response XML is well formed before we parse it
 	if err := xrv.Validate(bytes.NewReader(decodedResponseXML)); err != nil {
+		log.Debugf("Error validatin XML: %+v", err)
 		retErr.PrivateErr = fmt.Errorf("invalid xml: %s", err)
 		return nil, retErr
 	}
@@ -565,11 +568,13 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 	// do some validation first before we decrypt
 	resp := Response{}
 	if err := xml.Unmarshal(decodedResponseXML, &resp); err != nil {
+		log.Debugf("cannot unmarshal response: %v", err)
 		retErr.PrivateErr = fmt.Errorf("cannot unmarshal response: %s", err)
 		return nil, retErr
 	}
 
 	if err := sp.validateDestination(decodedResponseXML, &resp); err != nil {
+		log.Debugf("error validating destination: %+v", err)
 		retErr.PrivateErr = err
 		return nil, retErr
 	}
@@ -577,6 +582,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 	requestIDvalid := false
 
 	if sp.AllowIDPInitiated {
+		log.Debugf("SP Allow IDPInitiated, then requestID is valid")
 		requestIDvalid = true
 	} else {
 		for _, possibleRequestID := range possibleRequestIDs {
@@ -587,28 +593,34 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 	}
 
 	if !requestIDvalid {
+		log.Debugf("`InResponseTo` does not match any of the possible request IDs (expected %v)", possibleRequestIDs)
 		retErr.PrivateErr = fmt.Errorf("`InResponseTo` does not match any of the possible request IDs (expected %v)", possibleRequestIDs)
 		return nil, retErr
 	}
 
 	if resp.IssueInstant.Add(MaxIssueDelay).Before(now) {
+		log.Debugf("response IssueInstant expired at %s", resp.IssueInstant.Add(MaxIssueDelay))
 		retErr.PrivateErr = fmt.Errorf("response IssueInstant expired at %s", resp.IssueInstant.Add(MaxIssueDelay))
 		return nil, retErr
 	}
 	if resp.Issuer.Value != sp.IDPMetadata.EntityID {
+		log.Debugf("response Issuer does not match the IDP metadata (expected %q)", sp.IDPMetadata.EntityID)
 		retErr.PrivateErr = fmt.Errorf("response Issuer does not match the IDP metadata (expected %q)", sp.IDPMetadata.EntityID)
 		return nil, retErr
 	}
 	if resp.Status.StatusCode.Value != StatusSuccess {
+		log.Debugf("Resp: %+v", resp)
+		log.Debugf("Status is not success. Resp Status: %v", resp.Status.StatusCode.Value)
 		retErr.PrivateErr = ErrBadStatus{Status: resp.Status.StatusCode.Value}
 		return nil, retErr
 	}
 
 	var assertion *Assertion
 	if resp.EncryptedAssertion == nil {
-
+		log.Debug("Encripted assertion is nil")
 		doc := etree.NewDocument()
 		if err := doc.ReadFromBytes(decodedResponseXML); err != nil {
+			log.Debugf("Error reading doc from bytes: %+v", err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -616,11 +628,13 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// TODO(ross): verify that the namespace is urn:oasis:names:tc:SAML:2.0:protocol
 		responseEl := doc.Root()
 		if responseEl.Tag != "Response" {
+			log.Debugf("expected to find a response object, not %s", doc.Root().Tag)
 			retErr.PrivateErr = fmt.Errorf("expected to find a response object, not %s", doc.Root().Tag)
 			return nil, retErr
 		}
 
 		if err = sp.validateSigned(responseEl); err != nil {
+			log.Debugf("Error Validating signed: %+v",err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -630,8 +644,10 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 	// decrypt the response
 	if resp.EncryptedAssertion != nil {
+		log.Debug("Decrypting the response")
 		doc := etree.NewDocument()
 		if err := doc.ReadFromBytes(decodedResponseXML); err != nil {
+			log.Debugf("Error Reading response XML in doc... %+v",err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -640,11 +656,13 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// before decrypting the response verify that
 		responseSigned, err := responseIsSigned(doc)
 		if err != nil {
+			log.Debugf("Error...response nort signed? Signed: %v  Err: %+v",responseSigned, err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
 		if responseSigned {
 			if err := sp.validateSigned(doc.Root()); err != nil {
+				log.Debugf("Err on Validate signed: %v", err)
 				retErr.PrivateErr = err
 				return nil, retErr
 			}
@@ -653,8 +671,10 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		var key interface{} = sp.Key
 		keyEl := doc.FindElement("//EncryptedAssertion/EncryptedKey")
 		if keyEl != nil {
+			log.Debugf("KeyEl is not nil  = //EncryptedAssertion/EncryptedKey")
 			key, err = xmlenc.Decrypt(sp.Key, keyEl)
 			if err != nil {
+				log.Debugf("failed to decrypt key from response: %s", err)
 				retErr.PrivateErr = fmt.Errorf("failed to decrypt key from response: %s", err)
 				return nil, retErr
 			}
@@ -663,6 +683,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		el := doc.FindElement("//EncryptedAssertion/EncryptedData")
 		plaintextAssertion, err := xmlenc.Decrypt(key, el)
 		if err != nil {
+			log.Debugf("failed to decrypt response(//EncryptedAssertion/EncryptedData): %s", err)
 			retErr.PrivateErr = fmt.Errorf("failed to decrypt response: %s", err)
 			return nil, retErr
 		}
@@ -670,12 +691,15 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 
 		// TODO(ross): add test case for this
 		if err := xrv.Validate(bytes.NewReader(plaintextAssertion)); err != nil {
+			log.Debugf("plaintext response contains invalid XML: %s", err)
 			retErr.PrivateErr = fmt.Errorf("plaintext response contains invalid XML: %s", err)
 			return nil, retErr
 		}
 
 		doc = etree.NewDocument()
 		if err := doc.ReadFromBytes(plaintextAssertion); err != nil {
+			log.Debugf("PlaninTestAssertion: %+v", plaintextAssertion)
+			log.Debugf("cannot parse plaintext response %v", err)
 			retErr.PrivateErr = fmt.Errorf("cannot parse plaintext response %v", err)
 			return nil, retErr
 		}
@@ -683,6 +707,7 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// the decrypted assertion may be signed too
 		// otherwise, a signed response is sufficient
 		if err := sp.validateSigned(doc.Root()); err != nil && !responseSigned {
+			log.Debugf("nothing is signed...Err: %v", err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
@@ -691,16 +716,19 @@ func (sp *ServiceProvider) ParseXMLResponse(decodedResponseXML []byte, possibleR
 		// Note: plaintextAssertion is known to be safe to parse because
 		// plaintextAssertion is unmodified from when xrv.Validate() was called above.
 		if err := xml.Unmarshal(plaintextAssertion, assertion); err != nil {
+			log.Debugf("Error unmarshalling assertion: %v", err)
 			retErr.PrivateErr = err
 			return nil, retErr
 		}
 	}
 
 	if err := sp.validateAssertion(assertion, possibleRequestIDs, now); err != nil {
+		log.Debugf("Err validaitng assertion: %+v", err)
 		retErr.PrivateErr = fmt.Errorf("assertion invalid: %s", err)
 		return nil, retErr
 	}
 
+	log.Debugf("Everyting went well in ParseXMLResponse")
 	return assertion, nil
 }
 
