@@ -15,7 +15,7 @@
 builds:
   - id: std
     ldflags:
-      - -X github.com/TykTechnologies/tyk-identity-broker/main.VERSION={{.Version}} -X github.com/TykTechnologies/tyk-identity-broker/main.commit={{.FullCommit}} -X github.com/TykTechnologies/tyk-identity-broker/main.buildDate={{.Date}} -X github.com/TykTechnologies/tyk-identity-broker/main.builtBy=goreleaser
+      - -X github.com/TykTechnologies/tyk-identity-broker/main.VERSION={{.Version}} -X github.com/TykTechnologies/tyk-identity-broker/main.Commit={{.FullCommit}} -X github.com/TykTechnologies/tyk-identity-broker/main.buildDate={{.Date}} -X github.com/TykTechnologies/tyk-identity-broker/main.builtBy=goreleaser
     goos:
       - linux
       - darwin
@@ -25,7 +25,7 @@ builds:
   # static builds strip symbols and do not allow plugins
   - id: static-amd64
     ldflags:
-      - -s -w -X github.com/TykTechnologies/tyk-identity-broker/main.VERSION={{.Version}} -X github.com/TykTechnologies/tyk-identity-broker/main.commit={{.FullCommit}} -X github.com/TykTechnologies/tyk-identity-broker/main.buildDate={{.Date}} -X github.com/TykTechnologies/tyk-identity-broker/main.builtBy=goreleaser
+      - -s -w -X github.com/TykTechnologies/tyk-identity-broker/main.VERSION={{.Version}} -X github.com/TykTechnologies/tyk-identity-broker/main.Commit={{.FullCommit}} -X github.com/TykTechnologies/tyk-identity-broker/main.buildDate={{.Date}} -X github.com/TykTechnologies/tyk-identity-broker/main.builtBy=goreleaser
     goos:
       - linux
     goarch:
