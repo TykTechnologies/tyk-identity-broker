@@ -4,8 +4,6 @@ package tap
 
 import (
 	"encoding/json"
-
-	"github.com/TykTechnologies/tyk/apidef"
 )
 
 // I know it is not correct convention for table naming but it needs to be backward compatible :(
@@ -36,13 +34,6 @@ type Profile struct {
 
 func (p Profile) TableName() string {
 	return ProfilesCollectionName
-}
-
-func (p *Profile) DBID() apidef.ObjectId {
-	return ""
-}
-
-func (p *Profile) SetDBID(id apidef.ObjectId) {
 }
 
 // ProfileConstraint Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
