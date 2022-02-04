@@ -97,7 +97,7 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 
 	t.profile = conf.(tap.Profile)
 	if conf.(tap.Profile).IdentityHandlerConfig != nil {
-		theseConfs := conf.(tap.Profile).IdentityHandlerConfig.(map[string]interface{})
+		theseConfs := conf.(tap.Profile).IdentityHandlerConfig
 		if theseConfs["DashboardCredential"] != nil {
 			t.dashboardUserAPICred = theseConfs["DashboardCredential"].(string)
 		}
@@ -485,6 +485,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 // CompleteIdentityAction will log a user into Tyk dashboard or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+	tykHandlerLogger.Debug("Completing Identity Action")
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
 		t.CompleteIdentityActionForDashboard(w, r, i, profile)
 		return

@@ -3,13 +3,14 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"net"
+	"net/http"
+	"strconv"
+
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"github.com/TykTechnologies/tyk-identity-broker/data_loader"
 	"github.com/TykTechnologies/tyk-identity-broker/initializer"
-	"net"
-	"net/http"
-	"strconv"
 
 	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -35,17 +36,18 @@ var GlobalDataLoader data_loader.DataLoader
 
 var log = logger.Get()
 var mainLogger = log.WithField("prefix", "MAIN")
-var ProfileFilename *string
+var ProfileFilename, confFile string
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", VERSION)
 	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
 
-	confFile := flag.String("c", "tib.conf", "Path to the config file")
-	ProfileFilename := flag.String("p", "./profiles.json", "Path to the profiles file")
+	flag.StringVar(&confFile, "conf", "tib.conf", "Path to the config file")
+	flag.StringVar(&confFile, "c", "tib.conf", "Path to the config file")
+	flag.StringVar(&ProfileFilename, "p", "./profiles.json", "Path to the profiles file")
 	flag.Parse()
 
-	configuration.LoadConfig(*confFile, &config)
+	configuration.LoadConfig(confFile, &config)
 	AuthConfigStore, IdentityKeyStore = initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	configStore := &backends.RedisBackend{KeyPrefix: "tib-provider-config-"}
@@ -57,9 +59,11 @@ func init() {
 	// In OIDC there are calls to the https://{IDP-DOMAIN}/.well-know/openid-configuration and other endpoints
 	// We set the http client's Transport to do InsecureSkipVerify to avoid error in case the certificate
 	// was signed by unknown authority, trusting the user to set up his profile with the correct .well-know URL.
-	http.DefaultClient.Transport =
-		&http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.SSLInsecureSkipVerify}}
-
+	http.DefaultClient.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: config.SSLInsecureSkipVerify,
+		},
+	}
 	var err error
 	GlobalDataLoader, err = data_loader.CreateDataLoader(config, ProfileFilename)
 	if err != nil {
