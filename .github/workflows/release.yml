@@ -22,22 +22,31 @@ on:
     branches:
       - master
       - release-**
+      - integration/**
+      - feature/**
+      - perf/**
     tags:
       - 'v*'
 
 env:
   SLACK_CLI_TOKEN: ${{ secrets.BENDER_TOKEN }}
-  
+  GOPRIVATE: github.com/TykTechnologies
+
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
-    container: tykio/golang-cross:1.15.8
+
     outputs:
       tag: ${{ steps.targets.outputs.tag }}
       upload: ${{ steps.targets.outputs.upload }}
       pc: ${{ steps.targets.outputs.pc }}
 
     steps:
+      - name: Fix private module deps
+        env:
+          TOKEN: '${{ secrets.REPO_TOKEN }}'
+        run: >
+          git config --global url."https://${TOKEN}@github.com".insteadOf "https://github.com"
       - name: Checkout of tyk-identity-broker
         uses: actions/checkout@v2
         with:
@@ -70,24 +79,23 @@ jobs:
           GPG_FINGERPRINT: 12B5D62C28F57592D1575BD51ED14C59E37DAC20
           PKG_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: |
-          /unlock-agent.sh
+          bin/unlock-agent.sh
+          DOCKER_CFG_PATH="${DOCKER_CONFIG:-$HOME/.docker}/config.json"
+          jq '. + {"experimental": "enabled"}' "$DOCKER_CFG_PATH" > c.json && mv c.json "$DOCKER_CFG_PATH" || rm c.json
           current_tag=${GITHUB_REF##*/}
           echo "::set-output name=tag::${current_tag}"
           if [[ $current_tag =~ .+-(qa|rc).* ]]; then
                   echo "::set-output name=upload::true"
                   echo "::set-output name=pc::tyk-identity-broker-unstable"
-                  echo "::set-output name=hub::unstable"
                   echo "::debug file=.goreleaser.yml::Pushing to unstable repos"
           # From https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
           # If this is a public release, the tag is of the form vX.Y.Z where X, Y, Z ∈ ℤ
           elif [[ $current_tag =~ v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*) ]]; then
                   echo "::set-output name=upload::true"
                   echo "::set-output name=pc::tyk-identity-broker"
-                  echo "::set-output name=hub::stable"
                   echo "::debug file=.goreleaser.yml::Pushing to stable repos"
           else
                   echo "::set-output name=upload::false"
-                  echo "::set-output name=hub::unstable"
                   echo "::debug file=.goreleaser.yml::No uploads"
           fi
 
@@ -112,35 +120,33 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
           NFPM_STD_PASSPHRASE: ${{ secrets.SIGNING_KEY_PASSPHRASE }}
           NFPM_PAYG_PASSPHRASE: ${{ secrets.SIGNING_KEY_PASSPHRASE }}
           GPG_FINGERPRINT: 12B5D62C28F57592D1575BD51ED14C59E37DAC20
           PKG_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          CI_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          CI_TAG: ${{ steps.targets.outputs.tag }}
-
-      - name: Push unstable docker image
-        if: steps.targets.outputs.hub == 'unstable' && steps.targets.outputs.upload == 'true'
-        run: |
-          docker tag tykio/tyk-identity-broker:${{ steps.targets.outputs.tag }} tykio/tyk-identity-broker:${{ steps.targets.outputs.hub }}
-          docker push tykio/tyk-identity-broker:${{ steps.targets.outputs.hub }}
-          docker push tykio/tyk-identity-broker:${{ steps.targets.outputs.tag }}
-          docker tag tykio/tyk-identity-broker:${{ steps.targets.outputs.tag }} docker.tyk.io/tyk-identity-broker/tyk-identity-broker:${{ steps.targets.outputs.tag }}
-          docker push docker.tyk.io/tyk-identity-broker/tyk-identity-broker:${{ steps.targets.outputs.tag }}
-
 
       - uses: actions/upload-artifact@v2
         with:
           name: deb
           retention-days: 1
-          path: dist/*.deb
+          path: |
+            dist/*.deb
+            !dist/*PAYG*.deb
 
       - uses: actions/upload-artifact@v2
         with:
           name: rpm
           retention-days: 1
-          path: dist/*.rpm
+          path: |
+            dist/*.rpm
+            !dist/*PAYG*.rpm
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: payg
+          retention-days: 1
+          path: dist/*PAYG*
 
   ci:
     needs:
@@ -230,49 +236,68 @@ jobs:
           --title 'Failed to add new build for CD' \
           --title-link 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
-  install-deb:
+  upgrade-deb:
     runs-on: ubuntu-latest
     needs: goreleaser
     strategy:
+      fail-fast: false
       matrix:
+        arch:
+          - amd64
+          - arm64
         distro:
           - ubuntu:xenial
           - ubuntu:bionic
           - ubuntu:focal
-          - debian:jessie
           - debian:stretch
           - debian:buster
 
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
       - uses: actions/download-artifact@v2
         with:
           name: deb
+
+      - uses: docker/setup-qemu-action@v1
 
       - uses: docker/setup-buildx-action@v1
 
       - name: generate dockerfile
         run: |
           echo 'FROM ${{ matrix.distro }}
-          COPY tyk-identity-broker*_amd64.deb /tyk-identity-broker.deb
-          RUN dpkg -i /tyk-identity-broker.deb && /opt/tyk-identity-broker/tyk-identity-broker --conf=/opt/tyk-identity-broker/tyk-identity-broker.conf &' > Dockerfile
+          ARG TARGETARCH
+          COPY tyk-identity-broker*_${TARGETARCH}.deb /tyk-identity-broker.deb
+          RUN apt-get update && apt-get install -y curl
+
+          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.deb.sh | bash && apt-get install -y tyk-identity-broker=1.1.0
+          RUN dpkg -i /tyk-identity-broker.deb' > Dockerfile
 
       - name: install on ${{ matrix.distro }}
         uses: docker/build-push-action@v2
         with:
           context: "."
+          platforms: linux/${{ matrix.arch }}
           file: Dockerfile
           push: false
 
-  install-rpm:
+  upgrade-rpm:
     needs: goreleaser
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distro:
           - ubi7/ubi:7.9
           - ubi8/ubi:8.3
 
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
       - uses: actions/download-artifact@v2
         with:
           name: rpm
@@ -283,7 +308,10 @@ jobs:
         run: |
           echo 'FROM registry.access.redhat.com/${{ matrix.distro }}
           COPY tyk-identity-broker*_x86_64.rpm /tyk-identity-broker.rpm
-          RUN rpm -ih /tyk-identity-broker.rpm && /opt/tyk-identity-broker/tyk-identity-broker --conf=/opt/tyk-identity-broker/tyk-identity-broker.conf &' > Dockerfile
+          RUN yum install -y curl
+
+          RUN curl -s https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.rpm.sh | bash && yum install -y tyk-identity-broker-1.1.0-1
+          RUN rpm -Uvh /tyk-identity-broker.rpm' > Dockerfile
 
       - name: install on ${{ matrix.distro }}
         uses: docker/build-push-action@v2
@@ -292,12 +320,41 @@ jobs:
           file: Dockerfile
           push: false
 
-  packagecloud:
+  smoke-tests:
     if: needs.goreleaser.outputs.upload == 'true'
     needs:
       - goreleaser
-      - install-deb
-      - install-rpm
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Run tests
+        shell: bash
+        run: |
+          set -eaxo pipefail
+          if [ ! -d integration/smoke-tests ]; then
+             echo "::warning No smoke tests defined"
+             exit 0
+          fi
+          for d in integration/smoke-tests/*/
+          do
+              echo Attempting to test $d
+              if [ -d $d ]; then
+                  cd $d
+                  ./test.sh ${{ needs.goreleaser.outputs.tag }}
+                  cd -
+              fi
+          done
+
+
+  packagecloud:
+    if: needs.goreleaser.outputs.upload == 'true'
+    needs:
+      - smoke-tests
+      - goreleaser
     runs-on: ubuntu-latest
 
     steps:
@@ -352,9 +409,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v3.0')
     runs-on: ubuntu-latest
     needs:
-      - goreleaser
-      - install-deb
-      - install-rpm
+      - smoke-tests
     strategy:
       matrix:
         flavour:
@@ -369,6 +424,7 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
+          name: rpm
           path: aws
 
       - name: Packer build
