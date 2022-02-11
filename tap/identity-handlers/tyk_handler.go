@@ -281,7 +281,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 			Password:      uuid.NewV4().String(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
-			ApiKeys:       map[string]string{},
+			Keys:          map[string][]string{},
 			Subscriptions: map[string]string{},
 			Fields:        map[string]string{},
 			Nonce:         nonce,
@@ -304,6 +304,8 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		if thisUser.Password == "" {
 			thisUser.Password = uuid.NewV4().String()
 		}
+		log.Infof("\nThis User: %+v\n", thisUser)
+
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
 			tykHandlerLogger.WithField("error", updateErr).Error("Failed to update user!")

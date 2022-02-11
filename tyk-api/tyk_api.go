@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/TykTechnologies/tyk/apidef"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var onceReloadTykApiLogger sync.Once
@@ -50,22 +50,44 @@ type TykAPI struct {
 	GatewayConfig         EndpointConfig
 	DashboardConfig       EndpointConfig
 	CustomDispatcher      func(target Endpoint, method string, usercode string, body io.Reader) ([]byte, int, error) `json:"-"`
-	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error) `json:"-"`
+	CustomSuperDispatcher func(target Endpoint, method string, body io.Reader) ([]byte, int, error)                  `json:"-"`
 }
 
 // PortalDeveloper represents a portal developer
 type PortalDeveloper struct {
-	Id            bson.ObjectId     `bson:"_id,omitempty" json:"id"`
-	Email         string            `bson:"email" json:"email"`
-	Password      string            `bson:"password" json:"password"`
-	DateCreated   time.Time         `bson:"date_created" json:"date_created"`
-	InActive      bool              `bson:"inactive" json:"inactive"`
-	OrgId         string            `bson:"org_id" json:"org_id"`
-	ApiKeys       map[string]string `bson:"api_keys" json:"api_keys"`
-	Subscriptions map[string]string `bson:"subscriptions" json:"subscriptions"`
-	Fields        map[string]string `bson:"fields" json:"fields"`
-	Nonce         string            `bson:"nonce" json:"nonce"`
-	SSOKey        string            `bson:"sso_key" json:"sso_key"`
+	Id              apidef.ObjectId                         `bson:"_id,omitempty" json:"id" gorm:"primaryKey;column:_id"`
+	Email           string                                  `bson:"email" json:"email"`
+	Password        string                                  `bson:"password" json:"-"`
+	DateCreated     time.Time                               `bson:"date_created" json:"date_created"`
+	InActive        bool                                    `bson:"inactive" json:"inactive"`
+	OrgId           string                                  `bson:"org_id" json:"org_id"`
+	Keys            map[string][]string                     `bson:"keys" json:"keys"`
+	Subscriptions   map[string]string                       `bson:"subscriptions" json:"subscriptions"`
+	Fields          map[string]string                       `bson:"fields" json:"fields"`
+	Nonce           string                                  `bson:"nonce" json:"nonce"`
+	SSOKey          string                                  `bson:"sso_key" json:"sso_key"`
+	OauthClients    map[string][]PortalDeveloperOAuthClient `bson:"oauth_clients,omitempty" json:"oauth_clients,omitempty"`
+	PasswordMaxDays int                                     `bson:"password_max_days" json:"password_max_days"`
+	PasswordUpdated time.Time                               `bson:"password_updated" json:"password_updated"`
+	PWHistory       []string                                `bson:"PWHistory" json:"PWHistory"`
+	LastLoginDate   time.Time                               `bson:"last_login_date" json:"last_login_date"`
+}
+
+type PortalDeveloperOAuthClient struct {
+	ClientID          string       `bson:"client_id" json:"client_id"`
+	ClientName        string       `bson:"client_name" json:"client_name"`
+	ClientSecret      string       `bson:"secret" json:"secret"`
+	ClientRedirectURI string       `bson:"redirect_uri" json:"redirect_uri"`
+	AppDescription    string       `bson:"app_description" json:"app_description"`
+	UseCase           string       `bson:"use_case" json:"use_case"`
+	DateCreated       time.Time    `bson:"date_created" json:"date_created"`
+	DCRRegistration   Registration `bson:"dcr_registration" json:"dcr_registration"`
+}
+
+type Registration struct {
+	ClientURI   string `bson:"client_uri" json:"client_uri"`
+	AccessToken string `bson:"access_token" json:"access_token"`
+	Provider    string `bson:"provider" json:"provider"`
 }
 
 // HashType is an encryption method for basic auth keys
