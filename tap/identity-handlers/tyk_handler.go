@@ -304,7 +304,6 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		if thisUser.Password == "" {
 			thisUser.Password = uuid.NewV4().String()
 		}
-		log.Infof("\nThis User: %+v\n", thisUser)
 
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
 		if updateErr != nil {
