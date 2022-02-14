@@ -3,6 +3,8 @@ package configuration
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
@@ -105,6 +107,12 @@ func LoadConfig(filePath string, conf *Configuration) {
 			mainLogger.Error("Couldn't unmarshal configuration: ", jsErr)
 		}
 	}
+
+	shouldOmit, omitEnvExist := os.LookupEnv(tothic.EnvPrefix + "_OMITCONFIGFILE")
+	if omitEnvExist && strings.ToLower(shouldOmit) == "true" {
+		*conf = Configuration{}
+	}
+
 
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
