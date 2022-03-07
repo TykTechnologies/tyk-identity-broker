@@ -2,8 +2,6 @@
 proxy */
 package tap
 
-import "github.com/TykTechnologies/tyk/apidef"
-
 // AuthRegisterBackend is an interface to provide storage for profiles loaded into TAP
 type AuthRegisterBackend interface {
 	Init(interface{})
@@ -11,9 +9,4 @@ type AuthRegisterBackend interface {
 	GetKey(key string, orgId string, val interface{}) error
 	GetAll(orgId string) []interface{}
 	DeleteKey(key string, orgId string) error
-}
-
-type DBObject interface {
-	DBID() apidef.ObjectId
-	SetDBID(id apidef.ObjectId)
 }
