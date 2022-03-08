@@ -7,7 +7,7 @@ tyk-auth-proxy_linux_*
 release/
 build/
 build_tools/
-tyk-identity-broker
+./tyk-identity-broker
 tyk.io.signing.key
 # IDEA
 .idea
