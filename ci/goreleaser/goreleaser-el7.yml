@@ -5,12 +5,12 @@
 
 # Generation commands:
 # ./pr.zsh -p -base TD-879/Sync-releng-templates-master -branch TD-879/Sync-releng-templates-master -title internal: Sync releng templates -repos tyk-identity-broker
-# m4 -E -DxREPO=tyk-identity-broker
+# m4 -E -DxEL7_SUFFIX=-el7 -DxREPO=tyk-identity-broker
 
-version: 2
-updates:
-  # Maintain dependencies for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+
+# Check the documentation at http://goreleaser.com
+# This project needs CGO_ENABLED=1 and the cross-compiler toolchains for
+# - arm64
+# - amd64
+
+
