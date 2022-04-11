@@ -31,6 +31,7 @@ type Profile struct {
 	DefaultUserGroupID        string                 `bson:"DefaultUserGroupID" json:"DefaultUserGroupID"`
 	CustomUserGroupField      string                 `bson:"CustomUserGroupField" json:"CustomUserGroupField"`
 	UserGroupMapping          map[string]string      `bson:"UserGroupMapping" json:"UserGroupMapping"`
+	UserGroupSeparator        string                 `bson:"UserGroupSeparator" json:"UserGroupSeparator"`
 	SSOOnlyForRegisteredUsers bool                   `bson:"SSOOnlyForRegisteredUsers" json:"SSOOnlyForRegisteredUsers"`
 }
 
