@@ -121,6 +121,7 @@ func TestGetGroupId(t *testing.T) {
 		ExpectedGroupID    string
 		DefaultGroupID     string
 		UserGroupMapping   map[string]string
+		UserGroupSeparator string
 	}{
 		{
 			TestName:           "Custom group id field empty",
@@ -167,6 +168,31 @@ func TestGetGroupId(t *testing.T) {
 			UserGroupMapping: UserGroupMapping,
 		},
 		{
+			TestName:           "Receive many groups from idp with blank space separated",
+			CustomGroupIDField: "my-custom-group-id-field",
+			user: goth.User{
+				RawData: map[string]interface{}{
+					"my-custom-group-id-field": "devs admins",
+				},
+			},
+			ExpectedGroupID:  "admins-group",
+			DefaultGroupID:   "",
+			UserGroupMapping: UserGroupMapping,
+		},
+		{
+			TestName:           "Receive many groups from idp with comma separated",
+			CustomGroupIDField: "my-custom-group-id-field",
+			user: goth.User{
+				RawData: map[string]interface{}{
+					"my-custom-group-id-field": "devs,admins",
+				},
+			},
+			ExpectedGroupID:    "admins-group",
+			DefaultGroupID:     "",
+			UserGroupMapping:   UserGroupMapping,
+			UserGroupSeparator: ",",
+		},
+		{
 			TestName:           "Custom group id field not empty & valid. With default group set",
 			CustomGroupIDField: "my-custom-group-id-field",
 			user: goth.User{
@@ -182,7 +208,7 @@ func TestGetGroupId(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.TestName, func(t *testing.T) {
-			id := GetGroupId(tc.user, tc.CustomGroupIDField, tc.DefaultGroupID, tc.UserGroupMapping)
+			id := GetGroupId(tc.user, tc.CustomGroupIDField, tc.DefaultGroupID, tc.UserGroupMapping, tc.UserGroupSeparator)
 			if id != tc.ExpectedGroupID {
 				t.Errorf("group id incorrect. Expected:%v got:%v", tc.ExpectedGroupID, id)
 			}
