@@ -172,7 +172,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			displayName = email
 		}
 
-		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField, t.profile.DefaultUserGroupID, t.profile.UserGroupMapping)
+		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField, t.profile.DefaultUserGroupID, t.profile.UserGroupMapping, t.profile.UserGroupSeparator)
 	}
 
 	tykHandlerLogger.Debugf("The GroupID %s is used for SSO: ", groupID)
@@ -200,7 +200,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 // azure give us a []interface{} so need to handle that for now
 //this lets us deal with odd inputs from other IDPs in future
-func groupsStringer(i interface{}) []string {
+// separator is the string to split the group if required
+func groupsStringer(i interface{}, separator string) []string {
 	switch v := i.(type) {
 	case []string:
 		groups := make([]string, 0)
@@ -216,7 +217,11 @@ func groupsStringer(i interface{}) []string {
 		return groups
 
 	default:
-		return strings.Split(i.(string), " ")
+		// defaults to blank space to maintain backward compatibility
+		if separator == "" {
+			separator = " "
+		}
+		return strings.Split(i.(string), separator)
 	}
 }
 
@@ -530,12 +535,12 @@ func GetUserID(gUser goth.User, CustomUserIDField string) string {
 	return gUser.UserID
 }
 
-func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string) string {
+func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string, userGroupSeparator string) string {
 	groupID := DefaultUserGroup
 	if CustomUserGroupField != "" {
 		groups := make([]string, 0)
 		if gUser.RawData[CustomUserGroupField] != nil {
-			groups = groupsStringer(gUser.RawData[CustomUserGroupField])
+			groups = groupsStringer(gUser.RawData[CustomUserGroupField], userGroupSeparator)
 		}
 
 		for _, group := range groups {
