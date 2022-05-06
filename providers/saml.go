@@ -29,6 +29,14 @@ var onceReloadSAMLLogger sync.Once
 var SAMLLogTag = "SAML AUTH"
 var SAMLLogger = log.WithField("prefix", SAMLLogTag)
 
+const (
+	DefaultForeNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+	DefaultSurNameClaim  = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+	DefaultEmailClaim    = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+	// According to Windows Identity Foundation: unique name of the user. It might be the email address
+	WIFUniqueName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+)
+
 // certManager will fallback as files as default
 var CertManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
 
@@ -211,12 +219,12 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	}
 
 	SAMLLogger.Debugf("BindingLocation: %v", bindingLocation)
-	SAMLLogger.Debug("Performing Authentication request to: %v", binding)
+	SAMLLogger.Debugf("Performing Authentication request to: %v", binding)
 	SAMLLogger.Debugf("Service Provider details: %+v", s.m.ServiceProvider)
 	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation, binding)
 
 	if err != nil {
-		SAMLLogger.Error("Making authentication request: %+v", err.Error())
+		SAMLLogger.Errorf("Making authentication request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
@@ -228,16 +236,16 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	// against the SAML response when we get it.
 	relayState, err := s.m.RequestTracker.TrackRequest(w, r, authReq.ID)
 	if err != nil {
-		SAMLLogger.Error("Tracking request: %+v", err.Error())
+		SAMLLogger.Errorf("Tracking request: %+v", err.Error())
 		s.provideErrorRedirect(w, r)
 		return
 	}
 	SAMLLogger.Debugf("Relay State: %+v", relayState)
 
 	if binding == saml.HTTPRedirectBinding {
-		redirectURL, err := authReq.Redirect(relayState,&s.m.ServiceProvider)
+		redirectURL, err := authReq.Redirect(relayState, &s.m.ServiceProvider)
 		if err != nil {
-			SAMLLogger.Error("Redirecting auth request: %+v", err.Error())
+			SAMLLogger.Errorf("Redirecting auth request: %+v", err.Error())
 			s.provideErrorRedirect(w, r)
 			return
 		}
@@ -295,6 +303,7 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 	rawData := make(map[string]interface{}, 0)
 	var str strings.Builder
+
 	for _, v := range assertion.AttributeStatements {
 		for _, att := range v.Attributes {
 			SAMLLogger.Debugf("attribute name: %v\n", att.Name)
@@ -308,32 +317,15 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 		}
 	}
 
-	//this is going to be a nightmare of slight differences between IDPs
-	// so lets make it configurable with a sensible backup
-	var email string
-	emailClaim := s.config.SAMLEmailClaim
-	if emailClaim == "" {
-		emailClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-	}
+	email := ReadEmailFromClaims(s.config.SAMLEmailClaim, rawData)
+	forename, surname := ReadNamesFromClaims(s.config.SAMLForenameClaim, s.config.SAMLSurnameClaim, rawData)
+	name := forename + " " + surname
 
-	if _, ok := rawData[emailClaim]; ok {
-		email = rawData[emailClaim].(string)
-	} else if _, ok := rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/"]; ok {
-		email = rawData["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"].(string)
+	if forename == "" && surname == "" {
+		// defaults to show the email
+		name = email
+		SAMLLogger.Debug("Forename and Surname are not present in claims. You might need to map them or/and ensure that the IDP is sending them.")
 	}
-
-	givenNameClaim := s.config.SAMLForenameClaim
-	surnameClaim := s.config.SAMLSurnameClaim
-
-	if givenNameClaim == "" {
-		givenNameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
-	}
-
-	if surnameClaim == "" {
-		surnameClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
-	}
-	name := rawData[givenNameClaim].(string) + " " +
-		rawData[surnameClaim].(string)
 
 	thisUser := goth.User{
 		UserID:   name,
@@ -370,4 +362,41 @@ func PrintErrorStruct(err error) {
 		f := e.Field(i)
 		SAMLLogger.Debugf("%d: %s %s = %v\n", i, typeOfT.Field(i).Name, f.Type(), f.Interface())
 	}
+}
+
+func ReadNamesFromClaims(ForenameClaim, SurnameClaim string, claims map[string]interface{}) (forename, surname string) {
+	if ForenameClaim == "" {
+		ForenameClaim = DefaultForeNameClaim
+	}
+
+	if SurnameClaim == "" {
+		SurnameClaim = DefaultSurNameClaim
+	}
+
+	if val, ok := claims[ForenameClaim]; ok {
+		forename = val.(string)
+	}
+
+	if val, ok := claims[SurnameClaim]; ok {
+		surname = val.(string)
+	}
+
+	return
+}
+
+func ReadEmailFromClaims(emailClaim string, claims map[string]interface{}) (email string) {
+	// this is going to be a nightmare of slight differences between IDPs
+	// so lets make it configurable with a sensible backup
+	if emailClaim == "" {
+		emailClaim = DefaultEmailClaim
+	}
+
+	if _, ok := claims[emailClaim]; ok {
+		email = claims[emailClaim].(string)
+	} else if _, ok := claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/"]; ok {
+		// fallback to WIF
+		email = claims[WIFUniqueName].(string)
+	}
+
+	return
 }
