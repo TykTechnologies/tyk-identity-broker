@@ -393,7 +393,7 @@ func ReadEmailFromClaims(emailClaim string, claims map[string]interface{}) (emai
 
 	if _, ok := claims[emailClaim]; ok {
 		email = claims[emailClaim].(string)
-	} else if _, ok := claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/"]; ok {
+	} else if _, ok := claims[WIFUniqueName]; ok {
 		// fallback to WIF
 		email = claims[WIFUniqueName].(string)
 	}
