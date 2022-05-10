@@ -320,7 +320,6 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	email := ReadEmailFromClaims(s.config.SAMLEmailClaim, rawData)
 	forename, surname := ReadNamesFromClaims(s.config.SAMLForenameClaim, s.config.SAMLSurnameClaim, rawData)
 	name := forename + " " + surname
-
 	if forename == "" && surname == "" {
 		// defaults to show the email
 		name = email
@@ -328,10 +327,12 @@ func (s *SAMLProvider) HandleCallback(w http.ResponseWriter, r *http.Request, on
 	}
 
 	thisUser := goth.User{
-		UserID:   name,
-		Email:    email,
-		Provider: "SAMLProvider",
-		RawData:  rawData,
+		UserID:    name,
+		Email:     email,
+		Provider:  "SAMLProvider",
+		RawData:   rawData,
+		FirstName: forename,
+		LastName:  surname,
 	}
 	SAMLLogger.Debugf("User: %+v", thisUser)
 	s.handler.CompleteIdentityAction(w, r, thisUser, s.profile)
