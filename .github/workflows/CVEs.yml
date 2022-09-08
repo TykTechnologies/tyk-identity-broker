@@ -4,6 +4,7 @@ on:
 jobs:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - run: |
-          cd ci/CVEs
-          make
+      cd ci/CVEs
+      make
