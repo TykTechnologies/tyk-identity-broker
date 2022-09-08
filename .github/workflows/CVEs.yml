@@ -4,14 +4,10 @@ on:
 
 jobs:
   Scan CVEs:
-    name: Scan CVEs
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check out code
         uses: actions/checkout@v3
-
-      - name: Change directory and run (make)
         run: |
           cd ci/CVEs
           make
