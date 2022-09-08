@@ -1,5 +1,6 @@
 on: 
   workflow_dispatch:
+    inputs:
 jobs:
   Scan CVE:
     runs-on: ubuntu-latest
