@@ -1,12 +1,10 @@
-on:
+on: 
   workflow_dispatch:
-    inputs:
-
 jobs:
-  Scan CVEs:
+  Scan CVE:
     runs-on: ubuntu-latest
-    
     steps:
-      -  run: |
+      - uses: actions/checkout@v3
+      - run: |
           cd ci/CVEs
           make
