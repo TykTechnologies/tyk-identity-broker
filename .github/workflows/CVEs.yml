@@ -1,17 +1,20 @@
+name: Scan CVEs
+
 on: 
   workflow_dispatch:
+
 jobs:
-  scanCVE:
+  scan:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v2
+      - name: checkout of tyk-identity-broker
+        uses: actions/checkout@v2
         with:
           fetch-depth: 1
+
       - name: Change directory and Make
         run: |
           cd ci/CVEs
           make
-
-
-
-           
+   
