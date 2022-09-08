@@ -1,42 +1,10 @@
 on:
-  pull_request:
-  push:
-    branches:
-      - master
-      - release-**
-      - integration/**
-      - feature/**
-      - perf/**
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
-      prefix:
-        - 'tykio'
-      scan_report:
-        $(addsuffix .json,tyk-gateway tyk-dashboard tyk-plugin-compiler tyk-hybrid-docker tyk-pump tyk-mdcb-docker tyk-identity-broker)
-      scan:
-        - '-docker scan --accept-license --json --group-issues'
-      filter:
-        - '.vulnerabilities | group_by(.packageName)[] | add | [ .packageName, .severity, .severityWithCritical, .version, .isUpgradeable, .isPatchable, .description, .from[0][0], .identifiers.CVE[] ]'
-      tags:
-        - 'rc*'
 jobs:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - run: |
-          all: unified.csv
-          unified.csv: $(SCAN_REPORTS)
-                  jq -r '$(FILTER) | @csv' $^ > $@
-          tyk-gateway.json tyk-dashboard.json tyk-plugin-compiler.json tyk-hybrid-docker.json:
-                  $(SCAN) $(PREFIX)/$(basename $@):v3.2 > $@
-          tyk-pump.json:
-                  $(SCAN) $(PREFIX)/$(basename $@):v1.5 > $@
-          tyk-mdcb-docker.json:
-                  $(SCAN) $(PREFIX)/$(basename $@):v1.7 > $@
-          tyk-identity-broker.json:
-                  $(SCAN) $(PREFIX)/$(basename $@):v1.2 > $@
-          clean:
-                  rm -fv *.csv
-          realclean: clean
-                  rm -fv *.json
+          cd ci/CVEs
+          make
