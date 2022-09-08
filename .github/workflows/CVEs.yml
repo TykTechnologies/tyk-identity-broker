@@ -2,10 +2,17 @@ on:
   workflow_dispatch:
     inputs:
 jobs:
-  Scan CVE:
+  scanCVE:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: |
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Change directory and Make
+        run: |
           cd ci/CVEs
           make
+
+
+
+           
