@@ -1,4 +1,4 @@
-name: Scan CVEs
+name: Adding CVE workflow
 
 on: 
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
         run: |
           cd ci/CVEs
           make 
-    steps:
+ 
       - id: 'update_worksheet'
         uses: jroehl/gsheet.action@v1.0.0 # you can specify '@release' to always have the latest changes
         with:
