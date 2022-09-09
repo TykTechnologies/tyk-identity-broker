@@ -17,3 +17,23 @@ jobs:
         run: |
           cd ci/CVEs
           make 
+    steps:
+      - id: 'update_worksheet'
+        uses: jroehl/gsheet.action@v1.0.0 # you can specify '@release' to always have the latest changes
+        with:
+          spreadsheetId: <spreadsheetId>
+          commands: | # list of commands, specified as a valid JSON string
+            [
+              { "command": "addWorksheet", "args": { "worksheetTitle": "<worksheetTitle>" }},
+              { "command": "updateData", "args": { "data": [["All!A2:I180", "All!B2:B180" <> "low", "All!B2:B180" <> "medium"]] }},
+              { "command": "getData", "args": { "range": "'<worksheetTitle>'!A2:B3" } }
+            ]
+        env:
+          GSHEET_CLIENT_EMAIL: adequnl3@gmail.com
+          GSHEET_PRIVATE_KEY: Less4more$
+      - name: dump results
+        env:
+          #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
+          RESULTS: ${{ steps.update_worksheet.outputs.results }}
+        run: echo "$RESULTS" | jq
+
