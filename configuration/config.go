@@ -48,6 +48,7 @@ type MongoConf struct {
 	MaxDocumentSizeBytes       int    `json:"max_document_size_bytes" mapstructure:"max_document_size_bytes"`
 	CollectionCapMaxSizeBytes  int    `json:"collection_cap_max_size_bytes" mapstructure:"collection_cap_max_size_bytes"`
 	CollectionCapEnable        bool   `json:"collection_cap_enable" mapstructure:"collection_cap_enable"`
+	SessionConsistency         string `json:"session_consistency" mapstructure:"session_consistency"`
 }
 
 // Storage object to configure the storage where the profiles lives in
@@ -71,8 +72,8 @@ type Backend struct {
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
-	Secret string
-	Port   int
+	Secret            string
+	Port              int
 	ProfileDir        string
 	BackEnd           Backend
 	TykAPISettings    tyk.TykAPI
@@ -112,7 +113,6 @@ func LoadConfig(filePath string, conf *Configuration) {
 	if omitEnvExist && strings.ToLower(shouldOmit) == "true" {
 		*conf = Configuration{}
 	}
-
 
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)

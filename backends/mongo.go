@@ -1,19 +1,20 @@
 package backends
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/TykTechnologies/storage/persistent"
+	"github.com/TykTechnologies/storage/persistent/dbm"
 
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var mongoPrefix = "mongo-backend"
 var mongoLogger = log.Get().WithField("prefix", mongoPrefix).Logger
 
 type MongoBackend struct {
-	Db         *mgo.Database
+	Store      persistent.PersistentStorage
 	Collection string
 }
 
@@ -21,28 +22,24 @@ func (m MongoBackend) Init(interface{}) {
 
 }
 
-func (m *MongoBackend) getCollection() *mgo.Collection {
-	session := m.Db.Session.Copy()
-	return session.DB("").C(m.Collection)
-}
-
 func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error {
-	profilesCollection := m.getCollection()
-	defer profilesCollection.Database.Session.Close()
 
-	filter := bson.M{"ID": key}
+	profile := value.(tap.Profile)
+	var filter dbm.DBM
+	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
-	// delete if exist, where matches the profile ID and org
-	err := profilesCollection.Remove(filter)
+
+	// delete if exists, where matches the profile ID and org
+	err := m.Store.DeleteWhere(context.Background(), profile, filter)
 	if err != nil {
 		if err.Error() != "not found" {
 			mongoLogger.WithError(err).Error("setting profile in mongo")
 		}
 	}
 
-	err = profilesCollection.Insert(value)
+	err = m.Store.Insert(context.Background(), profile)
 	if err != nil {
 		mongoLogger.WithError(err).Error("inserting profile in mongo")
 	}
@@ -51,16 +48,15 @@ func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error 
 }
 
 func (m MongoBackend) GetKey(key string, orgId string, val interface{}) error {
-	profilesCollection := m.getCollection()
-	defer profilesCollection.Database.Session.Close()
 
-	filter := bson.M{"ID": key}
+	var filter dbm.DBM
+	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
 
 	p := tap.Profile{}
-	err := profilesCollection.Find(filter).One(&p)
+	err := m.Store.Query(context.Background(), p, &p, filter)
 	if err != nil {
 		if err.Error() != "not found" {
 			mongoLogger.WithError(err).Error("error reading profile from mongo, key:", key)
@@ -86,14 +82,12 @@ func (m MongoBackend) GetKey(key string, orgId string, val interface{}) error {
 func (m MongoBackend) GetAll(orgId string) []interface{} {
 	var profiles []tap.Profile
 
-	filter := bson.M{}
+	filter := dbm.DBM{}
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
 
-	profilesCollection := m.getCollection()
-	defer profilesCollection.Database.Session.Close()
-	err := profilesCollection.Find(filter).All(&profiles)
+	err := m.Store.Query(context.Background(), tap.Profile{}, &profiles, filter)
 	if err != nil {
 		mongoLogger.Error("error reading profiles from mongo: " + err.Error())
 	}
@@ -107,15 +101,13 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 }
 
 func (m MongoBackend) DeleteKey(key string, orgId string) error {
-	profilesCollection := m.getCollection()
-	defer profilesCollection.Database.Session.Close()
-
-	filter := bson.M{"ID": key}
+	var filter dbm.DBM
+	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
 
-	err := profilesCollection.Remove(filter)
+	err := m.Store.DeleteWhere(context.Background(), tap.Profile{}, filter)
 	if err != nil {
 		mongoLogger.WithError(err).Error("removing profile")
 	}
