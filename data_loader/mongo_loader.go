@@ -20,9 +20,8 @@ type MongoLoaderConf struct {
 
 // MongoLoader implements DataLoader and will load TAP Profiles from a file
 type MongoLoader struct {
-	config MongoLoaderConf
-	store  persistent.PersistentStorage
-	//Db        *mgo.Database
+	config    MongoLoaderConf
+	store     persistent.PersistentStorage
 	SkipFlush bool
 }
 
@@ -34,7 +33,6 @@ type ProfilesBackup struct {
 // Init initialises the mongo loader
 func (m *MongoLoader) Init(conf interface{}) error {
 	mongoConfig := conf.(MongoLoaderConf)
-	mongoConfig.ClientOpts.Type = persistent.Mgo
 
 	store, err := persistent.NewPersistentStorage(mongoConfig.ClientOpts)
 	if err != nil {
