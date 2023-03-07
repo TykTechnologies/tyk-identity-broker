@@ -48,7 +48,7 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename string
 			UseSSL:                mongoConf.MongoUseSSL,
 			SSLInsecureSkipVerify: mongoConf.MongoSSLInsecureSkipVerify,
 			SessionConsistency:    mongoConf.SessionConsistency,
-			Type:                  persistent.Mgo,
+			Type:                  persistent.OfficialMongo,
 		}
 
 		loaderConf = MongoLoaderConf{
