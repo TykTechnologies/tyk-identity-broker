@@ -32,7 +32,7 @@ func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error 
 	}
 
 	// delete if exists, where matches the profile ID and org
-	err := m.Store.DeleteWhere(context.Background(), profile, filter)
+	err := m.Store.Delete(context.Background(), profile, filter)
 	if err != nil {
 		if err.Error() != "not found" {
 			mongoLogger.WithError(err).Error("setting profile in mongo")
@@ -107,7 +107,7 @@ func (m MongoBackend) DeleteKey(key string, orgId string) error {
 		filter["OrgID"] = orgId
 	}
 
-	err := m.Store.DeleteWhere(context.Background(), tap.Profile{}, filter)
+	err := m.Store.Delete(context.Background(), tap.Profile{}, filter)
 	if err != nil {
 		mongoLogger.WithError(err).Error("removing profile")
 	}

@@ -74,7 +74,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	updatedSet := store.GetAll("")
 
 	//empty to store new changes
-	err := m.store.DeleteWhere(context.Background(), tap.Profile{}, nil)
+	err := m.store.Delete(context.Background(), tap.Profile{}, nil)
 	if err != nil {
 		dataLogger.WithError(err).Error("emptying profiles collection")
 		return err

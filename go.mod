@@ -1,10 +1,10 @@
 module github.com/TykTechnologies/tyk-identity-broker
 
-go 1.19
+go 1.16
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/storage v0.0.0-20230306183208-bb5bfcd14c9c
+	github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b
 	github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7
 	github.com/crewjam/saml v0.4.6
 	github.com/go-ldap/ldap/v3 v3.2.3
