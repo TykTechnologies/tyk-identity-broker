@@ -66,8 +66,6 @@ github.com/TykTechnologies/murmur3 v0.0.0-20180602122059-1915e687e465/go.mod h1:
 github.com/TykTechnologies/openid2go v0.0.0-20200312160651-00c254a52b19/go.mod h1:rGlqNE4CvxZIeiHp0mgrw+/jdGSjJzkZ0n78hhHMdfM=
 github.com/TykTechnologies/saml v0.4.6-0.20211129150050-bf5ed7a9f748 h1:Y58AdQLBwk96uu604bE9gMmtjm0YnKZ6/Y4YYu4+TUU=
 github.com/TykTechnologies/saml v0.4.6-0.20211129150050-bf5ed7a9f748/go.mod h1:jp3pClkYh59TEICx179+Vp9jIxo+6URPErq6TAdKnJ8=
-github.com/TykTechnologies/storage v0.0.0-20230306183208-bb5bfcd14c9c h1:j7S80TKw2bVChluzL6F7xMqWElpWOKv23q5/1Gsi7Uk=
-github.com/TykTechnologies/storage v0.0.0-20230306183208-bb5bfcd14c9c/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
 github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b h1:Y2PZfsIvTOJpK1KxQWzAVFZ+NYNX6MX+BkAJ6xTdRIU=
 github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
 github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7 h1:zZCE0CA/t+K+k5vAkQL1bGaBKNQi4tEupLNGRpQ8J6U=
@@ -161,6 +159,7 @@ github.com/go-chi/chi v3.3.2+incompatible/go.mod h1:eB3wogJHnLi3x/kFX2A+IbTBlXxm
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
+github.com/go-ldap/ldap v3.0.2+incompatible h1:kD5HQcAzlQ7yrhfn+h+MSABeAy/jAJhvIJ/QDllP44g=
 github.com/go-ldap/ldap v3.0.2+incompatible/go.mod h1:qfd9rJvER9Q0/D/Sqn1DfHRoBp40uXYvFoEVrNEPqRc=
 github.com/go-ldap/ldap/v3 v3.2.3 h1:FBt+5w3q/vPVPb4eYMQSn+pOiz4zewPamYhlGMmc7yM=
 github.com/go-ldap/ldap/v3 v3.2.3/go.mod h1:iYS1MdmrmceOJ1QOTnRXrIs7i3kloqtmGQjRvjKpyMg=
