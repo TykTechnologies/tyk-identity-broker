@@ -36,14 +36,14 @@ module "tyk-identity-broker" {
 { branch    = "master",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.15"]},
+	required_tests = ["1.16"]},
 { branch    = "release-1.2",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.15"]},
+	required_tests = ["1.16"]},
 { branch    = "release-1.3",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.15"]},
+	required_tests = ["1.16"]},
 ]
 }
