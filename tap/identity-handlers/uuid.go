@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func uuid() string {
+func newUUID() string {
 	id, err := uuid.NewV4()
 	if err != nil {
 		panic(err)

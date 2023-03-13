@@ -282,7 +282,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
-			Password:      uuid(),
+			Password:      newUUID(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
 			Keys:          map[string][]string{},
@@ -306,7 +306,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
 		if thisUser.Password == "" {
-			thisUser.Password = uuid()
+			thisUser.Password = newUUID()
 		}
 
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
