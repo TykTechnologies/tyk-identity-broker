@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/markbates/goth"
-	uuid "github.com/satori/go.uuid"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -283,7 +282,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 
 		newUser := tyk.PortalDeveloper{
 			Email:         user.Email,
-			Password:      uuid.NewV4().String(),
+			Password:      newUUID(),
 			DateCreated:   time.Now(),
 			OrgId:         t.profile.OrgID,
 			Keys:          map[string][]string{},
@@ -307,7 +306,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 		// Set nonce value in user profile
 		thisUser.Nonce = nonce
 		if thisUser.Password == "" {
-			thisUser.Password = uuid.NewV4().String()
+			thisUser.Password = newUUID()
 		}
 
 		updateErr := t.API.UpdateDeveloper(t.dashboardUserAPICred, thisUser)
