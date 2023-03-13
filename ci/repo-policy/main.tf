@@ -40,7 +40,7 @@ module "tyk-identity-broker" {
 { branch    = "release-1.2",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.16"]},
+	required_tests = ["1.15"]},
 { branch    = "release-1.3",
 	reviewers = "1",
 	convos    = "false",
