@@ -5,7 +5,7 @@ import (
 )
 
 func uuid() string {
-	id, err := uuid.NewV5()
+	id, err := uuid.NewV4()
 	if err != nil {
 		panic(err)
 	}
