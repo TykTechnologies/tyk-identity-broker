@@ -8,16 +8,28 @@ require (
 	github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563
 	github.com/crewjam/saml v0.4.12
 	github.com/go-ldap/ldap/v3 v3.2.3
+<<<<<<< HEAD
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
+=======
+	github.com/go-redis/redis/v8 v8.3.1
+	github.com/gofrs/uuid v3.3.0+incompatible
+	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/sessions v1.2.0
+>>>>>>> 7e6d116... [TT-8265] Replace satori/go.uuid lib with gofrs/uuid (#247)
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/markbates/goth v1.64.2
 	github.com/matryer/is v1.4.0
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+<<<<<<< HEAD
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.1
+=======
+	github.com/sirupsen/logrus v1.4.3-0.20191026113918-67a7fdcf741f
+	github.com/stretchr/testify v1.7.0
+>>>>>>> 7e6d116... [TT-8265] Replace satori/go.uuid lib with gofrs/uuid (#247)
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/text v0.3.7
