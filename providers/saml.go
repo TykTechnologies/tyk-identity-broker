@@ -221,7 +221,7 @@ func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams
 	SAMLLogger.Debugf("BindingLocation: %v", bindingLocation)
 	SAMLLogger.Debugf("Performing Authentication request to: %v", binding)
 	SAMLLogger.Debugf("Service Provider details: %+v", s.m.ServiceProvider)
-	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation, binding)
+	authReq, err := s.m.ServiceProvider.MakeAuthenticationRequest(bindingLocation, binding, saml.HTTPPostBinding)
 
 	if err != nil {
 		SAMLLogger.Errorf("Making authentication request: %+v", err.Error())
