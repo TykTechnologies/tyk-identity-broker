@@ -71,8 +71,8 @@ type Backend struct {
 
 // Configuration holds all configuration settings for TAP
 type Configuration struct {
-	Secret string
-	Port   int
+	Secret            string
+	Port              int
 	ProfileDir        string
 	BackEnd           Backend
 	TykAPISettings    tyk.TykAPI
@@ -112,7 +112,6 @@ func LoadConfig(filePath string, conf *Configuration) {
 	if omitEnvExist && strings.ToLower(shouldOmit) == "true" {
 		*conf = Configuration{}
 	}
-
 
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
