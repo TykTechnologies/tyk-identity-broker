@@ -46,7 +46,7 @@ module "tyk-identity-broker" {
 	convos    = "false",
 	required_tests = ["1.16"]},
 { branch    = "release-1.4",
-    reviewers = "1",
+    reviewers = "0",
     convos    = "false",
     required_tests = ["1.16"]},
 ]
