@@ -165,7 +165,7 @@ jobs:
           echo "region=$region" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials for use
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ steps.aws-creds.outputs.key }}
           aws-secret-access-key: ${{ steps.aws-creds.outputs.secret }}

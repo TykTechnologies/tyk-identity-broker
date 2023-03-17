@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::754489498669:role/gromit-ci
           role-session-name: gromitci
