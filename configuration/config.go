@@ -48,6 +48,7 @@ type MongoConf struct {
 	MaxDocumentSizeBytes       int    `json:"max_document_size_bytes" mapstructure:"max_document_size_bytes"`
 	CollectionCapMaxSizeBytes  int    `json:"collection_cap_max_size_bytes" mapstructure:"collection_cap_max_size_bytes"`
 	CollectionCapEnable        bool   `json:"collection_cap_enable" mapstructure:"collection_cap_enable"`
+	SessionConsistency         string `json:"session_consistency" mapstructure:"session_consistency"`
 }
 
 // Storage object to configure the storage where the profiles lives in
