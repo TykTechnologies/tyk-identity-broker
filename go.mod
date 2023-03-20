@@ -7,7 +7,7 @@ require (
 	github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b
 	github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7
 	github.com/crewjam/saml v0.4.12
-	github.com/go-ldap/ldap/v3 v3.2.3
+	github.com/go-ldap/ldap/v3 v3.4.4
 	github.com/go-redis/redis/v8 v8.3.1
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/mux v1.7.4
