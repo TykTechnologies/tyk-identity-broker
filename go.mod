@@ -6,7 +6,7 @@ require (
 	github.com/Jeffail/gabs v1.4.0
 	github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b
 	github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7
-	github.com/crewjam/saml v0.4.6
+	github.com/crewjam/saml v0.4.12
 	github.com/go-ldap/ldap/v3 v3.2.3
 	github.com/go-redis/redis/v8 v8.3.1
 	github.com/gofrs/uuid v3.3.0+incompatible
@@ -23,8 +23,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/text v0.3.7
 )
-
-replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20211129150050-bf5ed7a9f748
 
 replace github.com/jeffail/tunny => github.com/Jeffail/tunny v0.0.0-20171107125207-452a8e97d6a3
 
