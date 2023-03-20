@@ -15,3 +15,4 @@ tyk.io.signing.key
 *.swp
 *~
 .terraform**
+.DS_Store
