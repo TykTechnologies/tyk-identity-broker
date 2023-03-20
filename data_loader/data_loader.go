@@ -1,12 +1,11 @@
 package data_loader
 
 import (
-	"github.com/sirupsen/logrus"
-	"gopkg.in/mgo.v2"
-
+	"github.com/TykTechnologies/storage/persistent"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 )
 
 var log = logger.Get()
@@ -26,16 +25,6 @@ func reloadDataLoaderLogger() {
 	dataLogger = dataLogger.Logger.WithField("prefix", dataLoaderLoggerTag)
 }
 
-func CreateMongoLoaderFromConnection(db *mgo.Database) DataLoader {
-	var dataLoader DataLoader
-
-	reloadDataLoaderLogger()
-	dataLogger.Info("Set mongo loader for TIB")
-	dataLoader = &MongoLoader{Db: db}
-
-	return dataLoader
-}
-
 func CreateDataLoader(config configuration.Configuration, ProfileFilename string) (DataLoader, error) {
 	var dataLoader DataLoader
 	var loaderConf interface{}
@@ -53,13 +42,17 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename string
 		dataLoader = &MongoLoader{}
 
 		mongoConf := config.Storage.MongoConf
-		dialInfo, err := MongoDialInfo(mongoConf.MongoURL, mongoConf.MongoUseSSL, mongoConf.MongoSSLInsecureSkipVerify)
-		if err != nil {
-			dataLogger.Error("Error getting mongo settings: " + err.Error())
-			return nil, err
+		// map from tib mongo conf structure to persistent.ClientOpts
+		connectionConf := persistent.ClientOpts{
+			ConnectionString:      mongoConf.MongoURL,
+			UseSSL:                mongoConf.MongoUseSSL,
+			SSLInsecureSkipVerify: mongoConf.MongoSSLInsecureSkipVerify,
+			SessionConsistency:    mongoConf.SessionConsistency,
+			Type:                  persistent.OfficialMongo,
 		}
+
 		loaderConf = MongoLoaderConf{
-			DialInfo: dialInfo,
+			ClientOpts: &connectionConf,
 		}
 	default:
 		//default: FILE

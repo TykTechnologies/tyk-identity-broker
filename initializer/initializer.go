@@ -1,6 +1,7 @@
 package initializer
 
 import (
+	"github.com/TykTechnologies/storage/persistent"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -10,7 +11,6 @@ import (
 	"github.com/TykTechnologies/tyk/certs"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
 )
 
 var log = logger.Get()
@@ -59,9 +59,9 @@ func CreateInMemoryBackend() tap.AuthRegisterBackend {
 	return inMemoryBackend
 }
 
-func CreateMongoBackend(db *mgo.Database) tap.AuthRegisterBackend {
+func CreateMongoBackend(store persistent.PersistentStorage) tap.AuthRegisterBackend {
 	mongoBackend := &backends.MongoBackend{
-		Db:         db,
+		Store:      store,
 		Collection: tap.ProfilesCollectionName,
 	}
 	var config interface{}

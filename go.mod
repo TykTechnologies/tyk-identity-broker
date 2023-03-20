@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/Jeffail/gabs v1.4.0
+	github.com/TykTechnologies/storage v0.0.0-20230308174156-ed14b745c68b
 	github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7
 	github.com/crewjam/saml v0.4.12
 	github.com/go-ldap/ldap/v3 v3.2.3
@@ -20,8 +21,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/text v0.3.6
-	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+	golang.org/x/text v0.3.7
 )
 
 replace github.com/jeffail/tunny => github.com/Jeffail/tunny v0.0.0-20171107125207-452a8e97d6a3
