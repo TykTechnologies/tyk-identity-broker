@@ -4,14 +4,13 @@ package tap
 
 import (
 	"encoding/json"
-
-	"github.com/TykTechnologies/tyk/apidef"
+	"github.com/TykTechnologies/storage/persistent/id"
 )
 
 // I know it is not correct convention for table naming but it needs to be backward compatible :(
 const ProfilesCollectionName = "profilesCollection"
 
-// Profile is the configuration objct for an authentication session, it
+// Profile is the configuration object for an authentication session, it
 // combines an Action (what to do with the identity once confirmed, this is
 // delegated to an IdentityHandler) with a Provider (such as Social / GPlus)
 type Profile struct {
@@ -35,15 +34,15 @@ type Profile struct {
 	SSOOnlyForRegisteredUsers bool                   `bson:"SSOOnlyForRegisteredUsers" json:"SSOOnlyForRegisteredUsers"`
 }
 
+func (p Profile) SetObjectID(id id.ObjectId) {
+}
+
 func (p Profile) TableName() string {
 	return ProfilesCollectionName
 }
 
-func (p *Profile) DBID() apidef.ObjectId {
+func (p Profile) GetObjectID() id.ObjectId {
 	return ""
-}
-
-func (p *Profile) SetDBID(id apidef.ObjectId) {
 }
 
 // ProfileConstraint Certain providers can have constraints, this object sets out those constraints. E.g. Domain: "tyk.io" will limit
