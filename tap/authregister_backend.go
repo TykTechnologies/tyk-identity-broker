@@ -1,8 +1,13 @@
-/* package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
-proxy */
+/*
+	package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
+
+proxy
+*/
 package tap
 
-import "github.com/TykTechnologies/tyk/apidef"
+import (
+	"github.com/TykTechnologies/storage/persistent/id"
+)
 
 // AuthRegisterBackend is an interface to provide storage for profiles loaded into TAP
 type AuthRegisterBackend interface {
@@ -14,6 +19,5 @@ type AuthRegisterBackend interface {
 }
 
 type DBObject interface {
-	DBID() apidef.ObjectId
-	SetDBID(id apidef.ObjectId)
+	SetDBID(id id.ObjectId)
 }
