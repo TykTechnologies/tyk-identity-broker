@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"github.com/TykTechnologies/storage/persistent"
 	"os"
 	"strconv"
 	"testing"
@@ -93,4 +94,36 @@ func TestOverrideConfigWithEnvVars(t *testing.T) {
 	is.Equal(true, conf.HttpServerOptions.UseSSL)
 	is.Equal(certFile, conf.HttpServerOptions.CertFile)
 	is.Equal(keyFile, conf.HttpServerOptions.KeyFile)
+}
+
+func TestGetMongoDriver(t *testing.T) {
+	tests := []struct {
+		name           string
+		driverFromConf string
+		expected       string
+	}{
+		{
+			name:           "valid persistent.Mgo",
+			driverFromConf: persistent.Mgo,
+			expected:       persistent.Mgo,
+		},
+		{
+			name:           "valid persistent.OfficialMongo",
+			driverFromConf: persistent.OfficialMongo,
+			expected:       persistent.OfficialMongo,
+		},
+		{
+			name:           "invalid driverFromConf",
+			driverFromConf: "invalidDriver",
+			expected:       persistent.Mgo,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetMongoDriver(tt.driverFromConf); got != tt.expected {
+				t.Errorf("GetMongoDriver() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
 }
