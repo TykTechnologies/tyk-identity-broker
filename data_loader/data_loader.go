@@ -42,13 +42,15 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename string
 		dataLoader = &MongoLoader{}
 
 		mongoConf := config.Storage.MongoConf
+
+		mongoDriver := configuration.GetMongoDriver(config.Storage.MongoConf.Driver)
 		// map from tib mongo conf structure to persistent.ClientOpts
 		connectionConf := persistent.ClientOpts{
 			ConnectionString:      mongoConf.MongoURL,
 			UseSSL:                mongoConf.MongoUseSSL,
 			SSLInsecureSkipVerify: mongoConf.MongoSSLInsecureSkipVerify,
 			SessionConsistency:    mongoConf.SessionConsistency,
-			Type:                  persistent.OfficialMongo,
+			Type:                  mongoDriver,
 		}
 
 		loaderConf = MongoLoaderConf{

@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"encoding/json"
+	"github.com/TykTechnologies/storage/persistent"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -49,6 +50,7 @@ type MongoConf struct {
 	CollectionCapMaxSizeBytes  int    `json:"collection_cap_max_size_bytes" mapstructure:"collection_cap_max_size_bytes"`
 	CollectionCapEnable        bool   `json:"collection_cap_enable" mapstructure:"collection_cap_enable"`
 	SessionConsistency         string `json:"session_consistency" mapstructure:"session_consistency"`
+	Driver                     string `json:"driver" mapstructure:"driver"`
 }
 
 // Storage object to configure the storage where the profiles lives in
@@ -117,7 +119,18 @@ func LoadConfig(filePath string, conf *Configuration) {
 	if err = envconfig.Process(tothic.EnvPrefix, conf); err != nil {
 		mainLogger.Errorf("Failed to process config env vars: %v", err)
 	}
+
 	mainLogger.Debugf("\nConfig Loaded: %+v \n", conf)
 	mainLogger.Debugf("\n Storage conf: %+v \n", conf.Storage)
 	mainLogger.Debug("Settings Struct: ", conf.TykAPISettings)
+}
+
+// GetMongoDriver returns a valid mongo driver to use, it receives the
+// driver set in config, and check its validity
+// otherwise default to MGO
+func GetMongoDriver(driverFromConf string) string {
+	if driverFromConf != persistent.Mgo && driverFromConf != persistent.OfficialMongo {
+		return persistent.Mgo
+	}
+	return driverFromConf
 }
