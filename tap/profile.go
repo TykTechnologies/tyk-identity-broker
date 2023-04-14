@@ -1,10 +1,13 @@
-/* package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
-proxy */
+/*
+	package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
+
+proxy
+*/
 package tap
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/storage/persistent/id"
+	"github.com/TykTechnologies/storage/persistent/model"
 )
 
 // I know it is not correct convention for table naming but it needs to be backward compatible :(
@@ -34,14 +37,14 @@ type Profile struct {
 	SSOOnlyForRegisteredUsers bool                   `bson:"SSOOnlyForRegisteredUsers" json:"SSOOnlyForRegisteredUsers"`
 }
 
-func (p Profile) SetObjectID(id id.ObjectId) {
+func (p Profile) SetObjectID(id model.ObjectID) {
 }
 
 func (p Profile) TableName() string {
 	return ProfilesCollectionName
 }
 
-func (p Profile) GetObjectID() id.ObjectId {
+func (p Profile) GetObjectID() model.ObjectID {
 	return ""
 }
 

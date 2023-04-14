@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/TykTechnologies/storage/persistent/id"
+	"github.com/TykTechnologies/storage/persistent/model"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -55,7 +55,7 @@ type TykAPI struct {
 
 // PortalDeveloper represents a portal developer
 type PortalDeveloper struct {
-	Id              id.ObjectId                             `bson:"_id,omitempty" json:"id"`
+	Id              model.ObjectID                          `bson:"_id,omitempty" json:"id"`
 	Email           string                                  `bson:"email" json:"email"`
 	Password        string                                  `bson:"password" json:"-"`
 	DateCreated     time.Time                               `bson:"date_created" json:"date_created"`
