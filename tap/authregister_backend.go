@@ -6,7 +6,7 @@ proxy
 package tap
 
 import (
-	"github.com/TykTechnologies/storage/persistent/id"
+	"github.com/TykTechnologies/storage/persistent/model"
 )
 
 // AuthRegisterBackend is an interface to provide storage for profiles loaded into TAP
@@ -19,5 +19,5 @@ type AuthRegisterBackend interface {
 }
 
 type DBObject interface {
-	SetDBID(id id.ObjectId)
+	SetDBID(id model.ObjectID)
 }

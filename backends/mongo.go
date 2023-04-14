@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/TykTechnologies/storage/persistent"
-	"github.com/TykTechnologies/storage/persistent/dbm"
-
+	"github.com/TykTechnologies/storage/persistent/model"
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
@@ -25,7 +24,7 @@ func (m MongoBackend) Init(interface{}) {
 func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error {
 
 	profile := value.(tap.Profile)
-	filter := dbm.DBM{}
+	filter := model.DBM{}
 	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
@@ -49,7 +48,7 @@ func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error 
 
 func (m MongoBackend) GetKey(key string, orgId string, val interface{}) error {
 
-	filter := dbm.DBM{}
+	filter := model.DBM{}
 	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
@@ -82,7 +81,7 @@ func (m MongoBackend) GetKey(key string, orgId string, val interface{}) error {
 func (m MongoBackend) GetAll(orgId string) []interface{} {
 	var profiles []tap.Profile
 
-	filter := dbm.DBM{}
+	filter := model.DBM{}
 	if orgId != "" {
 		filter["OrgID"] = orgId
 	}
@@ -101,7 +100,7 @@ func (m MongoBackend) GetAll(orgId string) []interface{} {
 }
 
 func (m MongoBackend) DeleteKey(key string, orgId string) error {
-	filter := dbm.DBM{}
+	filter := model.DBM{}
 	filter["ID"] = key
 	if orgId != "" {
 		filter["OrgID"] = orgId
