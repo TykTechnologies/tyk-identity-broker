@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/storage v1.0.1
+	github.com/TykTechnologies/storage v1.0.2
 	github.com/TykTechnologies/tyk v1.9.2-0.20211217130848-b04d51712be7
 	github.com/crewjam/saml v0.4.12
 	github.com/go-ldap/ldap/v3 v3.2.3
