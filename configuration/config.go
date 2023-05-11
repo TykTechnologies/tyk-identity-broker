@@ -2,10 +2,11 @@ package configuration
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/storage/persistent"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/TykTechnologies/storage/persistent"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
@@ -51,6 +52,7 @@ type MongoConf struct {
 	CollectionCapEnable        bool   `json:"collection_cap_enable" mapstructure:"collection_cap_enable"`
 	SessionConsistency         string `json:"session_consistency" mapstructure:"session_consistency"`
 	Driver                     string `json:"driver" mapstructure:"driver"`
+	DirectConnection           bool   `json:"direct_connection" mapstructure:"direct_connection"`
 }
 
 // Storage object to configure the storage where the profiles lives in

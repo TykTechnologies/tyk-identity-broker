@@ -51,6 +51,7 @@ func CreateDataLoader(config configuration.Configuration, ProfileFilename string
 			SSLInsecureSkipVerify: mongoConf.MongoSSLInsecureSkipVerify,
 			SessionConsistency:    mongoConf.SessionConsistency,
 			Type:                  mongoDriver,
+			DirectConnection:      mongoConf.DirectConnection,
 		}
 
 		loaderConf = MongoLoaderConf{
