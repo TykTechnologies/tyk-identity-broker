@@ -18,7 +18,7 @@ require (
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/sirupsen/logrus v1.4.3-0.20191026113918-67a7fdcf741f
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.3
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/text v0.3.7
