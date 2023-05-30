@@ -38,7 +38,7 @@ const (
 )
 
 // certManager will fallback as files as default
-var CertManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
+var CertManager certs.CertificateManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
