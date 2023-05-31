@@ -48,7 +48,7 @@ func SetLogger(newLogger *logrus.Logger) {
 	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
-func SetCertManager(cm *certs.CertificateManager) {
+func SetCertManager(cm certs.CertificateManager) {
 	providers.CertManager = cm
 }
 
