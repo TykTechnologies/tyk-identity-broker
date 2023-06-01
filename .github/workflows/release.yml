@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        golang_cross: [1.19]
+        golang_cross: [1.19-bullseye]
         include:
           - golang_cross: 1.19-bullseye
             goreleaser: "ci/goreleaser/goreleaser.yml"
