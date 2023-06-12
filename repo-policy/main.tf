@@ -36,7 +36,7 @@ module "tyk-identity-broker" {
 { branch    = "master",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.16"]},
+	required_tests = ["1.19-bullseye"]},
 { branch    = "release-1.2",
 	reviewers = "0",
 	convos    = "false",
@@ -45,5 +45,9 @@ module "tyk-identity-broker" {
 	reviewers = "0",
 	convos    = "false",
 	required_tests = ["1.16"]},
+{ branch    = "release-1.4",
+	reviewers = "0",
+	convos    = "false",
+	required_tests = ["1.19-bullseye"]},
 ]
 }
