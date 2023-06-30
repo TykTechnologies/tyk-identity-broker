@@ -39,8 +39,8 @@ jobs:
         include:
           - golang_cross: 1.16
             goreleaser: 'ci/goreleaser/goreleaser.yml' 
-            rpmvers: ' el/7 el/8 el/9'
-            debvers: 'ubuntu/xenial ubuntu/bionic ubuntu/focal ubuntu/jammy debian/jessie debian/buster debian/bullseye'
+            rpmvers: 'el/7 el/8'
+            debvers: 'ubuntu/xenial ubuntu/bionic debian/jessie ubuntu/focal debian/buster debian/bullseye'
     outputs:
       tag: ${{ steps.targets.outputs.tag }}
 
@@ -106,7 +106,7 @@ jobs:
 
       - uses: goreleaser/goreleaser-action@v4
         with:
-          version: latest
+          version: 1.18.2
           args: release --clean -f ${{ matrix.goreleaser }} ${{ !startsWith(github.ref, 'refs/tags/') && ' --snapshot' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
