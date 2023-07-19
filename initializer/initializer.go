@@ -1,16 +1,17 @@
 package initializer
 
 import (
-	"github.com/TykTechnologies/storage/persistent"
-	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 
+	"github.com/TykTechnologies/storage/persistent"
+
+	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	"github.com/TykTechnologies/tyk-identity-broker/cert"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
-	"github.com/TykTechnologies/tyk/certs"
-	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
 )
 
 var log = logger.Get()
@@ -48,7 +49,7 @@ func SetLogger(newLogger *logrus.Logger) {
 	initializerLogger = initializerLogger.Logger.WithField("prefix", "TIB INITIALIZER")
 }
 
-func SetCertManager(cm certs.CertificateManager) {
+func SetCertManager(cm cert.CertificateManager) {
 	providers.CertManager = cm
 }
 

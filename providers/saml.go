@@ -11,17 +11,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TykTechnologies/tyk/certs"
-
-	"github.com/markbates/goth"
-
 	"github.com/crewjam/saml"
-
 	"github.com/crewjam/saml/samlsp"
-
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
+	"github.com/markbates/goth"
 	"github.com/sirupsen/logrus"
 
+	"github.com/TykTechnologies/tyk-identity-broker/cert"
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
 
@@ -37,8 +33,8 @@ const (
 	WIFUniqueName = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
 )
 
-// certManager will fallback as files as default
-var CertManager certs.CertificateManager = certs.NewCertificateManager(FileLoader{}, "", nil, false)
+// CertManager variable contains default Tyk Identity Broker certificate manages with FileLoader storage.
+var CertManager = cert.NewCertificateManager()
 
 type SAMLProvider struct {
 	handler tap.IdentityHandler
@@ -76,6 +72,7 @@ func (s *SAMLProvider) Init(handler tap.IdentityHandler, profile tap.Profile, co
 		return unmarshalErr
 	}
 	SAMLLogger.Debugf("Initializing SAML profile with config: %+v", s.config)
+
 	s.initialiseSAMLMiddleware()
 
 	return nil
@@ -94,11 +91,11 @@ func (s *SAMLProvider) UseCallback() bool {
 }
 
 func (s *SAMLProvider) initialiseSAMLMiddleware() {
-
 	if s.m == nil {
 		SAMLLogger.Debug("Initialising middleware SAML")
-		//needs to match the signing cert if IDP
-		certs := CertManager.List([]string{s.config.CertLocation}, certs.CertificateAny)
+
+		// Needs to match the signing cert if IDP.
+		certs := CertManager.ListAny([]string{s.config.CertLocation})
 
 		if len(certs) == 0 {
 			SAMLLogger.Error("certificate was not loaded")
@@ -136,7 +133,6 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		SAMLLogger.Debugf("Root URL: %v", rootURL.String())
 		if keyPair == nil {
 			SAMLLogger.Error("profile certificate was not loaded")
-			return
 		} else {
 			SAMLLogger.Debug("Profile Certificate was loaded")
 		}
@@ -183,10 +179,9 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 		s.m.RequestTracker = samlsp.DefaultRequestTracker(opts, &s.m.ServiceProvider)
 	}
-
 }
 
-func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
+func (s *SAMLProvider) Handle(w http.ResponseWriter, r *http.Request, _ map[string]string, _ tap.Profile) {
 	SAMLLogger.Debugf("Handling SAML request: %+v", r)
 	if s.m == nil {
 		SAMLLogger.Error("cannot process request, middleware not loaded")
