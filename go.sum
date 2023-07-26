@@ -86,8 +86,9 @@ github.com/TykTechnologies/leakybucket v0.0.0-20170301023702-71692c943e3c/go.mod
 github.com/TykTechnologies/murmur3 v0.0.0-20230310161213-aad17efd5632 h1:T5NWziFusj8au5nxAqMMh/bZyX9CAyYnBkaMSsfH6BA=
 github.com/TykTechnologies/murmur3 v0.0.0-20230310161213-aad17efd5632/go.mod h1:UsPYgOFBpNzDXLEti7MKOwHLpVSqdzuNGkVFPspQmnQ=
 github.com/TykTechnologies/openid2go v0.1.2/go.mod h1:gYfkqeWa+lY3Xz/Z2xYtIzmYXynlgKZaBIbPCqdcdMA=
-github.com/TykTechnologies/storage v1.0.5 h1:lfMljPueySAW7Mpc70g1/qC5n2LKNcKgQs+Xw30apP8=
 github.com/TykTechnologies/storage v1.0.5/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
+github.com/TykTechnologies/storage v1.0.7 h1:lPkqSI5w15Eysh7JuOPCk/ajhgC4ibdHRhuiuoQQv2w=
+github.com/TykTechnologies/storage v1.0.7/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563 h1:YMx2UIdX327ySzp34T8dvRR9WPx50kwtXLCw5pjvxzg=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563/go.mod h1:dblrpGRayR3bf7chtEP4kZSIZw1eDiQKXCiTMfWffFs=
 github.com/TykTechnologies/tyk-pump v1.8.0-rc4/go.mod h1:dTxcW0leM1oHhMJOxM784iTuWe+D2SnffAEhmHPZOug=
