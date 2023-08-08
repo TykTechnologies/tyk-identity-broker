@@ -4,7 +4,11 @@ go 1.19
 
 require (
 	github.com/Jeffail/gabs v1.4.0
+<<<<<<< HEAD
 	github.com/TykTechnologies/storage v1.0.5
+=======
+	github.com/TykTechnologies/storage v1.0.8
+>>>>>>> 2a5dd4d... [TT-9464] Updating storage to v1.0.8 (#324)
 	github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563
 	github.com/crewjam/saml v0.4.12
 	github.com/go-ldap/ldap/v3 v3.2.3
