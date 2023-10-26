@@ -16,7 +16,7 @@ require (
 	github.com/markbates/goth v1.64.2
 	github.com/matryer/is v1.4.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.8.1
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/text v0.13.0
@@ -117,11 +117,11 @@ replace github.com/jensneuse/graphql-go-tools => github.com/TykTechnologies/grap
 
 replace gorm.io/gorm => github.com/TykTechnologies/gorm v1.20.7-0.20210409171139-b5c340f85ed0
 
-replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0
+replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231026194119-d2021456ce01
 
 // to keep backward compatibility with Tyk 5 LTS
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
 
-replace github.com/stretchr/testify => github.com/stretchr/testify v1.8.1
+//replace github.com/stretchr/testify => github.com/stretchr/testify v1.8.1
 
 exclude github.com/TykTechnologies/tyk/certs v0.0.1
