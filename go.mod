@@ -117,7 +117,7 @@ replace github.com/jensneuse/graphql-go-tools => github.com/TykTechnologies/grap
 
 replace gorm.io/gorm => github.com/TykTechnologies/gorm v1.20.7-0.20210409171139-b5c340f85ed0
 
-replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231026183902-164adf3ce760
+replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0
 
 // to keep backward compatibility with Tyk 5 LTS
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
