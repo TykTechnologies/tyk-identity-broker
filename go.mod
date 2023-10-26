@@ -122,4 +122,6 @@ replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.2023
 // to keep backward compatibility with Tyk 5 LTS
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
 
+replace github.com/stretchr/testify => github.com/stretchr/testify v1.8.1
+
 exclude github.com/TykTechnologies/tyk/certs v0.0.1
