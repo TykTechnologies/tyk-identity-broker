@@ -3,6 +3,7 @@ package identityHandlers
 import (
 	"github.com/markbates/goth"
 	"testing"
+	"time"
 )
 
 const (
@@ -14,6 +15,7 @@ const (
 var UserGroupMapping = map[string]string{
 	"devs":   "devs-group",
 	"admins": "admins-group",
+	"CN=tyk_admin,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN": "tyk-admin",
 }
 
 func TestGetEmail(t *testing.T) {
@@ -204,6 +206,22 @@ func TestGetGroupId(t *testing.T) {
 			DefaultGroupID:   "devs",
 			UserGroupMapping: UserGroupMapping,
 		},
+		{
+			TestName:           "Custom group id field not empty, and the claim being an array",
+			CustomGroupIDField: "memberOf",
+			user: goth.User{RawData: map[string]interface{}{
+				"memberOf": []string{
+					"CN=tyk_admin,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=openshift-uat-users,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=Generic Contract Employees,OU=Email_Group,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=VPN-Group-Outsourced,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=Normal Group,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+				},
+			}},
+			ExpectedGroupID:  "tyk-admin",
+			DefaultGroupID:   "devs",
+			UserGroupMapping: UserGroupMapping,
+		},
 	}
 
 	for _, tc := range cases {
@@ -214,4 +232,88 @@ func TestGetGroupId(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStringer(t *testing.T) {
+	d := []string{"CN=tyk_admin,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+		"CN=openshift-uat-users,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+		"CN=Neoleap Contract Employees,OU=Email_Group,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+		"CN=VPN-Group-Outsourced,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+		"CN=Normal Group,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+	}
+	group := groupsStringer(d, ",")
+	t.Log(group)
+}
+
+func TestGroupi(t *testing.T) {
+	var gUser goth.User
+
+	gUser = goth.User{
+		RawData: map[string]interface{}{
+			"accountExpires":        "133483572000000000",
+			"badPasswordTime":       "133442641065870630",
+			"badPwdCount":           "0",
+			"cn":                    "Dejan Petrovic",
+			"codePage":              "0",
+			"company":               "Nortal",
+			"countryCode":           "0",
+			"dSCorePropagationData": "20231105085000.0Z",
+			"department":            "Development & Application Enablement",
+			"description":           "Created by IdentityIQ on 10/01/2023 15:11:20",
+			"displayName":           "Dejan Petrovic",
+			"distinguishedName":     "CN=Dejan Petrovic,OU=Con,OU=IT,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+			"employeeType":          "Vendor",
+			"extensionAttribute1":   "dejan.petrovic@nortal.com",
+			"givenName":             "Dejan",
+			"homeMDB":               "CN=DB03,CN=Databases,CN=Exchange Administrative Group (FYDIBOHF23SPDLT),CN=Administrative Groups,CN=NEOLEAP,CN=Microsoft Exchange,CN=Services,CN=Configuration,DC=NEOLEAP,DC=COM,DC=SA",
+			"instanceType":          "4",
+			"lastLogoff":            "0",
+			"lastLogon":             "133442642622033640",
+			"lastLogonTimestamp":    "133441743216979740",
+			"legacyExchangeDN":      "/o=NEOLEAP/ou=Exchange Administrative Group (FYDIBOHF23SPDLT)/cn=Recipients/cn=84f26ab45c544c27a968c48edf045189-Dejan Petrovic",
+			"lockoutTime":           "0",
+			"logonCount":            "1",
+			"mDBUseDefaults":        "TRUE",
+			"mS-DS-ConsistencyGuid": "\\x05\\x0f\\x84\\x98\\x9eK\\xaeJ\\xa2\\xc5N\\f\\x88ө\\xed",
+			"mail":                  "dpetrovic.c@neoleap.com.sa",
+			"mailNickname":          "dpetrovic.c",
+			"manager":               "CN=Abdullah Alfaleh,OU=Emp,OU=IT,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+			"memberOf": []string{
+				"CN=tyk_admin,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+				"CN=openshift-uat-users,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+				"CN=Neoleap Contract Employees,OU=Email_Group,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+				"CN=VPN-Group-Outsourced,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+				"CN=Normal Group,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA",
+			},
+			"mobile":                     "+381631614015",
+			"msExchArchiveQuota":         "104857600",
+			"msExchArchiveWarnQuota":     "94371840",
+			"msExchCalendarLoggingQuota": "6291456",
+			"msExchDumpsterQuota":        "31457280",
+			"msExchDumpsterWarningQuota": "20971520",
+			"msExchELCMailboxFlags":      "130",
+		},
+		Provider:          "ADProvider",
+		Email:             "dpetrovic.c@neoleap.com.sa",
+		Name:              "",
+		FirstName:         "Dejan",
+		LastName:          "Petrovic",
+		NickName:          "",
+		Description:       "",
+		UserID:            "Dejan Petrovic",
+		AvatarURL:         "",
+		Location:          "",
+		AccessToken:       "",
+		AccessTokenSecret: "",
+		RefreshToken:      "",
+		ExpiresAt:         time.Time{}, // Set the appropriate time if needed
+		IDToken:           "",
+	}
+
+	mpping := map[string]string{
+		"tyk": "tyk-id",
+		"CN=tyk_admin,OU=Security Groups,OU=NEOLEAP,DC=NEOLEAP,DC=COM,DC=SA": "tyk-admin-id",
+	}
+	id := GetGroupId(gUser, "memberOf", "tyk", mpping, "")
+	t.Logf("\nGroup: %v\n", id)
 }
