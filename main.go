@@ -26,7 +26,7 @@ var AuthConfigStore tap.AuthRegisterBackend
 // IdentityKeyStore keeps a record of identities tied to tokens (if needed)
 var IdentityKeyStore tap.AuthRegisterBackend
 
-//  config is the system-wide configuration
+// config is the system-wide configuration
 var config configuration.Configuration
 
 // TykAPIHandler is a global API handler for Tyk, wraps the tyk APi in Go functions
@@ -39,7 +39,7 @@ var mainLogger = log.WithField("prefix", "MAIN")
 var ProfileFilename, confFile string
 
 func init() {
-	mainLogger.Info("Tyk Identity Broker ", VERSION)
+	mainLogger.Info("Tyk Identity Broker ", Version)
 	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
 
 	flag.StringVar(&confFile, "conf", "tib.conf", "Path to the config file")
