@@ -71,5 +71,4 @@ func CreateMongoBackend(store persistent.PersistentStorage) tap.AuthRegisterBack
 
 func SetConfigHandler(backend tap.AuthRegisterBackend) {
 	tothic.SetParamsStoreHandler(backend)
-	tothic.SetupSessionStore()
 }
