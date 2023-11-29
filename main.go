@@ -76,6 +76,7 @@ func init() {
 	}
 
 	tothic.TothErrorHandler = errors.HandleError
+	tothic.SetupSessionStore()
 }
 
 func main() {
