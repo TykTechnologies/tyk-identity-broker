@@ -19,7 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 )
 
 require (
