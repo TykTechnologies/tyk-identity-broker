@@ -91,6 +91,8 @@ github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0/go.mod h1:S
 github.com/TykTechnologies/storage v1.0.5/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
 github.com/TykTechnologies/storage v1.0.8 h1:MBs6hk5oLOmr2qK5/rl+dYO6iDMez6u3QkwOCL6K8n8=
 github.com/TykTechnologies/storage v1.0.8/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
+github.com/TykTechnologies/storage v1.0.11-0.20231207153537-7c82cef4d486 h1:hhyLd/BoRcVdHZJc8ZOHsLEPoxyPzd3V757P0yyIz2c=
+github.com/TykTechnologies/storage v1.0.11-0.20231207153537-7c82cef4d486/go.mod h1:8/hlPO4am4GaFOc3+MthExTAk14cKbIrn0quK9KnobU=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563 h1:YMx2UIdX327ySzp34T8dvRR9WPx50kwtXLCw5pjvxzg=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563/go.mod h1:dblrpGRayR3bf7chtEP4kZSIZw1eDiQKXCiTMfWffFs=
 github.com/TykTechnologies/tyk-pump v1.8.0-rc4/go.mod h1:dTxcW0leM1oHhMJOxM784iTuWe+D2SnffAEhmHPZOug=
