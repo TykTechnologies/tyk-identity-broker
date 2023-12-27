@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/TykTechnologies/storage/persistent/model"
 	"io"
 	"io/ioutil"
@@ -567,6 +568,7 @@ func (t *TykAPI) RequestStandardToken(orgID, policyID, BaseAPIID, UserCred strin
 	tykAPILogger.Debug("Request data sent: ", data)
 
 	body := bytes.NewBuffer([]byte(data))
+	fmt.Printf("\n\nEndpoint: %v\n ---- creds: %v", target, UserCred)
 	dErr, _, isAuthorized := t.DispatchAndDecode(Endpoint(target), "POST", DASH, response, UserCred, body, "")
 
 	tykAPILogger.WithField("is_authorized", isAuthorized).WithField("response", response).Debug("Returned from dispatch to the dashboard.")

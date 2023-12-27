@@ -76,8 +76,10 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//empty to store new changes
 	err := m.store.Delete(context.Background(), tap.Profile{}, nil)
 	if err != nil {
-		dataLogger.WithError(err).Error("emptying profiles collection")
-		return err
+		if err.Error() != "not found" {
+			dataLogger.WithError(err).Error("emptying profiles collection")
+			return err
+		}
 	}
 
 	for _, p := range updatedSet {
@@ -93,7 +95,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 			profile = p.(tap.Profile)
 		}
 
-		m.store.Insert(context.Background(), profile)
+		err = m.store.Insert(context.Background(), profile)
 		if err != nil {
 			dataLogger.WithError(err).Error("error refreshing profiles records in mongo")
 			return err
