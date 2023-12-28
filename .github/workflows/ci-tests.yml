@@ -45,3 +45,20 @@ jobs:
       if: ${{ github.event_name == 'push' }}
       run: |
         $(go env GOPATH)/bin/golangci-lint run --out-format checkstyle --issues-exit-code=0 ./... > golanglint.xml
+        
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@master
+      with:
+          args: >
+            -Dsonar.organization=tyktechnologies
+            -Dsonar.projectKey=TykTechnologies_tyk-identity-broker
+            -Dsonar.sources=.
+            -Dsonar.exclusions=ci/**
+            -Dsonar.coverage.exclusions=**/*_test.go,**/mock/*
+            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.tests=.
+            -Dsonar.go.coverage.reportPaths=*.cov
+            -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
