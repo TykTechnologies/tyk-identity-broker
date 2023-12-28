@@ -26,3 +26,16 @@ jobs:
     - name: Run tests
       run: |
         go test ./... -cover
+        
+    - name: Download golangci-lint
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+    
+    - name: golangci-lint
+      if: ${{ github.event_name == 'pull_request' }}
+      run: |
+        $(go env GOPATH)/bin/golangci-lint run --out-format checkstyle --issues-exit-code=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
+    
+    - name: golangci-lint-on-push
+      if: ${{ github.event_name == 'push' }}
+      run: |
+        $(go env GOPATH)/bin/golangci-lint run --out-format checkstyle --issues-exit-code=0 ./... > golanglint.xml
