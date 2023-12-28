@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/TykTechnologies/storage/persistent"
+	"github.com/TykTechnologies/storage/persistent/utils"
 	"time"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -76,7 +77,7 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//empty to store new changes
 	err := m.store.Delete(context.Background(), tap.Profile{}, nil)
 	if err != nil {
-		if err.Error() != "not found" {
+		if !utils.IsErrNoRows(err) {
 			dataLogger.WithError(err).Error("emptying profiles collection")
 			return err
 		}
