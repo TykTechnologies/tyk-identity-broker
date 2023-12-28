@@ -28,7 +28,7 @@ jobs:
         go test ./... -cover
         
     - name: Download golangci-lint
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
     
     - name: golangci-lint
       if: ${{ github.event_name == 'pull_request' }}
