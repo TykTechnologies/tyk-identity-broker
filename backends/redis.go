@@ -53,38 +53,43 @@ func (e KeyError) Error() string {
 	return "Key not found"
 }
 
-func (r *RedisBackend) Connect() temporal.KeyValue {
+func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
 	redisLogger.Info("Creating new Redis connection pool")
 
 	conf := r.config
 	// ToDo: why we do not have TLS conf?
 	optsR := model.RedisOptions{
-		Username:              conf.Username,
-		Password:              conf.Password,
-		Host:                  conf.Host,
-		Port:                  conf.Port,
-		Timeout:               conf.Timeout,
-		UseSSL:                conf.UseSSL,
-		SSLInsecureSkipVerify: conf.SSLInsecureSkipVerify,
-		Hosts:                 conf.Hosts,
-		Addrs:                 conf.Addrs,
-		MasterName:            conf.MasterName,
-		SentinelPassword:      conf.SentinelPassword,
-		Database:              conf.Database,
-		MaxActive:             conf.MaxActive,
-		EnableCluster:         conf.EnableCluster,
+		Username:         conf.Username,
+		Password:         conf.Password,
+		Host:             conf.Host,
+		Port:             conf.Port,
+		Timeout:          conf.Timeout,
+		Hosts:            conf.Hosts,
+		Addrs:            conf.Addrs,
+		MasterName:       conf.MasterName,
+		SentinelPassword: conf.SentinelPassword,
+		Database:         conf.Database,
+		MaxActive:        conf.MaxActive,
+		EnableCluster:    conf.EnableCluster,
 	}
 
-	connector, err := connector.NewConnector(model.RedisV8Type, model.WithRedisConfig(&optsR))
+	tls := model.TLS{
+		Enable:             conf.UseSSL,
+		InsecureSkipVerify: conf.SSLInsecureSkipVerify,
+	}
+
+	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
 	if err != nil {
 		redisLogger.WithError(err).Error("creating redis connector")
+		return nil, err
 	}
 	r.kv, err = temporal.NewKeyValue(connector)
 	if err != nil {
 		redisLogger.WithError(err).Error("creating KV store")
+		return nil, err
 	}
 
-	return r.kv
+	return r.kv, nil
 }
 
 // Init will create the initial in-memory store structures
