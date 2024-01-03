@@ -3,11 +3,19 @@ package backends
 import (
 	mocks "github.com/TykTechnologies/storage/temporal/tempmocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
+	"time"
 )
 
-func mockRedisBackend() *RedisBackend {
-	return &RedisBackend{KeyPrefix: "prefix_"}
+func mockRedisBackend(t *testing.T) (*RedisBackend, *mocks.KeyValue) {
+	testObj := mocks.NewKeyValue(t)
+	rb := &RedisBackend{
+		kv:        testObj,
+		config:    &RedisConfig{},
+		KeyPrefix: "key-prefix",
+	}
+	return rb, testObj
 }
 
 func TestConnect(t *testing.T) {
@@ -26,7 +34,8 @@ func TestConnect(t *testing.T) {
 
 // TestCleanKey tests the cleanKey function
 func TestCleanKey(t *testing.T) {
-	r := mockRedisBackend()
+	r, _ := mockRedisBackend(t)
+	r.KeyPrefix = "prefix_"
 	tests := []struct {
 		keyName string
 		want    string
@@ -47,7 +56,7 @@ func TestCleanKey(t *testing.T) {
 
 // TestHashKey tests the hashKey function
 func TestHashKey(t *testing.T) {
-	r := mockRedisBackend()
+	r, _ := mockRedisBackend(t)
 	input := "testKey"
 	want := "testKey" // hashKey returns the input as is
 	if got := r.hashKey(input); got != want {
@@ -57,7 +66,8 @@ func TestHashKey(t *testing.T) {
 
 // TestFixKey tests the fixKey function
 func TestFixKey(t *testing.T) {
-	r := mockRedisBackend()
+	r, _ := mockRedisBackend(t)
+	r.KeyPrefix = "prefix_"
 	tests := []struct {
 		keyName string
 		want    string
@@ -73,4 +83,115 @@ func TestFixKey(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInit(t *testing.T) {
+
+	testCases := []struct {
+		name      string
+		config    interface{}
+		shouldErr bool
+	}{
+		{
+			name:      "invalid config - numeric",
+			config:    1111,
+			shouldErr: true,
+		},
+		{
+			name:      "invalid config - random string",
+			config:    "some-invalid-config",
+			shouldErr: true,
+		},
+		{
+			name: "valid config",
+			// change some configs
+			config: RedisConfig{
+				MaxIdle:               1,
+				MaxActive:             0,
+				MasterName:            "some-master",
+				Database:              1,
+				Username:              "testUser",
+				Password:              "s3cr3t",
+				UseSSL:                true,
+				SSLInsecureSkipVerify: true,
+				Port:                  5000,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r, _ := mockRedisBackend(t)
+
+			err := r.Init(tc.config)
+
+			didErr := err != nil
+			assert.Equal(t, tc.shouldErr, didErr)
+
+			if !tc.shouldErr {
+				assert.Equal(t, tc.config, *r.config)
+			}
+		})
+	}
+}
+
+func TestRedisBackend_SetDb(t *testing.T) {
+	// Mock KeyValue instance
+	testObj := mocks.NewKeyValue(t)
+	testObj.Test(t)
+
+	// Create an instance of RedisBackend
+	r := &RedisBackend{
+		// Initialize other necessary fields, if any
+	}
+
+	// Call SetDb with the mock KeyValue
+	r.SetDb(testObj)
+
+	// Assertions
+	assert.Equal(t, testObj, r.kv, "KeyValue instance not set correctly in RedisBackend")
+}
+
+func TestSetKey(t *testing.T) {
+	rb, testObj := mockRedisBackend(t)
+
+	keyName := "key"
+	orgId := "orgId"
+	value := "test-val"
+	var ttl time.Duration
+
+	testObj.On("Set", mock.Anything, rb.KeyPrefix+keyName, value, ttl).Return(nil)
+	err := rb.SetKey(keyName, orgId, value)
+	assert.Nil(t, err)
+	testObj.AssertExpectations(t)
+}
+
+func TestGetKey(t *testing.T) {
+	rb, testObj := mockRedisBackend(t)
+
+	var newVal string
+	keyName := "key"
+	orgId := "orgId"
+	value := "test-val"
+	var ttl time.Duration
+
+	testObj.On("Set", mock.Anything, rb.KeyPrefix+keyName, value, ttl).Return(nil)
+	testObj.On("Get", mock.Anything, rb.KeyPrefix+keyName).Return(value, nil)
+
+	rb.SetKey(keyName, orgId, value)
+	rb.GetKey(keyName, orgId, &newVal)
+
+	testObj.AssertExpectations(t)
+}
+
+func TestDeleteKey(t *testing.T) {
+	rb, testObj := mockRedisBackend(t)
+	key := "keyName"
+	orgId := "orgId"
+
+	testObj.On("Delete", mock.Anything, rb.KeyPrefix+key).Return(nil)
+
+	rb.DeleteKey(key, orgId)
+	testObj.AssertExpectations(t)
 }

@@ -83,6 +83,7 @@ func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
 		redisLogger.WithError(err).Error("creating redis connector")
 		return nil, err
 	}
+
 	r.kv, err = temporal.NewKeyValue(connector)
 	if err != nil {
 		redisLogger.WithError(err).Error("creating KV store")
@@ -93,13 +94,25 @@ func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
 }
 
 // Init will create the initial in-memory store structures
-func (r *RedisBackend) Init(config interface{}) {
-	asJ, _ := json.Marshal(config)
+func (r *RedisBackend) Init(config interface{}) error {
+	asJ, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
 	fixedConf := RedisConfig{}
-	json.Unmarshal(asJ, &fixedConf)
+	err = json.Unmarshal(asJ, &fixedConf)
+	if err != nil {
+		return err
+	}
 	r.config = &fixedConf
-	r.Connect()
+	_, err = r.Connect()
+	if err != nil {
+		return err
+	}
+
 	redisLogger.Info("Initialized")
+	return nil
 }
 
 // SetDb from existent connection
@@ -113,7 +126,6 @@ func (r *RedisBackend) SetDb(kv temporal.KeyValue) {
 }
 
 func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
-
 	if err := r.kv.Set(ctx, r.fixKey(key), val.(string), 0); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
