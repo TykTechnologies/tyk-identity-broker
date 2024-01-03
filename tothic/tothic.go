@@ -48,7 +48,7 @@ func (p PathParam) MarshalBinary() ([]byte, error) {
 	return json.Marshal(p)
 }
 
-func init() {
+func SetupSessionStore() {
 	key := KeyFromEnv()
 	Store = sessions.NewCookieStore([]byte(key))
 }
