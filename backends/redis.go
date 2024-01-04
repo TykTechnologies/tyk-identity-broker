@@ -57,7 +57,6 @@ func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
 	redisLogger.Info("Creating new Redis connection pool")
 
 	conf := r.config
-	// ToDo: why we do not have TLS conf?
 	optsR := model.RedisOptions{
 		Username:         conf.Username,
 		Password:         conf.Password,
