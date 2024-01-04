@@ -192,11 +192,6 @@ func (r *RedisBackend) cleanKey(keyName string) string {
 	return strings.Replace(keyName, r.KeyPrefix, "", 1)
 }
 
-func (r *RedisBackend) hashKey(in string) string {
-	// missing implementation
-	return in
-}
-
 func (r *RedisBackend) DeleteKey(key string, orgId string) error {
 	return r.kv.Delete(ctx, r.fixKey(key))
 }

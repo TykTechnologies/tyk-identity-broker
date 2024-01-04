@@ -54,16 +54,6 @@ func TestCleanKey(t *testing.T) {
 	}
 }
 
-// TestHashKey tests the hashKey function
-func TestHashKey(t *testing.T) {
-	r, _ := mockRedisBackend(t)
-	input := "testKey"
-	want := "testKey" // hashKey returns the input as is
-	if got := r.hashKey(input); got != want {
-		t.Errorf("hashKey() = %v, want %v", got, want)
-	}
-}
-
 // TestFixKey tests the fixKey function
 func TestFixKey(t *testing.T) {
 	r, _ := mockRedisBackend(t)
