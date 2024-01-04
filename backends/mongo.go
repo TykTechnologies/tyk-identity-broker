@@ -17,8 +17,8 @@ type MongoBackend struct {
 	Collection string
 }
 
-func (m MongoBackend) Init(interface{}) {
-
+func (m MongoBackend) Init(interface{}) error {
+	return nil
 }
 
 func (m MongoBackend) SetKey(key string, orgId string, value interface{}) error {

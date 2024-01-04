@@ -24,7 +24,7 @@ type InMemoryBackend struct {
 }
 
 // Init will create the initial in-memory store structures
-func (m *InMemoryBackend) Init(config interface{}) {
+func (m *InMemoryBackend) Init(config interface{}) error {
 	logger = log.Get()
 	inMemoryLogger = &logrus.Entry{Logger: logger}
 	inMemoryLogger = inMemoryLogger.Logger.WithField("prefix", inMemoryLogTag)
@@ -32,6 +32,7 @@ func (m *InMemoryBackend) Init(config interface{}) {
 	inMemoryLogger.Info("Initialised")
 	m.kv = make(map[string]interface{})
 	m.lock = sync.RWMutex{}
+	return nil
 }
 
 // SetKey will set the value of a key in the map
