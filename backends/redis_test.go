@@ -26,10 +26,10 @@ func TestConnect(t *testing.T) {
 		config: &RedisConfig{},
 	}
 
-	tkv, err := rb.Connect()
+	err := rb.Connect()
 
 	assert.Nil(t, err)
-	assert.NotNil(t, tkv, "key-value store should not be nil")
+	assert.NotNil(t, rb.kv, "key-value store should not be nil")
 }
 
 // TestCleanKey tests the cleanKey function

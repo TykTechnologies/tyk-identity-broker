@@ -53,7 +53,7 @@ func (e KeyError) Error() string {
 	return "Key not found"
 }
 
-func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
+func (r *RedisBackend) Connect() error {
 	redisLogger.Info("Creating new Redis connection pool")
 
 	conf := r.config
@@ -80,16 +80,16 @@ func (r *RedisBackend) Connect() (temporal.KeyValue, error) {
 	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
 	if err != nil {
 		redisLogger.WithError(err).Error("creating redis connector")
-		return nil, err
+		return err
 	}
 
 	r.kv, err = temporal.NewKeyValue(connector)
 	if err != nil {
 		redisLogger.WithError(err).Error("creating KV store")
-		return nil, err
+		return err
 	}
 
-	return r.kv, nil
+	return nil
 }
 
 // Init will create the initial in-memory store structures
@@ -105,7 +105,7 @@ func (r *RedisBackend) Init(config interface{}) error {
 		return err
 	}
 	r.config = &fixedConf
-	_, err = r.Connect()
+	err = r.Connect()
 	if err != nil {
 		return err
 	}
