@@ -38,9 +38,11 @@ jobs:
     
     - name: golangci-lint
       if: ${{ github.event_name == 'pull_request' }}
-      run: |
-        $(go env GOPATH)/bin/golangci-lint run --out-format checkstyle --issues-exit-code=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
-    
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --out-format checkstyle --timeout 600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
+        
     - name: golangci-lint-on-push
       if: ${{ github.event_name == 'push' }}
       run: |
