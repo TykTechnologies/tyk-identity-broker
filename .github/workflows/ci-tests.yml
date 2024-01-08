@@ -33,9 +33,6 @@ jobs:
       run: |
         go test ./... -cover
         
-    - name: Download golangci-lint
-      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-    
     - name: golangci-lint
       if: ${{ github.event_name == 'pull_request' }}
       uses: golangci/golangci-lint-action@v3
@@ -46,7 +43,7 @@ jobs:
     - name: golangci-lint-on-push
       if: ${{ github.event_name == 'push' }}
       run: |
-        $(go env GOPATH)/bin/golangci-lint run --out-format checkstyle --issues-exit-code=0 ./... > golanglint.xml
+        $(go env GOPATH)/bin/golangci-lint run checkstyle --issues-exit-code=0 ./... > golanglint.xml
         
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
