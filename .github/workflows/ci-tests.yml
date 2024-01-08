@@ -43,7 +43,7 @@ jobs:
         version: latest
         skip-pkg-cache: true
         skip-build-cache: true
-        args: --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
+        args: --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }}
         
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
