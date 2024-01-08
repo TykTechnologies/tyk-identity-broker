@@ -41,7 +41,8 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
-        cache: false
+        skip-pkg-cache: true
+        skip-build-cache: true
         args: --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
         
     - name: SonarCloud Scan
