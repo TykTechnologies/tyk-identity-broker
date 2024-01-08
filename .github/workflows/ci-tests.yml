@@ -40,11 +40,6 @@ jobs:
         version: latest
         args: --out-format checkstyle --timeout 600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }} ./... > golanglint.xml
         
-    - name: golangci-lint-on-push
-      if: ${{ github.event_name == 'push' }}
-      run: |
-        $(go env GOPATH)/bin/golangci-lint run checkstyle --issues-exit-code=0 ./... > golanglint.xml
-        
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
       with:
