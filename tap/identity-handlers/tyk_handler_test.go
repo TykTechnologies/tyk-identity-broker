@@ -14,6 +14,7 @@ const (
 var UserGroupMapping = map[string]string{
 	"devs":   "devs-group",
 	"admins": "admins-group",
+	"CN=tyk_admin,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN": "tyk-admin",
 }
 
 func TestGetEmail(t *testing.T) {
@@ -201,6 +202,22 @@ func TestGetGroupId(t *testing.T) {
 				},
 			},
 			ExpectedGroupID:  "admins-group",
+			DefaultGroupID:   "devs",
+			UserGroupMapping: UserGroupMapping,
+		},
+		{
+			TestName:           "Custom group id field not empty, and the claim being an array",
+			CustomGroupIDField: "memberOf",
+			user: goth.User{RawData: map[string]interface{}{
+				"memberOf": []string{
+					"CN=tyk_admin,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=openshift-uat-users,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=Generic Contract Employees,OU=Email_Group,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=VPN-Group-Outsourced,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+					"CN=Normal Group,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
+				},
+			}},
+			ExpectedGroupID:  "tyk-admin",
 			DefaultGroupID:   "devs",
 			UserGroupMapping: UserGroupMapping,
 		},
