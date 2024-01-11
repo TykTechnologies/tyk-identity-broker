@@ -49,11 +49,11 @@ module "tyk-identity-broker" {
 { branch    = "master",
 	reviewers = "1",
 	convos    = "false",
-	required_tests = ["1.19-bullseye"]},
+	required_tests = ["1.21-bullseye"]},
 { branch    = "release-1.4",
 	reviewers = "0",
 	convos    = "false",
 	source_branch  = "master",
-	required_tests = ["1.19-bullseye"]}
+	required_tests = ["1.21-bullseye"]}
 ])
 }
