@@ -54,6 +54,6 @@ module "tyk-identity-broker" {
 	reviewers = "0",
 	convos    = "false",
 	source_branch  = "master",
-	required_tests = ["1.21-bullseye"]}
+	required_tests = ["1.19-bullseye"]}
 ])
 }
