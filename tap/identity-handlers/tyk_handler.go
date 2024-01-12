@@ -411,7 +411,9 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 }
 
 func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
-	tykHandlerLogger.Info("Starting Token Flow...")
+	tykHandlerLogger.Info("Starting Token Flow...\n\n\treq.Header.Add(\"Authorization\", \"<AUTH_TOKEN>\")
+
+")
 
 	// Generate identity key match ID
 	sso_key := tap.GenerateSSOKey(i.(goth.User))
@@ -420,7 +422,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	value := ""
 	tykHandlerLogger.Debug("Store is: ", t.Store)
-	tykHandlerLogger.Debug("ID IS: ", id_with_profile)
+		req.Header.Add("Authorization", "Bearer <AUTH_TOKEN>")
 
 	if !t.disableOneTokenPerAPI {
 		fErr := t.Store.GetKey(id_with_profile, "", &value)
