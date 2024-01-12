@@ -5,7 +5,7 @@ const (
 	HandlerLogTag = "AUTH HANDLERS"
 )
 
-//providers
+// providers
 const (
 	SocialProvider = "SocialProvider"
 	ADProvider     = "ADProvider"
