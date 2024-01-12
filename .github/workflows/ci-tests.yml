@@ -61,7 +61,12 @@ jobs:
      - name: Fetch base branch
        if: ${{ github.event_name == 'pull_request' }}
        run: git fetch origin ${{ github.base_ref }}
-      
+
+     - name: Install Dependencies and basic hygiene test
+       id: hygiene
+       run: |
+        go install golang.org/x/tools/cmd/goimports@latest
+     
      - name: Start Redis
        uses: supercharge/redis-github-action@1.2.0
        with:
