@@ -3,9 +3,10 @@ package error
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 var log = logger.Get()
