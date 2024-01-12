@@ -74,8 +74,13 @@ jobs:
           
      - name: Run tests
        run: |
-        go test ./... -cover
-        
+        ./bin/ci-test.sh ${{ matrix.databases }}
+     - uses: actions/upload-artifact@v2
+       with:
+         name: coverage
+         retention-days: 1
+         path: |
+           *cov
   
   sonar-cloud-analysis:
     runs-on: ubuntu-latest
