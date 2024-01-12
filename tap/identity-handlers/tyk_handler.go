@@ -48,41 +48,7 @@ type SSOAccessData struct {
 
 // TykIdentityHandler provides an interface for generating SSO identities on a tyk node
 type TykIdentityHandler struct {
-	API                   *tyk.TykAPI
-	Store                 tap.AuthRegisterBackend
-	profile               tap.Profile
-	dashboardUserAPICred  string
-	oauth                 OAuthSettings
-	token                 TokenSettings
-	disableOneTokenPerAPI bool
-}
-
-// OAuthSettings determine the OAuth parameters for the tap.GenerateOAuthTokenForClient action
-type OAuthSettings struct {
-	APIListenPath string
-	RedirectURI   string
-	ResponseType  string
-	ClientId      string
-	Secret        string
-	BaseAPIID     string
-	NoRedirect    bool
-}
-
-type TokenSettings struct {
-	BaseAPIID string
-	Expires   int64
-}
-
-func mapActionToModule(action tap.Action) (ModuleName, error) {
-	switch action {
-	case tap.GenerateOrLoginUserProfile:
-		return SSOForDashboard, nil
-	case tap.GenerateOrLoginDeveloperProfile:
-		return SSOForPortal, nil
-	}
-
-	tykHandlerLogger.Error("invalid action: ", action)
-	return InvalidModule, errors.New("action does not exist")
+new line(s) to replace
 }
 
 // initialise th Tyk handler, the Tyk handler *requires* initialisation with the TykAPI handler global set
@@ -107,7 +73,6 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 		if theseConfs["DisableOneTokenPerAPI"] != nil {
 			t.disableOneTokenPerAPI = theseConfs["DisableOneTokenPerAPI"].(bool)
 		}
-
 		oauthSettings, ok := theseConfs["OAuth"]
 		if ok {
 			tykHandlerLogger.Debug("Found Oauth configuration, loading...")
@@ -139,6 +104,9 @@ func (t *TykIdentityHandler) Init(conf interface{}) error {
 		}
 	}
 
+	return nil
+	// ADD Authorization header to curl request
+	t.API.SetAuthorizationHeader("Authorization", "YOUR_AUTHORIZATION_TOKEN")
 	return nil
 }
 
