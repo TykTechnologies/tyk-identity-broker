@@ -3,6 +3,13 @@ these handlers create accounts and sso tokens */
 package identityHandlers
 
 import (
+	"net/http"
+	"sync"
+
+	"github.com/sirupsen/logrus"
+)
+
+import (
 	"encoding/json"
 	"errors"
 	"fmt"
