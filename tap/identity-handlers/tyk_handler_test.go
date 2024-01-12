@@ -1,8 +1,9 @@
 package identityHandlers
 
 import (
-	"github.com/markbates/goth"
 	"testing"
+
+	"github.com/markbates/goth"
 )
 
 const (

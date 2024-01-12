@@ -7,6 +7,7 @@ package tap
 
 import (
 	"encoding/json"
+
 	"github.com/TykTechnologies/storage/persistent/model"
 )
 
