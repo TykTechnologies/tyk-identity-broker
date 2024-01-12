@@ -1,14 +1,18 @@
-/* package identityHandlers provides a collection of handlers for target systems,
-these handlers create accounts and sso tokens */
+/*
+	package identityHandlers provides a collection of handlers for target systems,
+
+these handlers create accounts and sso tokens
+*/
 package identityHandlers
 
 import (
 	"fmt"
+	"net/http"
+	"sync"
+
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"sync"
 )
 
 var log = logger.Get()

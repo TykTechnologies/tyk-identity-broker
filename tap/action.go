@@ -1,5 +1,8 @@
-/* package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
-proxy */
+/*
+	package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
+
+proxy
+*/
 package tap
 
 // An Action is a value that defines what a particular authentication profile will do, for example, create and

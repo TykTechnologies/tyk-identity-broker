@@ -1,5 +1,8 @@
-/* package providers is a catch-all for all TAP auth provider types (e.g. social, active directory), if you are
-extending TAP to use more providers, add them to this section */
+/*
+	package providers is a catch-all for all TAP auth provider types (e.g. social, active directory), if you are
+
+extending TAP to use more providers, add them to this section
+*/
 package providers
 
 import (

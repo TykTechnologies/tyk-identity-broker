@@ -1,10 +1,14 @@
-/* package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
-proxy */
+/*
+	package tap wraps a set of interfaces and object to provide a generic interface to a delegated authentication
+
+proxy
+*/
 package tap
 
 import (
-	"github.com/markbates/goth"
 	"net/http"
+
+	"github.com/markbates/goth"
 )
 
 // IdentityHandler provides an interface that provides a generic way to handle the creation / login of an SSO

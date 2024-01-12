@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/TykTechnologies/storage/persistent/model"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/TykTechnologies/storage/persistent/model"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/markbates/goth"
