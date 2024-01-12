@@ -1,3 +1,4 @@
+//go:build test_mongo
 // +build test_mongo
 
 package data_loader_test

@@ -2,8 +2,9 @@ package tap
 
 import (
 	"errors"
-	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"net/http"
+
+	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 )
 
 var log = logger.Get()
