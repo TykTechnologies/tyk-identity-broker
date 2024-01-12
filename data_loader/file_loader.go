@@ -2,13 +2,14 @@ package data_loader
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/configuration"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"path"
 	"strconv"
 	"time"
+
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/sirupsen/logrus"
 )
 
 // FileLoader implements DataLoader and will load TAP Profiles from a file

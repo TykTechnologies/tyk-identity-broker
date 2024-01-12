@@ -2,10 +2,11 @@ package configuration
 
 import (
 	"fmt"
-	"github.com/TykTechnologies/storage/persistent"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/TykTechnologies/storage/persistent"
 
 	"github.com/matryer/is"
 )

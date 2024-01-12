@@ -1,5 +1,8 @@
-/* package identityHandlers provides a collection of handlers for target systems,
-these handlers create accounts and sso tokens */
+/*
+	package identityHandlers provides a collection of handlers for target systems,
+
+these handlers create accounts and sso tokens
+*/
 package identityHandlers
 
 import (
@@ -205,7 +208,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 }
 
 // azure give us a []interface{} so need to handle that for now
-//this lets us deal with odd inputs from other IDPs in future
+// this lets us deal with odd inputs from other IDPs in future
 // separator is the string to split the group if required
 func groupsStringer(i interface{}, separator string) []string {
 	switch v := i.(type) {

@@ -3,9 +3,10 @@ package data_loader
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/TykTechnologies/storage/persistent"
 	"github.com/TykTechnologies/storage/persistent/utils"
-	"time"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 )
