@@ -74,7 +74,7 @@ jobs:
           
      - name: Run tests
        run: |
-        ./bin/ci-test.sh ${{ matrix.databases }}
+        ./bin/ci-tests.sh ${{ matrix.databases }}
      - uses: actions/upload-artifact@v2
        with:
          name: coverage
