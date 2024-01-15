@@ -14,8 +14,10 @@ fatal() {
  echo "$@" >&2
  exit 1
 }
+
 TEST_TIMEOUT=10m
 db="file"
+
 if [[ -n $1 ]]; then
     db=$1
 fi
