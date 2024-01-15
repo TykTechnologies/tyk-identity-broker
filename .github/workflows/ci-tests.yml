@@ -22,7 +22,7 @@ jobs:
       - name: Checkout Tyk Identity Broker
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 2
       - name: Fetch base branch
         if: ${{ github.event_name == 'pull_request' }}
         run: git fetch origin ${{ github.base_ref }}
@@ -127,7 +127,7 @@ jobs:
           -Dsonar.projectKey=TykTechnologies_tyk-identity-broker
           -Dsonar.sources=.
           -Dsonar.exclusions=ci/**
-          -Dsonar.coverage.exclusions=**/*_test.go,**/mock/*
+          -Dsonar.coverage.exclusions=**/*_test.go,**/mocks/*.go
           -Dsonar.test.inclusions=**/*_test.go
           -Dsonar.tests=.
           -Dsonar.go.coverage.reportPaths=*.cov
