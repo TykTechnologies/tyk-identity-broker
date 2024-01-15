@@ -6,6 +6,7 @@ import (
 	"github.com/TykTechnologies/storage/temporal/connector"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/storage/temporal/model"
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"strings"
 	"sync/atomic"
 
@@ -38,6 +39,7 @@ type RedisConfig struct {
 	Timeout               int
 	Port                  int
 	Host                  string
+	TLS                   configuration.TLS
 }
 
 type RedisBackend struct {
@@ -75,6 +77,11 @@ func (r *RedisBackend) Connect() error {
 	tls := model.TLS{
 		Enable:             conf.UseSSL,
 		InsecureSkipVerify: conf.SSLInsecureSkipVerify,
+		CAFile:             conf.TLS.CAFile,
+		CertFile:           conf.TLS.CertFile,
+		KeyFile:            conf.TLS.KeyFile,
+		MaxVersion:         string(conf.TLS.MaxVersion),
+		MinVersion:         string(conf.TLS.MinVersion),
 	}
 
 	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
