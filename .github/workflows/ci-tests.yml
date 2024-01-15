@@ -2,9 +2,13 @@ name: Go Test Workflow
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - release-**
   pull_request:
-    branches: [master]
+    branches:
+      - master
+      - release-**
 env:
   TYK_IB_STORAGE_STORAGETYPE: file
   
@@ -58,9 +62,9 @@ jobs:
        with:
         ref: ${{ github.event.pull_request.head.ref }}
 
-     - name: Fetch base branch
-       if: ${{ github.event_name == 'pull_request' }}
-       run: git fetch origin ${{ github.base_ref }}
+     #- name: Fetch base branch
+     #  if: ${{ github.event_name == 'pull_request' }}
+     #  run: git fetch origin ${{ github.base_ref }}
 
      - name: Install Dependencies and basic hygiene test
        id: hygiene
