@@ -10,13 +10,14 @@ package tothic
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+	"os"
+
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/toth"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
-	"net/http"
-	"os"
 )
 
 // SessionName is the key used to access the session store.

@@ -1,5 +1,8 @@
-/* package toth is a clone of goth, but modified for multi-tenant usage instead of using
-globals everywhere */
+/*
+	package toth is a clone of goth, but modified for multi-tenant usage instead of using
+
+globals everywhere
+*/
 package toth
 
 import (
