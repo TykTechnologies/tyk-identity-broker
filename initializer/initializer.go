@@ -9,7 +9,7 @@ import (
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk/certs"
-	"github.com/go-redis/redis/v8"
+	"github.com/TykTechnologies/tyk-identity-broker/internal/redis"
 	"github.com/sirupsen/logrus"
 )
 

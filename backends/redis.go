@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/TykTechnologies/tyk-identity-broker/internal/redis"
 	"github.com/sirupsen/logrus"
 )
 
@@ -79,7 +79,6 @@ func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
 		DB:               r.config.Database,
 		Username:         r.config.Username,
 		Password:         r.config.Password,
-		IdleTimeout:      240 * time.Second,
 		ReadTimeout:      timeout,
 		WriteTimeout:     timeout,
 		DialTimeout:      timeout,

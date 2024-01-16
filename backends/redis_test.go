@@ -3,7 +3,7 @@ package backends
 import (
 	"testing"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/TykTechnologies/tyk-identity-broker/internal/redis"
 )
 
 func TestRedisAddressConfiguration(t *testing.T) {
