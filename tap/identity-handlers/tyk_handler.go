@@ -491,7 +491,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	return
 }
 
-// CompleteIdentityAction will log a user into Tyk dashboard or Tyk portal
+// CompleteIdentityActionWithErrorHandling will log a user into Tyk dashboard or Tyk portal
 func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
 	tykHandlerLogger.Debug("Completing Identity Action")
 	if profile.ActionType == tap.GenerateOrLoginUserProfile {
