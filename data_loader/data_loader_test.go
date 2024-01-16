@@ -12,10 +12,12 @@ import (
 )
 
 func TestCreateDataMongoLoader(t *testing.T) {
-	isMongo, url, driver := isMongoEnv()
+	isMongo := isMongoEnv()
 	t.Skip(!isMongo)
-	conf := configuration.Configuration{
 
+	url, driver := MongoEnvConf()
+
+	conf := configuration.Configuration{
 		Storage: &configuration.Storage{
 			StorageType: driver,
 			MongoConf: &configuration.MongoConf{
@@ -36,9 +38,12 @@ func TestCreateDataMongoLoader(t *testing.T) {
 
 func TestFlush(t *testing.T) {
 
-	isMongo, url, driver := isMongoEnv()
+	isMongo := isMongoEnv()
 	t.Skip(!isMongo)
+
+	url, driver := MongoEnvConf()
 	loader := MongoLoader{}
+
 	var err error
 	loader.store, err = persistent.NewPersistentStorage(&persistent.ClientOpts{
 		ConnectionString: url,
@@ -53,15 +58,21 @@ func TestFlush(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func isMongoEnv() (bool, string, string) {
+func isMongoEnv() bool {
 	storageType := os.Getenv("TYK_IB_STORAGE_STORAGETYPE")
+
+	// Check if MongoDB is the storage type and both URL and driver are set
+	if storageType == "mongo" {
+		return true
+	}
+
+	return false
+}
+
+func MongoEnvConf() (string, string) {
 	mongoURL := os.Getenv("TYK_IB_STORAGE_MONGOCONF_MONGOURL")
 	mongoDriver := os.Getenv("TYK_IB_STORAGE_MONGOCONF_DRIVER")
 
-	// Check if MongoDB is the storage type and both URL and driver are set
-	if storageType == "mongo" && mongoURL != "" && mongoDriver != "" {
-		return true, mongoURL, mongoDriver
-	}
+	return mongoURL, mongoDriver
 
-	return false, "", ""
 }
