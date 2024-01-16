@@ -132,6 +132,7 @@ jobs:
           -Dsonar.tests=.
           -Dsonar.go.coverage.reportPaths=*.cov
           -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
+          -Dsonar.projectVersion=1.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
