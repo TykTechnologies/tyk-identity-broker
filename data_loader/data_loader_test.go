@@ -1,11 +1,12 @@
 package data_loader
 
 import (
+	"os"
+	"testing"
+
 	"github.com/TykTechnologies/storage/persistent"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
 
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 )
