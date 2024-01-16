@@ -6,6 +6,7 @@ these handlers create accounts and sso tokens
 package identityHandlers
 
 import (
+	"github.com/TykTechnologies/tyk-identity-broker/new-email-package"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -509,8 +510,8 @@ func (t *TykIdentityHandler) CompleteIdentityAction(w http.ResponseWriter, r *ht
 	}
 }
 
-// GetEmail returns the email to be used for SSO
-func GetEmail(gUser goth.User, customEmailField string) string {
+// GetEmailWithFallbackWithFallback returns the email to be used for SSO
+func GetEmailWithFallback(gUser goth.User, customEmailField string) string {
 	email := ""
 
 	if customEmailField != "" {
