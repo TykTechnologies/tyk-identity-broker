@@ -58,16 +58,6 @@ type MongoConf struct {
 }
 
 type TLS struct {
-	// CA file
-	CAFile string `json:"ca_file"`
-	// Cert file
-	CertFile string `json:"cert_file"`
-	// KeyFile
-	KeyFile string `json:"key_file"`
-	// Maximum TLS version.
-	MaxVersion uint16 `json:"max_version"`
-	// Minimum TLS version.
-	MinVersion uint16 `json:"min_version"`
 }
 
 // Storage object to configure the storage where the profiles lives in
