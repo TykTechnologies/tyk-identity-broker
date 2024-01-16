@@ -1,8 +1,11 @@
 package data_loader
 
 import (
+	"context"
 	"os"
 	"testing"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 
 	"github.com/TykTechnologies/storage/persistent"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
@@ -53,6 +56,7 @@ func TestFlush(t *testing.T) {
 
 	assert.Nil(t, err)
 
+	loader.store.DropTable(context.Background(), tap.Profile{}.TableName())
 	authStore := &backends.InMemoryBackend{}
 	err = loader.Flush(authStore)
 	assert.Nil(t, err)
