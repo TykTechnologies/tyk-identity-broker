@@ -62,11 +62,7 @@ func isMongoEnv() bool {
 	storageType := os.Getenv("TYK_IB_STORAGE_STORAGETYPE")
 
 	// Check if MongoDB is the storage type and both URL and driver are set
-	if storageType == "mongo" {
-		return true
-	}
-
-	return false
+	return storageType == "mongo"
 }
 
 func MongoEnvConf() (string, string) {
