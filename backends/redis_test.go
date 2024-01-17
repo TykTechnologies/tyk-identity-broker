@@ -150,6 +150,11 @@ func TestInit(t *testing.T) {
 			},
 			shouldErr: true,
 		},
+		{
+			name:      "invalid config - non marshable",
+			config:    make(chan int),
+			shouldErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
