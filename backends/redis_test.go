@@ -114,6 +114,42 @@ func TestInit(t *testing.T) {
 			},
 			shouldErr: false,
 		},
+		{
+			name: "unvalid TLS MAX/Min Version",
+			// change some configs
+			config: RedisConfig{
+				MaxIdle:               1,
+				MaxActive:             0,
+				MasterName:            "some-master",
+				Database:              1,
+				Username:              "testUser",
+				Password:              "s3cr3t",
+				UseSSL:                true,
+				SSLInsecureSkipVerify: true,
+				Port:                  5000,
+				MaxVersion:            "xxx",
+				MinVersion:            "yyy",
+			},
+			shouldErr: true,
+		},
+		{
+			name: "Min version is greater than max version",
+			// change some configs
+			config: RedisConfig{
+				MaxIdle:               1,
+				MaxActive:             0,
+				MasterName:            "some-master",
+				Database:              1,
+				Username:              "testUser",
+				Password:              "s3cr3t",
+				UseSSL:                true,
+				SSLInsecureSkipVerify: true,
+				Port:                  5000,
+				MaxVersion:            "1.0",
+				MinVersion:            "1.2",
+			},
+			shouldErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
