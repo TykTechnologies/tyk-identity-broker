@@ -1,11 +1,12 @@
 package backends
 
 import (
+	"testing"
+	"time"
+
 	mocks "github.com/TykTechnologies/storage/temporal/tempmocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
 func mockRedisBackend(t *testing.T) (*RedisBackend, *mocks.KeyValue) {

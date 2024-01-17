@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"sync/atomic"
+
 	"github.com/TykTechnologies/storage/temporal/connector"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/storage/temporal/model"
-	"strings"
-	"sync/atomic"
 
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 
