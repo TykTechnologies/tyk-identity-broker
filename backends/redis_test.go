@@ -2,6 +2,7 @@ package backends
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -190,7 +191,7 @@ func TestRedisBackend_SetDb(t *testing.T) {
 	assert.Equal(t, testObj, r.kv, "KeyValue instance not set correctly in RedisBackend")
 }
 
-func TestSetKey(t *testing.T) {
+func TestRedis_SetKey(t *testing.T) {
 	rb, testObj := mockRedisBackend(t)
 
 	keyName := "key"
@@ -204,7 +205,7 @@ func TestSetKey(t *testing.T) {
 	testObj.AssertExpectations(t)
 }
 
-func TestGetKey(t *testing.T) {
+func TestRedis_GetKey(t *testing.T) {
 	// Setting up mocks
 	rb, testObj := mockRedisBackend(t)
 
@@ -238,7 +239,7 @@ func TestGetKey(t *testing.T) {
 	testObj.AssertExpectations(t)
 }
 
-func TestDeleteKey(t *testing.T) {
+func TestRedis_DeleteKey(t *testing.T) {
 	rb, testObj := mockRedisBackend(t)
 	key := "keyName"
 	orgId := "orgId"
@@ -248,4 +249,14 @@ func TestDeleteKey(t *testing.T) {
 	err := rb.DeleteKey(key, orgId)
 	assert.Nil(t, err)
 	testObj.AssertExpectations(t)
+}
+
+func TestRedis_GetAll(t *testing.T) {
+	rb, testObj := mockRedisBackend(t)
+
+	orgId := "test-org"
+
+	testObj.On("Keys", mock.Anything, rb.KeyPrefix).Return([]string{}, errors.New("pulling keys"))
+	keys := rb.GetAll(orgId)
+	assert.Len(t, keys, 0)
 }
