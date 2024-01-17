@@ -69,6 +69,16 @@ func (m *MongoLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 	return nil
 }
 
+func handleEmptyProfilesError(err error) error {
+	if err != nil {
+		if !utils.IsErrNoRows(err) {
+			dataLogger.WithError(err).Error("emptying profiles collection")
+			return err
+		}
+	}
+	return nil
+}
+
 // Flush creates a backup of the current loaded config
 func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 	//read all
@@ -77,11 +87,8 @@ func (m *MongoLoader) Flush(store tap.AuthRegisterBackend) error {
 
 	//empty to store new changes
 	err := m.store.Delete(context.Background(), tap.Profile{}, nil)
-	if err != nil {
-		if !utils.IsErrNoRows(err) {
-			dataLogger.WithError(err).Error("emptying profiles collection")
-			return err
-		}
+	if handledErr := handleEmptyProfilesError(err); handledErr != nil {
+		return handledErr
 	}
 
 	for _, p := range updatedSet {
