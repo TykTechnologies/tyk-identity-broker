@@ -79,7 +79,7 @@ func TestFixKey(t *testing.T) {
 	}
 }
 
-func TestInit(t *testing.T) {
+func TestRedisInit(t *testing.T) {
 
 	testCases := []struct {
 		name      string
