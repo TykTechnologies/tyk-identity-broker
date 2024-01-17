@@ -1,6 +1,8 @@
 package backends
 
 import (
+	"encoding/json"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"testing"
 	"time"
 
@@ -161,22 +163,36 @@ func TestSetKey(t *testing.T) {
 }
 
 func TestGetKey(t *testing.T) {
+	// Setting up mocks
 	rb, testObj := mockRedisBackend(t)
 
-	var newVal string
+	// Preparing test data
+	testProfile := tap.Profile{
+		ID:    "some-profile",
+		OrgID: "test-org",
+	}
+
+	bytes, err := json.Marshal(testProfile)
+	assert.Nil(t, err)
+
 	keyName := "key"
 	orgId := "orgId"
-	value := "test-val"
+	value := string(bytes)
 	var ttl time.Duration
 
+	// Setting up expectations for the mock object
 	testObj.On("Set", mock.Anything, rb.KeyPrefix+keyName, value, ttl).Return(nil)
 	testObj.On("Get", mock.Anything, rb.KeyPrefix+keyName).Return(value, nil)
 
-	err := rb.SetKey(keyName, orgId, value)
+	// Executing the function under test
+	err = rb.SetKey(keyName, orgId, value)
 	assert.Nil(t, err)
+
+	var newVal tap.Profile
 	err = rb.GetKey(keyName, orgId, &newVal)
 	assert.Nil(t, err)
 
+	// Verifying that expectations were met
 	testObj.AssertExpectations(t)
 }
 
