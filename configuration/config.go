@@ -39,6 +39,8 @@ type IdentityBackendSettings struct {
 	SSLInsecureSkipVerify bool
 	MasterName            string
 	SentinelPassword      string
+	// TLS config of the backend
+	TLS TLS `json:"tls"`
 }
 
 type MongoConf struct {
@@ -53,6 +55,9 @@ type MongoConf struct {
 	SessionConsistency         string `json:"session_consistency" mapstructure:"session_consistency"`
 	Driver                     string `json:"driver" mapstructure:"driver"`
 	DirectConnection           bool   `json:"direct_connection" mapstructure:"direct_connection"`
+}
+
+type TLS struct {
 }
 
 // Storage object to configure the storage where the profiles lives in
