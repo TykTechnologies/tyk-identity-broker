@@ -106,6 +106,8 @@ func TestInit(t *testing.T) {
 				UseSSL:                true,
 				SSLInsecureSkipVerify: true,
 				Port:                  5000,
+				MaxVersion:            "1.0",
+				MinVersion:            "1.0",
 			},
 			shouldErr: false,
 		},

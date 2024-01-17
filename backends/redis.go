@@ -3,7 +3,6 @@ package backends
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync/atomic"
 
@@ -43,8 +42,8 @@ type RedisConfig struct {
 	CAFile                string `json:"ca_file"`
 	CertFile              string `json:"cert_file"`
 	KeyFile               string `json:"key_file"`
-	MaxVersion            uint16 `json:"max_version"`
-	MinVersion            uint16 `json:"min_version"`
+	MaxVersion            string `json:"max_version"`
+	MinVersion            string `json:"min_version"`
 }
 
 type RedisBackend struct {
@@ -85,8 +84,8 @@ func (r *RedisBackend) Connect() error {
 		CAFile:             conf.CAFile,
 		CertFile:           conf.CertFile,
 		KeyFile:            conf.KeyFile,
-		MaxVersion:         fmt.Sprintf("%d", conf.MaxVersion),
-		MinVersion:         fmt.Sprintf("%d", conf.MinVersion),
+		MinVersion:         conf.MinVersion,
+		MaxVersion:         conf.MaxVersion,
 	}
 
 	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
