@@ -66,10 +66,6 @@ jobs:
        id: hygiene
        run: |
         go install golang.org/x/tools/cmd/goimports@latest
-
-     - name: Fetch base branch
-       if: ${{ github.event_name == 'pull_request' }}
-       run: git fetch origin ${{ github.base_ref }}
        
      - name: Start Redis
        uses: supercharge/redis-github-action@1.2.0
@@ -96,11 +92,14 @@ jobs:
     needs: [ci-test, golangci-lint]
     steps:
       - name: Checkout TIB
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Fetch master branch
-        run: git fetch --no-tags --depth=1 origin +refs/heads/master:refs/remotes/origin/master
+      - name: Fetch base branch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: git fetch origin ${{ github.base_ref }}
+      #- name: Fetch master branch
+      #  run: git fetch --no-tags --depth=1 origin +refs/heads/master:refs/remotes/origin/master
       - name: Setup Golang
         uses: actions/setup-go@v3
         with:
