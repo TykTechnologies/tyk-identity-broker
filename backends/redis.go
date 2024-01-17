@@ -3,6 +3,7 @@ package backends
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/TykTechnologies/storage/temporal/connector"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/storage/temporal/model"
@@ -83,8 +84,8 @@ func (r *RedisBackend) Connect() error {
 		CAFile:             conf.CAFile,
 		CertFile:           conf.CertFile,
 		KeyFile:            conf.KeyFile,
-		MaxVersion:         string(conf.MaxVersion),
-		MinVersion:         string(conf.MinVersion),
+		MaxVersion:         fmt.Sprintf("%d", conf.MaxVersion),
+		MinVersion:         fmt.Sprintf("%d", conf.MinVersion),
 	}
 
 	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))

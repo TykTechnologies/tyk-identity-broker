@@ -169,8 +169,10 @@ func TestGetKey(t *testing.T) {
 	testObj.On("Set", mock.Anything, rb.KeyPrefix+keyName, value, ttl).Return(nil)
 	testObj.On("Get", mock.Anything, rb.KeyPrefix+keyName).Return(value, nil)
 
-	rb.SetKey(keyName, orgId, value)
-	rb.GetKey(keyName, orgId, &newVal)
+	err := rb.SetKey(keyName, orgId, value)
+	assert.Nil(t, err)
+	err = rb.GetKey(keyName, orgId, &newVal)
+	assert.Nil(t, err)
 
 	testObj.AssertExpectations(t)
 }
@@ -182,6 +184,7 @@ func TestDeleteKey(t *testing.T) {
 
 	testObj.On("Delete", mock.Anything, rb.KeyPrefix+key).Return(nil)
 
-	rb.DeleteKey(key, orgId)
+	err := rb.DeleteKey(key, orgId)
+	assert.Nil(t, err)
 	testObj.AssertExpectations(t)
 }
