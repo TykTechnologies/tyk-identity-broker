@@ -29,7 +29,7 @@ if [[ $db = "mongo-mgo" ]]; then
     : # do nothing
 elif [[ $db = "mongo-official" ]]; then
     export TYK_IB_STORAGE_STORAGETYPE="mongo"
-    export TYK_IB_STORAGE_MONGOCONF_MONGOURL=="mongodb://localhost/tyk_identity_broker"
+    export TYK_IB_STORAGE_MONGOCONF_MONGOURL="mongodb://localhost/tyk_identity_broker"
     export TYK_IB_STORAGE_MONGOCONF_DRIVER="mongo-go"
 elif [[ $db = "file" ]]; then
     export TYK_IB_STORAGE_STORAGETYPE="file"
