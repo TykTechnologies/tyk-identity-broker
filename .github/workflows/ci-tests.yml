@@ -99,6 +99,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 2
+      - name: Fetch master branch
+        run: git fetch --no-tags --depth=1 origin +refs/heads/master:refs/remotes/origin/master
       - name: Setup Golang
         uses: actions/setup-go@v3
         with:
@@ -136,7 +138,6 @@ jobs:
           -Dsonar.tests=.
           -Dsonar.go.coverage.reportPaths=*.cov
           -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
-          -Dsonar.projectVersion=1.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
