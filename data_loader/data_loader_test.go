@@ -13,7 +13,9 @@ import (
 
 func TestCreateDataMongoLoader(t *testing.T) {
 	isMongo := isMongoEnv()
-	t.Skip(!isMongo)
+	if !isMongo {
+		t.Skip()
+	}
 
 	url, driver := MongoEnvConf()
 
@@ -39,7 +41,9 @@ func TestCreateDataMongoLoader(t *testing.T) {
 func TestFlush(t *testing.T) {
 
 	isMongo := isMongoEnv()
-	t.Skip(!isMongo)
+	if !isMongo {
+		t.Skip()
+	}
 
 	url, driver := MongoEnvConf()
 	loader := MongoLoader{}
