@@ -98,8 +98,6 @@ jobs:
       - name: Fetch base branch
         if: ${{ github.event_name == 'pull_request' }}
         run: git fetch origin ${{ github.base_ref }}
-      #- name: Fetch master branch
-      #  run: git fetch --no-tags --depth=1 origin +refs/heads/master:refs/remotes/origin/master
       - name: Setup Golang
         uses: actions/setup-go@v3
         with:
