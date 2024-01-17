@@ -2,17 +2,16 @@ package backends
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"strings"
 	"sync/atomic"
 
+	"github.com/TykTechnologies/storage/temporal/connector"
+	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
+	"github.com/TykTechnologies/storage/temporal/model"
+
 	"github.com/TykTechnologies/tyk-identity-broker/log"
 
-	"strconv"
-	"time"
-
-	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,10 +39,15 @@ type RedisConfig struct {
 	Timeout               int
 	Port                  int
 	Host                  string
+	CAFile                string `json:"ca_file"`
+	CertFile              string `json:"cert_file"`
+	KeyFile               string `json:"key_file"`
+	MaxVersion            string `json:"max_version"`
+	MinVersion            string `json:"min_version"`
 }
 
 type RedisBackend struct {
-	db        redis.UniversalClient
+	kv        temporal.KeyValue
 	config    *RedisConfig
 	HashKeys  bool
 	KeyPrefix string
@@ -55,99 +59,84 @@ func (e KeyError) Error() string {
 	return "Key not found"
 }
 
-func (r *RedisBackend) newRedisClusterPool() redis.UniversalClient {
+func (r *RedisBackend) Connect() error {
 	redisLogger.Info("Creating new Redis connection pool")
 
-	timeout := 5 * time.Second
-
-	if r.config.Timeout > 0 {
-		timeout = time.Duration(r.config.Timeout) * time.Second
+	conf := r.config
+	optsR := model.RedisOptions{
+		Username:         conf.Username,
+		Password:         conf.Password,
+		Host:             conf.Host,
+		Port:             conf.Port,
+		Timeout:          conf.Timeout,
+		Hosts:            conf.Hosts,
+		Addrs:            conf.Addrs,
+		MasterName:       conf.MasterName,
+		SentinelPassword: conf.SentinelPassword,
+		Database:         conf.Database,
+		MaxActive:        conf.MaxActive,
+		EnableCluster:    conf.EnableCluster,
 	}
 
-	var tlsConfig *tls.Config
-	if r.config.UseSSL {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: r.config.SSLInsecureSkipVerify,
-		}
+	tls := model.TLS{
+		Enable:             conf.UseSSL,
+		InsecureSkipVerify: conf.SSLInsecureSkipVerify,
+		CAFile:             conf.CAFile,
+		CertFile:           conf.CertFile,
+		KeyFile:            conf.KeyFile,
+		MinVersion:         conf.MinVersion,
+		MaxVersion:         conf.MaxVersion,
 	}
 
-	var client redis.UniversalClient
-	opts := &redis.UniversalOptions{
-		MasterName:       r.config.MasterName,
-		SentinelPassword: r.config.SentinelPassword,
-		Addrs:            r.getRedisAddrs(),
-		DB:               r.config.Database,
-		Username:         r.config.Username,
-		Password:         r.config.Password,
-		IdleTimeout:      240 * time.Second,
-		ReadTimeout:      timeout,
-		WriteTimeout:     timeout,
-		DialTimeout:      timeout,
-		TLSConfig:        tlsConfig,
+	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
+	if err != nil {
+		redisLogger.WithError(err).Error("creating redis connector")
+		return err
 	}
 
-	if opts.MasterName != "" {
-		redisLogger.Info("Creating sentinel-backed fail-over client")
-		client = redis.NewFailoverClient(opts.Failover())
-	} else if r.config.EnableCluster {
-		redisLogger.Info("Creating cluster client")
-		client = redis.NewClusterClient(opts.Cluster())
-	} else {
-		redisLogger.Info("Creating single-node client")
-		client = redis.NewClient(opts.Simple())
+	r.kv, err = temporal.NewKeyValue(connector)
+	if err != nil {
+		redisLogger.WithError(err).Error("creating KV store")
+		return err
 	}
 
-	return client
-}
-
-func (r *RedisBackend) getRedisAddrs() (addrs []string) {
-	if len(r.config.Addrs) != 0 {
-		addrs = r.config.Addrs
-	} else {
-		for h, p := range r.config.Hosts {
-			addr := h + ":" + p
-			addrs = append(addrs, addr)
-		}
-	}
-
-	if len(addrs) == 0 && r.config.Port != 0 {
-		addr := r.config.Host + ":" + strconv.Itoa(r.config.Port)
-		addrs = append(addrs, addr)
-	}
-
-	return addrs
-}
-
-func (r *RedisBackend) Connect() bool {
-
-	r.db = r.newRedisClusterPool()
-	return true
+	return nil
 }
 
 // Init will create the initial in-memory store structures
-func (r *RedisBackend) Init(config interface{}) {
-	asJ, _ := json.Marshal(config)
+func (r *RedisBackend) Init(config interface{}) error {
+	asJ, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
 	fixedConf := RedisConfig{}
-	json.Unmarshal(asJ, &fixedConf)
+	err = json.Unmarshal(asJ, &fixedConf)
+	if err != nil {
+		return err
+	}
 	r.config = &fixedConf
-	r.Connect()
+	err = r.Connect()
+	if err != nil {
+		return err
+	}
+
 	redisLogger.Info("Initialized")
+	return nil
 }
 
 // SetDb from existent connection
-func (r *RedisBackend) SetDb(db redis.UniversalClient) {
+func (r *RedisBackend) SetDb(kv temporal.KeyValue) {
 	logger = log.Get()
 	redisLogger = &logrus.Entry{Logger: logger}
 	redisLogger = redisLogger.Logger.WithField("prefix", "TIB REDIS STORE")
 
-	r.db = db
-	redisLogger.Info("Set DB")
+	r.kv = kv
+	redisLogger.Info("Set KV store")
 }
 
 func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
-	db := r.ensureConnection()
-
-	if err := db.Set(ctx, r.fixKey(key), val, 0).Err(); err != nil {
+	if err := r.kv.Set(ctx, r.fixKey(key), val.(string), 0); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
@@ -156,9 +145,7 @@ func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
 }
 
 func (r *RedisBackend) GetKey(key string, orgId string, val interface{}) error {
-	db := r.ensureConnection()
-	var err error
-	result, err := db.Get(ctx, r.fixKey(key)).Result()
+	result, err := r.kv.Get(ctx, r.fixKey(key))
 	if err != nil {
 		return err
 	}
@@ -171,76 +158,27 @@ func (r *RedisBackend) GetKey(key string, orgId string, val interface{}) error {
 	return err
 }
 
-func (r *RedisBackend) hashKey(in string) string {
-	// missing implementation
-	return in
-}
-
 // GetKeys will return all keys according to the filter (filter is a prefix - e.g. tyk.keys.*)
 func (r *RedisBackend) GetKeys(filter string) []string {
-	db := r.db
-	client := db
-
-	searchStr := r.KeyPrefix + "*"
-	logger.Debug("[STORE] Getting list by: ", searchStr)
-
-	fnFetchKeys := func(client *redis.Client) ([]string, error) {
-		values := make([]string, 0)
-
-		iter := client.Scan(ctx, 0, searchStr, 0).Iterator()
-		for iter.Next(ctx) {
-			values = append(values, iter.Val())
-		}
-
-		if err := iter.Err(); err != nil {
-			return nil, err
-		}
-
-		return values, nil
-	}
-
-	var err error
-	sessions := make([]string, 0)
-
-	switch v := client.(type) {
-	case *redis.ClusterClient:
-		ch := make(chan []string)
-
-		go func() {
-			err = v.ForEachMaster(ctx, func(context context.Context, client *redis.Client) error {
-				values, err := fnFetchKeys(client)
-				if err != nil {
-					return err
-				}
-
-				ch <- values
-				return nil
-			})
-			close(ch)
-		}()
-
-		for res := range ch {
-			sessions = append(sessions, res...)
-		}
-	case *redis.Client:
-		sessions, err = fnFetchKeys(v)
-	}
-
+	keys, err := r.kv.Keys(ctx, filter)
 	if err != nil {
-		logger.Error("Error while fetching keys:", err)
-		return nil
+		redisLogger.WithError(err).Error("getting keys")
 	}
 
-	for i, v := range sessions {
-		sessions[i] = r.cleanKey(v)
+	for k, v := range keys {
+		keys[k] = r.cleanKey(v)
 	}
-
-	return sessions
+	return keys
 }
 
 func (r *RedisBackend) GetAll(orgId string) []interface{} {
-	db := r.ensureConnection()
-	keys := r.GetKeys(r.KeyPrefix)
+
+	keys, err := r.kv.Keys(ctx, r.KeyPrefix)
+	if err != nil {
+		redisLogger.WithError(err).Error("retrieving keys from redis")
+		return nil
+	}
+
 	if keys == nil {
 		logger.Error("Error trying to get filtered client keys")
 		return nil
@@ -254,41 +192,10 @@ func (r *RedisBackend) GetAll(orgId string) []interface{} {
 		keys[i] = r.KeyPrefix + v
 	}
 
-	client := db
-	values := make([]interface{}, 0)
-
-	switch v := client.(type) {
-	case *redis.ClusterClient:
-		{
-			getCmds := make([]*redis.StringCmd, 0)
-			pipe := v.Pipeline()
-			for _, key := range keys {
-				getCmds = append(getCmds, pipe.Get(ctx, key))
-			}
-			_, err := pipe.Exec(ctx)
-			if err != nil && err != redis.Nil {
-				logger.Error("Error trying to get client keys: ", err)
-				return nil
-			}
-
-			for _, cmd := range getCmds {
-				values = append(values, cmd.Val())
-			}
-		}
-	case *redis.Client:
-		{
-			result, err := v.MGet(ctx, keys...).Result()
-			if err != nil {
-				logger.Error("Error trying to get client keys: ", err)
-				return nil
-			}
-
-			for _, val := range result {
-				values = append(values, val)
-			}
-		}
+	var values []interface{} = make([]interface{}, len(keys))
+	for i, s := range keys {
+		values[i] = s
 	}
-
 	return values
 }
 
@@ -296,44 +203,8 @@ func (r *RedisBackend) cleanKey(keyName string) string {
 	return strings.Replace(keyName, r.KeyPrefix, "", 1)
 }
 
-func singleton(cache bool) redis.UniversalClient {
-	if cache {
-		v := singleCachePool.Load()
-		if v != nil {
-			return v.(redis.UniversalClient)
-		}
-		return nil
-	}
-	v := singlePool.Load()
-	if v != nil {
-		return v.(redis.UniversalClient)
-	}
-	return nil
-}
-
 func (r *RedisBackend) DeleteKey(key string, orgId string) error {
-	db := r.ensureConnection()
-	return db.Del(ctx, r.fixKey(key)).Err()
-}
-
-func (r *RedisBackend) getDB() redis.UniversalClient {
-	return r.db
-}
-
-func (r *RedisBackend) ensureConnection() redis.UniversalClient {
-	if db := r.getDB(); db != nil {
-		// already connected
-		return db
-	}
-	redisLogger.Info("Connection dropped, reconnecting...")
-	for {
-		r.Connect()
-		if db := r.getDB(); db != nil {
-			// reconnection worked
-			return db
-		}
-		redisLogger.Info("Reconnecting again...")
-	}
+	return r.kv.Delete(ctx, r.fixKey(key))
 }
 
 func (r *RedisBackend) fixKey(keyName string) string {

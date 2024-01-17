@@ -11,7 +11,7 @@ import (
 
 // AuthRegisterBackend is an interface to provide storage for profiles loaded into TAP
 type AuthRegisterBackend interface {
-	Init(interface{})
+	Init(interface{}) error
 	SetKey(key string, orgId string, val interface{}) error
 	GetKey(key string, orgId string, val interface{}) error
 	GetAll(orgId string) []interface{}
