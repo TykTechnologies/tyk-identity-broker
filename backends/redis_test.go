@@ -2,9 +2,10 @@ package backends
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"testing"
 	"time"
+
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
 
 	mocks "github.com/TykTechnologies/storage/temporal/tempmocks"
 	"github.com/stretchr/testify/assert"
