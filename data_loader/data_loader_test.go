@@ -21,9 +21,10 @@ func TestCreateDataMongoLoader(t *testing.T) {
 
 	conf := configuration.Configuration{
 		Storage: &configuration.Storage{
-			StorageType: driver,
+			StorageType: "mongo",
 			MongoConf: &configuration.MongoConf{
 				MongoURL: url,
+				Driver:   driver,
 			},
 		},
 	}
