@@ -47,8 +47,6 @@ type IdentityBackendSettings struct {
 	Hosts                 map[string]string // Deprecated: Use Addrs instead.
 	MasterName            string
 	SentinelPassword      string
-	MaxVersion            string
-	MinVersion            string
 }
 
 type MongoConf struct {

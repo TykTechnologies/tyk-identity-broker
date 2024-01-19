@@ -3,9 +3,10 @@ package backends
 import (
 	"context"
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 	"strings"
 	"sync/atomic"
+
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
 
 	"github.com/TykTechnologies/storage/temporal/connector"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
