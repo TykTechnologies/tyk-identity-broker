@@ -32,6 +32,14 @@ func TestOverrideConfigWithEnvVars(t *testing.T) {
 		"dummyhost1": "1234",
 		"dummyhost2": "5678",
 	}
+
+	//redis tls config
+	redisCaFile := "test-ca-file"
+	redisCertFile := "test-cert-file"
+	redisKeyFile := "test-key-file"
+	redisMaxVersion := "1.2"
+	redisMinVersion := "1.0"
+
 	var hostsStr string
 	for key, value := range hosts {
 		if hostsStr != "" {
@@ -45,6 +53,11 @@ func TestOverrideConfigWithEnvVars(t *testing.T) {
 	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_PASSWORD", password))
 	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_ENABLECLUSTER", "true"))
 	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_HOSTS", hostsStr))
+	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_CAFILE", redisCaFile))
+	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_CERTFILE", redisCertFile))
+	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_KEYFILE", redisKeyFile))
+	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_MAXVERSION", redisMaxVersion))
+	is.NoErr(os.Setenv("TYK_IB_BACKEND_IDENTITYBACKENDSETTINGS_MINVERSION", redisMinVersion))
 
 	// TykAPISettings.GatewayConfig
 	gwEndpoint := "http://dummyhost"
@@ -84,6 +97,11 @@ func TestOverrideConfigWithEnvVars(t *testing.T) {
 	is.Equal(password, conf.BackEnd.IdentityBackendSettings.Password)
 	is.Equal(true, conf.BackEnd.IdentityBackendSettings.EnableCluster)
 	is.Equal(hosts, conf.BackEnd.IdentityBackendSettings.Hosts)
+	is.Equal(redisMaxVersion, conf.BackEnd.IdentityBackendSettings.MaxVersion)
+	is.Equal(redisMinVersion, conf.BackEnd.IdentityBackendSettings.MinVersion)
+	is.Equal(redisKeyFile, conf.BackEnd.IdentityBackendSettings.KeyFile)
+	is.Equal(redisCertFile, conf.BackEnd.IdentityBackendSettings.CertFile)
+	is.Equal(redisCaFile, conf.BackEnd.IdentityBackendSettings.CAFile)
 
 	is.Equal(gwEndpoint, conf.TykAPISettings.GatewayConfig.Endpoint)
 	is.Equal(gwPort, conf.TykAPISettings.GatewayConfig.Port)

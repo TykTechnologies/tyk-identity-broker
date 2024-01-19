@@ -39,8 +39,11 @@ type IdentityBackendSettings struct {
 	SSLInsecureSkipVerify bool
 	MasterName            string
 	SentinelPassword      string
-	// TLS config of the backend
-	TLS TLS `json:"tls"`
+	CAFile                string `json:"ca_file"`
+	CertFile              string `json:"cert_file"`
+	KeyFile               string `json:"key_file"`
+	MaxVersion            string `json:"max_version"`
+	MinVersion            string `json:"min_version"`
 }
 
 type MongoConf struct {
