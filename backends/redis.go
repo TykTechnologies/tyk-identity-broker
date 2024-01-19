@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/TykTechnologies/tyk-identity-broker/configuration"
+
 	"github.com/TykTechnologies/storage/temporal/connector"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/storage/temporal/model"
@@ -23,28 +25,7 @@ var singleCachePool atomic.Value
 var redisUp atomic.Value
 var ctx = context.Background()
 
-type RedisConfig struct {
-	MaxIdle               int
-	MaxActive             int
-	MasterName            string
-	SentinelPassword      string
-	Database              int
-	Username              string
-	Password              string
-	EnableCluster         bool
-	Hosts                 map[string]string // Deprecated: Use Addrs instead.
-	Addrs                 []string
-	UseSSL                bool
-	SSLInsecureSkipVerify bool
-	Timeout               int
-	Port                  int
-	Host                  string
-	CAFile                string `json:"ca_file"`
-	CertFile              string `json:"cert_file"`
-	KeyFile               string `json:"key_file"`
-	MaxVersion            string `json:"max_version"`
-	MinVersion            string `json:"min_version"`
-}
+type RedisConfig configuration.IdentityBackendSettings
 
 type RedisBackend struct {
 	kv        temporal.KeyValue
