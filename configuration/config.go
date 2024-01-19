@@ -27,20 +27,26 @@ const (
 )
 
 type IdentityBackendSettings struct {
-	MaxIdle               int
-	MaxActive             int
 	Database              int
 	Username              string
 	Password              string
-	EnableCluster         bool
-	Hosts                 map[string]string // Deprecated: Use Addrs instead.
-	Addrs                 []string
+	Host                  string
+	Port                  int
+	Timeout               int
+	MaxIdle               int
+	MaxActive             int
 	UseSSL                bool
 	SSLInsecureSkipVerify bool
+	CAFile                string
+	CertFile              string
+	KeyFile               string
+	MaxVersion            string
+	MinVersion            string
+	EnableCluster         bool
+	Addrs                 []string
+	Hosts                 map[string]string // Deprecated: Use Addrs instead.
 	MasterName            string
 	SentinelPassword      string
-	// TLS config of the backend
-	TLS TLS `json:"tls"`
 }
 
 type MongoConf struct {
