@@ -89,8 +89,10 @@ github.com/TykTechnologies/openid2go v0.1.2/go.mod h1:gYfkqeWa+lY3Xz/Z2xYtIzmYXy
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0 h1:RRu/X3Ga0in1Quu9lg0+61GbgyCtz5pLRGT3KD3GI40=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
 github.com/TykTechnologies/storage v1.0.5/go.mod h1:+0S3KuNlLGBTMTSFREuZFm315zzXjuuCO4QSAPy+d3M=
-github.com/TykTechnologies/storage v1.0.11-0.20231229145029-6fde14b1aa20 h1:puEgTIpj2A6c5z7TqIQB3bly2ielrhE4ubxOZTUND2o=
-github.com/TykTechnologies/storage v1.0.11-0.20231229145029-6fde14b1aa20/go.mod h1:zcANqpIsDL/l/1zsMMERmjBeJYpER9XMi/dw2Gqa7m4=
+github.com/TykTechnologies/storage v1.1.0 h1:OgXbnuA0QCWWROtLRlztNTX6kKC3GkAwEEdPmvuAPE4=
+github.com/TykTechnologies/storage v1.1.0/go.mod h1:zcANqpIsDL/l/1zsMMERmjBeJYpER9XMi/dw2Gqa7m4=
+github.com/TykTechnologies/storage v1.1.1 h1:mD9etJLHsXbluQIDX8/05Lk+ciqaAMXL5Pts9Wy+WAU=
+github.com/TykTechnologies/storage v1.1.1/go.mod h1:zcANqpIsDL/l/1zsMMERmjBeJYpER9XMi/dw2Gqa7m4=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563 h1:YMx2UIdX327ySzp34T8dvRR9WPx50kwtXLCw5pjvxzg=
 github.com/TykTechnologies/tyk v1.9.2-0.20230530103800-06c018df3563/go.mod h1:dblrpGRayR3bf7chtEP4kZSIZw1eDiQKXCiTMfWffFs=
 github.com/TykTechnologies/tyk-pump v1.8.0-rc4/go.mod h1:dTxcW0leM1oHhMJOxM784iTuWe+D2SnffAEhmHPZOug=
@@ -149,7 +151,9 @@ github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+Wji
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/bshuster-repo/logrus-logstash-hook v0.4.1/go.mod h1:zsTqEiSzDgAa/8GZR7E1qaXrhYNDKBYy5/dWPTIflbk=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
+github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
+github.com/bsm/gomega v1.27.10/go.mod h1:JyEr/xRbxbtgWNi8tIEVPUYZ5Dzef52k01W3YH0H+O0=
 github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
 github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
 github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
