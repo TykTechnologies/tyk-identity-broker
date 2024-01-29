@@ -140,10 +140,10 @@ func LoadConfig(filePath string, conf *Configuration) {
 
 // GetMongoDriver returns a valid mongo driver to use, it receives the
 // driver set in config, and check its validity
-// otherwise default to MGO
+// otherwise default to mongo-go
 func GetMongoDriver(driverFromConf string) string {
 	if driverFromConf != persistent.Mgo && driverFromConf != persistent.OfficialMongo {
-		return persistent.Mgo
+		return persistent.OfficialMongo
 	}
 	return driverFromConf
 }
