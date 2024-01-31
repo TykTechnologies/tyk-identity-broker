@@ -134,7 +134,7 @@ func TestGetMongoDriver(t *testing.T) {
 		{
 			name:           "invalid driverFromConf",
 			driverFromConf: "invalidDriver",
-			expected:       persistent.Mgo,
+			expected:       persistent.OfficialMongo,
 		},
 	}
 
