@@ -54,6 +54,11 @@ module "tyk-identity-broker" {
 	reviewers = "0",
 	convos    = "false",
 	source_branch  = "master",
-	required_tests = ["1.19-bullseye", "mongo-mgo","mongo-official","file"]}
+	required_tests = ["1.19-bullseye", "mongo-mgo","mongo-official","file"]},
+ { branch    = "release-1.5",
+      reviewers = "0",
+      convos    = "false",
+      source_branch  = "master",
+      required_tests = ["1.19-bullseye", "mongo-mgo","mongo-official","file"]}
 ])
 }
