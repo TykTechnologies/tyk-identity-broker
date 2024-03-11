@@ -1,8 +1,11 @@
 package tothic
 
 import (
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -32,4 +35,33 @@ func assert(t *testing.T, expected interface{}, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %v, actual %v", expected, actual)
 	}
+}
+
+func TestGetState(t *testing.T) {
+	req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
+	assert(t, "state", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodGet, "http://localhost?state=FooBar", nil)
+	assert(t, "FooBar", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost", nil)
+	assert(t, "state", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", nil)
+	assert(t, "FooBar", GetState(req))
+
+	data := url.Values{}
+	data.Add("state", "BarBaz")
+
+	requestBody := data.Encode()
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	assert(t, "BarBaz", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	assert(t, "FooBar", GetState(req))
 }
