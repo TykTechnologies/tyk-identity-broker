@@ -17,64 +17,17 @@ builds:
       - amd64
       - arm64
     binary: tyk-identity-broker
-dockers:
-  # Build tykio/tyk-identity-broker, docker.tyk.io/tyk-identity-broker/tyk-identity-broker (amd64)
-  - ids:
-      - std
-    image_templates:
-      - "tykio/tyk-identity-broker:{{.Tag}}-amd64"
-      - "docker.tyk.io/tyk-identity-broker/tyk-identity-broker:{{.Tag}}-amd64"
-    build_flag_templates:
-      - "--build-arg=PORTS=80"
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-    use: buildx
-    goarch: amd64
-    goos: linux
-    dockerfile: ci/Dockerfile.std
-    extra_files:
-      - "ci/install/"
-      - "README.md"
-  # Build tykio/tyk-identity-broker, docker.tyk.io/tyk-identity-broker/tyk-identity-broker (arm64)
-  - ids:
-      - std
-    image_templates:
-      - "tykio/tyk-identity-broker:{{.Tag}}-arm64"
-      - "docker.tyk.io/tyk-identity-broker/tyk-identity-broker:{{.Tag}}-arm64"
-    build_flag_templates:
-      - "--build-arg=PORTS=80"
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-    use: buildx
-    goarch: arm64
-    goos: linux
-    dockerfile: ci/Dockerfile.std
-    extra_files:
-      - "ci/install/"
-      - "README.md"
-docker_manifests:
-  - name_template: tykio/tyk-identity-broker:{{ .Tag }}
-    image_templates:
-      - tykio/tyk-identity-broker:{{ .Tag }}-amd64
-      - tykio/tyk-identity-broker:{{ .Tag }}-arm64
-  - name_template: tykio/tyk-identity-broker:v{{ .Major }}.{{ .Minor }}{{.Prerelease}}
-    image_templates:
-      - tykio/tyk-identity-broker:{{ .Tag }}-amd64
-      - tykio/tyk-identity-broker:{{ .Tag }}-arm64
-  - name_template: tykio/tyk-identity-broker:v{{ .Major }}{{.Prerelease}}
-    image_templates:
-      - tykio/tyk-identity-broker:{{ .Tag }}-amd64
-      - tykio/tyk-identity-broker:{{ .Tag }}-arm64
-  - name_template: docker.tyk.io/tyk-identity-broker/tyk-identity-broker:{{ .Tag }}
-    image_templates:
-      - docker.tyk.io/tyk-identity-broker/tyk-identity-broker:{{ .Tag }}-amd64
-      - docker.tyk.io/tyk-identity-broker/tyk-identity-broker:{{ .Tag }}-arm64
+  - id: fips
+    ldflags:
+      - -X github.com/TykTechnologies/tyk-identity-broker/main.Version={{.Version}}
+      - -X github.com/TykTechnologies/tyk-identity-broker/main.Commit={{.FullCommit}}
+      - -X github.com/TykTechnologies/tyk-identity-broker/main.BuildDate={{.Date}}
+      - -X github.com/TykTechnologies/tyk-identity-broker/main.BuiltBy=goreleaser
+    goos:
+      - linux
+    goarch:
+      - amd64
+    binary: tyk-identity-broker
 nfpms:
   - id: std
     vendor: "Tyk Technologies Ltd"
@@ -85,6 +38,46 @@ nfpms:
     file_name_template: "{{ .ConventionalFileName }}"
     builds:
       - std
+    formats:
+      - deb
+      - rpm
+    contents:
+      - src: "README.md"
+        dst: "/opt/share/docs/tyk-identity-broker/README.md"
+      - src: "ci/install/*"
+        dst: "/opt/tyk-identity-broker/install"
+      - src: ci/install/inits/systemd/system/tyk-identity-broker.service
+        dst: /lib/systemd/system/tyk-identity-broker.service
+      - src: ci/install/inits/sysv/init.d/tyk-identity-broker
+        dst: /etc/init.d/tyk-identity-broker
+      - src: "LICENSE.md"
+        dst: "/opt/share/docs/tyk-identity-broker/LICENSE.md"
+      - src: tib_sample.conf
+        dst: /opt/tyk-identity-broker/tib.conf
+        type: "config|noreplace"
+    scripts:
+      preinstall: "ci/install/before_install.sh"
+      postinstall: "ci/install/post_install.sh"
+      postremove: "ci/install/post_remove.sh"
+    bindir: "/opt/tyk-identity-broker"
+    rpm:
+      scripts:
+        posttrans: ci/install/post_trans.sh
+      signature:
+        key_file: tyk.io.signing.key
+    deb:
+      signature:
+        key_file: tyk.io.signing.key
+        type: origin
+  - id: fips
+    vendor: "Tyk Technologies Ltd"
+    homepage: "https://tyk.io"
+    maintainer: "Tyk <info@tyk.io>"
+    description: Tyk Authentication Proxy for third-party login
+    package_name: tyk-identity-broker-fips
+    file_name_template: "{{ .ConventionalFileName }}"
+    builds:
+      - fips
     formats:
       - deb
       - rpm
