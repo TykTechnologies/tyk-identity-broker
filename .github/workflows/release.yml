@@ -41,15 +41,20 @@ jobs:
             debvers: 'ubuntu/xenial ubuntu/bionic ubuntu/focal ubuntu/jammy debian/jessie debian/buster debian/bullseye debian/bookworm'
     outputs:
       tags: ${{ steps.ci_metadata.outputs.tags }}
-      commit_author: ${{ steps.fetch-author.outputs.commit_author}}
+      commit_author: ${{ steps.set_outputs.outputs.commit_author}}
     steps:
       - name: Checkout of tyk-identity-broker
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Get commit author
-        id: fetch-author
-        run: echo "commit_author=$(git show -s --format='%ae' HEAD)" >> $GITHUB_OUTPUT
+      - name: Set some outputs for later
+        id: set_outputs
+        shell: bash
+        env:
+          HEAD_REF: ${{github.head_ref}}
+        run: |
+          echo "commit_author=$(git show -s --format='%ae' HEAD)" >> $GITHUB_OUTPUT
+          echo "branch=${HEAD_REF##*/}" >> $GITHUB_OUTPUT
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub
@@ -75,7 +80,7 @@ jobs:
             ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       - name: Build
         env:
-          NFPM_STD_PASSPHRASE: ${{ secrets.SIGNING_KEY_PASSPHRASE }}
+          NFPM_PASSPHRASE: ${{ secrets.SIGNING_KEY_PASSPHRASE }}
           PKG_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
         run: |
@@ -90,7 +95,7 @@ jobs:
           -e DEBVERS='${{ matrix.debvers }}'                               \
           -e RPMVERS='${{ matrix.rpmvers }}'                               \
           -e CGO_ENABLED=${{ matrix.cgo }}                                 \
-          -e NFPM_STD_PASSPHRASE="$NFPM_STD_PASSPHRASE"                          \
+          -e NFPM_PASSPHRASE="$NFPM_PASSPHRASE"                          \
           -e GPG_FINGERPRINT=12B5D62C28F57592D1575BD51ED14C59E37DAC20            \
           -e PKG_SIGNING_KEY="$PKG_SIGNING_KEY"                                  \
           -e PACKAGECLOUD_TOKEN=$PACKAGECLOUD_TOKEN                              \
@@ -128,23 +133,57 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=sha,format=long
-            type=semver,pattern=v{{major}}.{{minor}},prefix=v
-            type=semver,pattern=v{{version}},prefix=v
-      - name: CI push
+            type=semver,pattern={{major}},prefix=v
+            type=raw,priority=700,value=${{ steps.set_outputs.outputs.branch}},enable=${{ github.event_name == 'pull_request' }},prefix=
+            type=semver,pattern={{major}}.{{minor}},prefix=v
+            type=semver,pattern={{version}},prefix=v
+      - name: push image to CI
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
-        shell: bash
-        env:
-          t: ${{ steps.ci_metadata.outputs.tags }}
-          build_tag: ${{ startswith(github.ref, 'refs/tags') && github.ref_name || 'v0.0.0' }}
-        run: |
-          set +e
-          IFS=$'\n' tags=($t)
-          for tag in "${tags[@]}"; do
-             for arch in amd64 arm64; do
-                 docker tag tykio/tyk-identity-broker:${build_tag}-${arch} ${tag}-${arch} && docker push ${tag}-${arch}
-             done
-             docker manifest create ${tag} ${tag}-amd64 ${tag}-arm64 && docker manifest push ${tag}
-          done
+        uses: docker/build-push-action@v5
+        with:
+          context: "dist"
+          platforms: linux/amd64,linux/arm64
+          file: ci/Dockerfile.distroless
+          provenance: mode=max
+          sbom: true
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.ci_metadata.outputs.tags }}
+          labels: ${{ steps.tag_metadata.outputs.labels }}
+      - name: Docker metadata for tag push
+        id: tag_metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            tykio/tyk-identity-broker
+            docker.tyk.io/tyk-identity-broker/tyk-identity-broker
+          flavor: |
+            latest=false
+            prefix=v
+          tags: |
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}}
+          labels: |
+            org.opencontainers.image.title=tyk-identity-broker (distroless)
+            org.opencontainers.image.description=Tyk Authentication Proxy for third-party login
+            org.opencontainers.image.vendor=tyk.io
+            org.opencontainers.image.version=${{ github.ref_name }}
+      - name: build multiarch image
+        if: ${{ matrix.golang_cross == '1.21-bookworm' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: "dist"
+          platforms: linux/amd64,linux/arm64
+          file: ci/Dockerfile.distroless
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: ${{ startsWith(github.ref, 'refs/tags') }}
+          tags: ${{ steps.tag_metadata.outputs.tags }}
+          labels: ${{ steps.tag_metadata.outputs.labels }}
       - uses: actions/upload-artifact@v4
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
         with:
@@ -161,59 +200,6 @@ jobs:
           path: |
             dist/*.rpm
             !dist/*PAYG*.rpm
-  distroless:
-    runs-on: ubuntu-latest
-    needs: goreleaser
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-      - uses: actions/download-artifact@v4
-        with:
-          name: deb
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - name: Login to DockerHub
-        if: startsWith(github.ref, 'refs/tags')
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Login to Cloudsmith
-        if: startsWith(github.ref, 'refs/tags')
-        uses: docker/login-action@v3
-        with:
-          registry: docker.tyk.io
-          username: ${{ secrets.CLOUDSMITH_USERNAME }}
-          password: ${{ secrets.CLOUDSMITH_API_KEY }}
-      - name: Docker metadata for distroless
-        id: distroless_metadata
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            tykio/tyk-identity-broker
-            docker.tyk.io/tyk-identity-broker/tyk-identity-broker
-          flavor: |
-            latest=false
-            prefix=s
-          tags: |
-            type=semver,pattern={{major}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{version}}
-          labels: |
-            org.opencontainers.image.title=tyk-identity-broker (distroless)
-            org.opencontainers.image.description=Tyk Authentication Proxy for third-party login
-            org.opencontainers.image.vendor=tyk.io
-            org.opencontainers.image.version=${{ github.ref_name }}
-      - name: build distroless image
-        uses: docker/build-push-action@v5
-        with:
-          context: "."
-          platforms: linux/amd64,linux/arm64
-          file: ci/Dockerfile.distroless
-          push: ${{ startsWith(github.ref, 'refs/tags') }}
-          tags: ${{ steps.distroless_metadata.outputs.tags }}
-          labels: ${{ steps.distroless_metadata.outputs.labels }}
   upgrade-deb:
     services:
       httpbin.org:
