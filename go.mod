@@ -10,7 +10,7 @@ require (
 	github.com/go-ldap/ldap/v3 v3.2.3
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/gorilla/mux v1.8.0
-	github.com/gorilla/sessions v1.2.1
+	github.com/gorilla/sessions v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/markbates/goth v1.64.2
 	github.com/matryer/is v1.4.0
@@ -49,7 +49,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
