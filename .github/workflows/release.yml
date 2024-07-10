@@ -134,7 +134,6 @@ jobs:
             type=ref,event=pr
             type=sha,format=long
             type=semver,pattern={{major}},prefix=v
-            type=raw,priority=700,value=${{ steps.set_outputs.outputs.branch}},enable=${{ github.event_name == 'pull_request' }},prefix=
             type=semver,pattern={{major}}.{{minor}},prefix=v
             type=semver,pattern={{version}},prefix=v
       - name: push image to CI
@@ -165,11 +164,7 @@ jobs:
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{version}}
-          labels: |
-            org.opencontainers.image.title=tyk-identity-broker (distroless)
-            org.opencontainers.image.description=Tyk Authentication Proxy for third-party login
-            org.opencontainers.image.vendor=tyk.io
-            org.opencontainers.image.version=${{ github.ref_name }}
+          labels: "org.opencontainers.image.title=tyk-identity-broker  (distroless) \norg.opencontainers.image.description=Tyk Authentication Proxy for third-party login\norg.opencontainers.image.vendor=tyk.io\norg.opencontainers.image.version=${{ github.ref_name }}\n"
       - name: build multiarch image
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
         uses: docker/build-push-action@v5
