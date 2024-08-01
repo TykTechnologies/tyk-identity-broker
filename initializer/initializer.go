@@ -4,6 +4,7 @@ import (
 	"github.com/TykTechnologies/storage/persistent"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
+	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
@@ -47,7 +48,7 @@ func createBackendFromRedisConn(kv temporal.KeyValue, keyPrefix string) tap.Auth
 	return redisBackend
 }
 
-func SetLogger(newLogger *logrus.Logger) {
+func setLogger(newLogger *logrus.Logger) {
 	logger.SetLogger(newLogger)
 	log = newLogger
 
@@ -80,7 +81,7 @@ func SetConfigHandler(backend tap.AuthRegisterBackend) {
 	tothic.SetParamsStoreHandler(backend)
 }
 
-func SetKVStorage(kv temporal.KeyValue) {
+func setKVStorage(kv temporal.KeyValue) {
 	configHandler := createBackendFromRedisConn(kv, "tib-provider-config-")
 
 	initializerLogger.Info("Initializing Config handler")
@@ -88,4 +89,26 @@ func SetKVStorage(kv temporal.KeyValue) {
 
 	initializerLogger.Info("Initializing Identity Cache")
 	IdentityKeyStore = createBackendFromRedisConn(kv, "identity-cache")
+}
+
+type TIB struct {
+	Logger       *logrus.Logger
+	KV           temporal.KeyValue
+	CookieSecret string
+}
+
+func (tib *TIB) Start() {
+	if tib.Logger == nil {
+		tib.Logger = logrus.New()
+	}
+	setLogger(tib.Logger)
+	setKVStorage(tib.KV)
+
+	tothic.TothErrorHandler = tykerror.HandleError
+	if tib.CookieSecret != "" {
+		tothic.SetupSessionStore(tib.CookieSecret)
+	} else {
+		// then it will read it from env
+		tothic.SetupSessionStore()
+	}
 }
