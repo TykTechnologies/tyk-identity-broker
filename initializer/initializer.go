@@ -37,10 +37,6 @@ func InitBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 	return AuthConfigStore, IdentityKeyStore
 }
 
-func SetKVStore(kv temporal.KeyValue) {
-
-}
-
 // CreateBackendFromRedisConn: creates a redis backend from an existent redis Connection
 func createBackendFromRedisConn(kv temporal.KeyValue, keyPrefix string) tap.AuthRegisterBackend {
 	redisBackend := &backends.RedisBackend{KeyPrefix: keyPrefix}
@@ -94,6 +90,7 @@ func setKVStorage(kv temporal.KeyValue) {
 type TIB struct {
 	Logger       *logrus.Logger
 	KV           temporal.KeyValue
+	CertManager  certs.CertificateManager
 	CookieSecret string
 }
 
@@ -104,6 +101,7 @@ func (tib *TIB) Start() {
 	setLogger(tib.Logger)
 	setKVStorage(tib.KV)
 
+	SetCertManager(tib.CertManager)
 	tothic.TothErrorHandler = tykerror.HandleError
 	if tib.CookieSecret != "" {
 		tothic.SetupSessionStore(tib.CookieSecret)
