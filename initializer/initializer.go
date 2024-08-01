@@ -16,11 +16,17 @@ import (
 var log = logger.Get()
 var initializerLogger = log.WithField("prefix", "TIB INITIALIZER")
 
+// IdentityKeyStore keeps a record of identities tied to tokens (if needed)
+var IdentityKeyStore tap.AuthRegisterBackend
+
+// AuthConfigStore Is the back end we are storing our configuration files to
+var AuthConfigStore tap.AuthRegisterBackend
+
 // initBackend: Get our backend to use from configs files, new back-ends must be registered here
 func InitBackend(profileBackendConfiguration interface{}, identityBackendConfiguration interface{}) (tap.AuthRegisterBackend, tap.AuthRegisterBackend) {
 
-	AuthConfigStore := &backends.InMemoryBackend{}
-	IdentityKeyStore := &backends.RedisBackend{KeyPrefix: "identity-cache."}
+	AuthConfigStore = &backends.InMemoryBackend{}
+	IdentityKeyStore = &backends.RedisBackend{KeyPrefix: "identity-cache."}
 
 	initializerLogger.Info("Initialising Profile Configuration Store")
 	AuthConfigStore.Init(profileBackendConfiguration)
@@ -30,13 +36,14 @@ func InitBackend(profileBackendConfiguration interface{}, identityBackendConfigu
 	return AuthConfigStore, IdentityKeyStore
 }
 
+func SetKVStore(kv temporal.KeyValue) {
+
+}
+
 // CreateBackendFromRedisConn: creates a redis backend from an existent redis Connection
-func CreateBackendFromRedisConn(kv temporal.KeyValue, keyPrefix string) tap.AuthRegisterBackend {
+func createBackendFromRedisConn(kv temporal.KeyValue, keyPrefix string) tap.AuthRegisterBackend {
 	redisBackend := &backends.RedisBackend{KeyPrefix: keyPrefix}
-
-	initializerLogger.Info("Initializing Identity Cache")
 	redisBackend.SetDb(kv)
-
 	return redisBackend
 }
 
@@ -71,4 +78,14 @@ func CreateMongoBackend(store persistent.PersistentStorage) tap.AuthRegisterBack
 
 func SetConfigHandler(backend tap.AuthRegisterBackend) {
 	tothic.SetParamsStoreHandler(backend)
+}
+
+func SetKVStorage(kv temporal.KeyValue) {
+	configHandler := createBackendFromRedisConn(kv, "tib-provider-config-")
+
+	initializerLogger.Info("Initializing Config handler")
+	tothic.SetParamsStoreHandler(configHandler)
+
+	initializerLogger.Info("Initializing Identity Cache")
+	IdentityKeyStore = createBackendFromRedisConn(kv, "identity-cache")
 }
