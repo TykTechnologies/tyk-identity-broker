@@ -118,4 +118,5 @@ func (tib *TIB) Start() error {
 		// then it will read it from env
 		tothic.SetupSessionStore()
 	}
+	return nil
 }

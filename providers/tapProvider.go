@@ -3,7 +3,6 @@ package providers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -67,7 +66,7 @@ func GetTapProfile(AuthConfigStore, identityKeyStore tap.AuthRegisterBackend, id
 		}
 	}
 
-	thisIdentityProvider, providerErr := GetTAProvider(thisProfile, tykHandler, initializer.IdentityKeyStore)
+	thisIdentityProvider, providerErr := GetTAProvider(thisProfile, tykHandler, identityKeyStore)
 	if providerErr != nil {
 		log.WithError(providerErr).Error("Getting Tap Provider")
 		return nil, thisProfile, &tap.HttpError{
