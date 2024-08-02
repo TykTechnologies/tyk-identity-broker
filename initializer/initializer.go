@@ -1,6 +1,8 @@
 package initializer
 
 import (
+	"errors"
+
 	"github.com/TykTechnologies/storage/persistent"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
@@ -94,13 +96,20 @@ type TIB struct {
 	CookieSecret string
 }
 
-func (tib *TIB) Start() {
+func (tib *TIB) Start() error {
 	if tib.Logger == nil {
 		tib.Logger = logrus.New()
 	}
 	setLogger(tib.Logger)
+
+	if tib.KV == nil {
+		return errors.New("kv store cannot be nil")
+	}
 	setKVStorage(tib.KV)
 
+	if tib.CertManager == nil {
+		return errors.New("certificate manager cannot be nil")
+	}
 	SetCertManager(tib.CertManager)
 	tothic.TothErrorHandler = tykerror.HandleError
 	if tib.CookieSecret != "" {

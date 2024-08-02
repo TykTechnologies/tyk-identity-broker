@@ -2,8 +2,9 @@ package main
 
 import (
 	"errors"
-	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 	"net/http"
+
+	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"

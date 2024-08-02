@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/TykTechnologies/tyk-identity-broker/initializer"
 
 	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
 
