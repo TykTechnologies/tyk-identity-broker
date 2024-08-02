@@ -3,7 +3,6 @@ package initializer
 import (
 	"errors"
 
-	"github.com/TykTechnologies/storage/persistent"
 	temporal "github.com/TykTechnologies/storage/temporal/keyvalue"
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
@@ -56,23 +55,6 @@ func setLogger(newLogger *logrus.Logger) {
 
 func SetCertManager(cm certs.CertificateManager) {
 	providers.CertManager = cm
-}
-
-func CreateInMemoryBackend() tap.AuthRegisterBackend {
-	inMemoryBackend := &backends.InMemoryBackend{}
-	var config interface{}
-	inMemoryBackend.Init(config)
-	return inMemoryBackend
-}
-
-func CreateMongoBackend(store persistent.PersistentStorage) tap.AuthRegisterBackend {
-	mongoBackend := &backends.MongoBackend{
-		Store:      store,
-		Collection: tap.ProfilesCollectionName,
-	}
-	var config interface{}
-	mongoBackend.Init(config)
-	return mongoBackend
 }
 
 func SetConfigHandler(backend tap.AuthRegisterBackend) {
