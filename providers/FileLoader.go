@@ -142,3 +142,7 @@ func (f FileLoader) SetRawKey(string, string, int64) error {
 func (f FileLoader) SetRollingWindow(key string, per int64, val string, pipeline bool) (int, []interface{}) {
 	panic("implement me")
 }
+
+func (f FileLoader) DeleteRawKeys([]string) bool {
+	panic("implement me")
+}
