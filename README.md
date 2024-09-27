@@ -1227,3 +1227,7 @@ POST /Authorization: test-secret
 #### Outcome:
 
 The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new profiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
+
+## Security Issues
+
+If you discover a security vulnerability within this project, please don't use the issue tracker. Instead, kindly email us directly at [support@tyk.io](mailto:support@tyk.io). We take security seriously and will promptly address your concerns.
