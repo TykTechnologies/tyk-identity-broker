@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/markbates/goth/providers/openidConnect"
 	jose "gopkg.in/square/go-jose.v2"
 )

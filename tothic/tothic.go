@@ -10,11 +10,12 @@ package tothic
 import (
 	"encoding/json"
 	"errors"
-	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
-	"github.com/markbates/goth/providers/openidConnect"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/markbates/goth/providers/openidConnect"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"

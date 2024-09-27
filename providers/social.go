@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
 	"github.com/TykTechnologies/tyk/certs"
-	"sync"
 
 	"net/http"
 	"strings"
