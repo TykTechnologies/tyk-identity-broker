@@ -142,7 +142,7 @@ func (s *SAMLProvider) initialiseSAMLMiddleware() {
 		}
 		var key *rsa.PrivateKey
 		if keyPair.PrivateKey == nil {
-			SAMLLogger.Error("Private Key is nil not rsa.PrivateKey")
+			SAMLLogger.Error("Private Key is nil not rsa.Key")
 		} else {
 			key = keyPair.PrivateKey.(*rsa.PrivateKey)
 			SAMLLogger.Debugf("Private Key is present in the certificate and was loaded")

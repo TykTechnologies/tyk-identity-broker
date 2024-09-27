@@ -10,8 +10,11 @@ package tothic
 import (
 	"encoding/json"
 	"errors"
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/markbates/goth/providers/openidConnect"
 	"net/http"
 	"os"
+	"strings"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -187,7 +190,13 @@ as either "provider" or ":provider".
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile) (goth.User, error) {
+
+type JWEHandler struct {
+	IsJWE   bool
+	Decrypt func(IDToken string) (string, error)
+}
+
+var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *JWEHandler) (goth.User, error) {
 
 	providerName, err := GetProviderName(profile)
 	if err != nil {
@@ -214,12 +223,38 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	}
 
 	_, err = sess.Authorize(provider, req.URL.Query())
-
 	if err != nil {
 		return goth.User{}, err
 	}
 
-	return provider.FetchUser(sess)
+	JWTSession := &openidConnect.Session{}
+	err = json.NewDecoder(strings.NewReader(sess.Marshal())).Decode(JWTSession)
+	if err != nil {
+		return goth.User{}, err
+	}
+
+	// for testing override the id token
+	JWTSession.IDToken, _ = jwe.Encrypt(JWTSession.IDToken)
+	//--end testing
+
+	// no decryption is required
+	if jweHandler == nil || !jweHandler.IsJWE {
+		return provider.FetchUser(sess)
+	}
+
+	// we must decrypt the ID token
+	decrypted, err := jweHandler.Decrypt(JWTSession.IDToken)
+	if err != nil {
+		return goth.User{}, err
+	}
+	JWTSession.IDToken = decrypted
+	return provider.FetchUser(JWTSession)
+}
+
+func UnmarshalIDToken(data string) (*openidConnect.Session, error) {
+	sess := &openidConnect.Session{}
+	err := json.NewDecoder(strings.NewReader(data)).Decode(sess)
+	return sess, err
 }
 
 // GetProviderName is a function used to get the name of a provider
