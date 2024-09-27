@@ -232,16 +232,16 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	//--end testing
 
 	// no decryption is required
-	if jweHandler == nil {
+	if !jweHandler.Enabled {
 		return provider.FetchUser(sess)
 	}
 
 	// we must decrypt the ID token
-	decrypted, err := jweHandler.Decrypt(JWTSession.IDToken)
+	decryptedIDToken, err := jweHandler.Decrypt(JWTSession.IDToken)
 	if err != nil {
 		return goth.User{}, err
 	}
-	JWTSession.IDToken = decrypted
+	JWTSession.IDToken = decryptedIDToken
 	return provider.FetchUser(JWTSession)
 }
 

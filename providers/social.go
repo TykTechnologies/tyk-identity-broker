@@ -190,9 +190,6 @@ func (s *Social) checkConstraints(user interface{}) error {
 	return nil
 }
 
-func (s *Social) DecryptJWE(IDToken string) (string, error) {
-}
-
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 
