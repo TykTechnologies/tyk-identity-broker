@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/markbates/goth/providers/openidConnect"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -74,4 +75,13 @@ func (handler *Handler) Decrypt(token string) (string, error) {
 	}
 
 	return string(decrypted), nil
+}
+
+func DecryptIDToken(jweHandler *Handler, JWTSession *openidConnect.Session) error {
+	decryptedIDToken, err := jweHandler.Decrypt(JWTSession.IDToken)
+	if err != nil {
+		return err
+	}
+	JWTSession.IDToken = decryptedIDToken
+	return nil
 }

@@ -46,11 +46,10 @@ var socialLogger = log.WithField("prefix", SocialLogTag)
 // Social is the identity handler for all social auth, it is a wrapper around Goth, and makes use of it's pluggable
 // providers to provide a raft of social OAuth providers as SSO or Login delegates.
 type Social struct {
-	handler    tap.IdentityHandler
-	config     GothConfig
-	toth       toth.TothInstance
-	profile    tap.Profile
-	jweHandler jwe.Handler
+	handler tap.IdentityHandler
+	config  GothConfig
+	toth    toth.TothInstance
+	profile tap.Profile
 }
 
 // GothProviderConfig the configurations required for the individual goth providers
@@ -192,8 +191,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
-
-	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &s.jweHandler)
+	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &s.config.JWE)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return

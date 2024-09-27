@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+// file to be removed after testing
+
 // using the keycloak one
 var publicKeyPEM = `
 -----BEGIN PUBLIC KEY-----
