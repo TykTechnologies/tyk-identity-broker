@@ -190,8 +190,7 @@ as either "provider" or ":provider".
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-
-var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *jwe.JWEHandler) (goth.User, error) {
+var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *jwe.Handler) (goth.User, error) {
 
 	providerName, err := GetProviderName(profile)
 	if err != nil {
@@ -233,7 +232,7 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	//--end testing
 
 	// no decryption is required
-	if jweHandler == nil || !jweHandler.IsJWE {
+	if jweHandler == nil {
 		return provider.FetchUser(sess)
 	}
 

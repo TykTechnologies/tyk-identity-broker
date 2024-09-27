@@ -6,7 +6,6 @@ extending TAP to use more providers, add them to this section
 package providers
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,10 +46,11 @@ var socialLogger = log.WithField("prefix", SocialLogTag)
 // Social is the identity handler for all social auth, it is a wrapper around Goth, and makes use of it's pluggable
 // providers to provide a raft of social OAuth providers as SSO or Login delegates.
 type Social struct {
-	handler tap.IdentityHandler
-	config  GothConfig
-	toth    toth.TothInstance
-	profile tap.Profile
+	handler    tap.IdentityHandler
+	config     GothConfig
+	toth       toth.TothInstance
+	profile    tap.Profile
+	jweHandler jwe.Handler
 }
 
 // GothProviderConfig the configurations required for the individual goth providers
@@ -69,7 +69,7 @@ type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
 	FailureRedirect string
-	JWE             jwe.Config `json:"jwe,omitempty"`
+	JWE             jwe.Handler `json:"jwe,omitempty"`
 }
 
 // Name returns the name of the provider
@@ -108,14 +108,13 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 	}
 
 	if s.config.JWE.Enabled {
-		certs := CertManager.List([]string{s.config.JWE.PrivateKeyLocation}, certs.CertificateAny)
-		if len(certs) == 0 {
+		keys := CertManager.List([]string{s.config.JWE.PrivateKeyLocation}, certs.CertificateAny)
+		if len(keys) == 0 {
 			socialLogger.Error("JWE Private Key was not loaded")
 		} else {
 			socialLogger.Debug("JWE Private Key Loaded")
-			s.config.JWE.Key = certs[0]
+			s.config.JWE.Key = keys[0]
 		}
-
 	}
 
 	// TODO: Add more providers here
@@ -192,32 +191,12 @@ func (s *Social) checkConstraints(user interface{}) error {
 }
 
 func (s *Social) DecryptJWE(IDToken string) (string, error) {
-
-	if !s.config.JWE.Enabled {
-		return IDToken, nil
-	}
-	if s.config.JWE.Key == nil {
-		return "", errors.New("JWE Private Key not loaded")
-	}
-
-	pk := s.config.JWE.Key.PrivateKey.(*rsa.PrivateKey)
-	decrypted, err := jwe.Decrypt(IDToken, pk)
-	if err != nil {
-		return "", err
-	}
-
-	return string(decrypted), nil
 }
 
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 
-	jweHandler := jwe.JWEHandler{
-		IsJWE:   s.config.JWE.Enabled,
-		Decrypt: s.DecryptJWE,
-	}
-
-	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &jweHandler)
+	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &s.jweHandler)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return

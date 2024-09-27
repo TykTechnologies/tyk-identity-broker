@@ -4,19 +4,15 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
-type Config struct {
+type Handler struct {
 	Enabled            bool             `json:"enabled"`
 	PrivateKeyLocation string           `json:"private_key_location"`
 	Key                *tls.Certificate `json:"-"`
-}
-
-type JWEHandler struct {
-	IsJWE   bool
-	Decrypt func(IDToken string) (string, error)
 }
 
 func Encrypt(token string) (string, error) {
@@ -54,18 +50,28 @@ func Encrypt(token string) (string, error) {
 	return serialized, nil
 }
 
-func Decrypt(tokenString string, privateKey *rsa.PrivateKey) ([]byte, error) {
+func (handler *Handler) Decrypt(token string) (string, error) {
+	if !handler.Enabled {
+		return token, nil
+	}
+
+	if handler.Key == nil {
+		return "", errors.New("JWE Private Key not loaded")
+	}
+
+	privateKey := handler.Key.PrivateKey.(*rsa.PrivateKey)
+
 	// Parse the serialized token
-	jwe, err := jose.ParseEncrypted(tokenString)
+	jwe, err := jose.ParseEncrypted(token)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing JWE: %v", err)
+		return "", fmt.Errorf("error parsing JWE: %v", err)
 	}
 
 	// Decrypt the token
 	decrypted, err := jwe.Decrypt(privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting JWE: %v", err)
+		return "", fmt.Errorf("error decrypting JWE: %v", err)
 	}
 
-	return decrypted, nil
+	return string(decrypted), nil
 }
