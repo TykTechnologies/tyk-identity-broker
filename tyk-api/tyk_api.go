@@ -358,7 +358,7 @@ func (t *TykAPI) CreateSSONonce(userAPICred string, data interface{}) (interface
 
 	dErr, retCode, _ := t.DispatchAndDecode(SSO_REGULAR, "POST", DASH, &returnVal, userAPICred, body, "")
 	if retCode != http.StatusOK {
-		tykAPILogger.Warn("SSO regular dashboard API failed, trying with Admin API")
+		tykAPILogger.Warnf("SSO regular dashboard API failed, trying with Admin API.Got: %v", retCode)
 		return t.CreateAdminSSONonce(data)
 	}
 
@@ -385,7 +385,7 @@ func (t *TykAPI) CreateAdminSSONonce(data interface{}) (interface{}, Endpoint, e
 	if dErr == nil && retCode == http.StatusOK {
 		tykAPILogger.Info("Single Sign-On nonce created successfully via Admin API!")
 	} else {
-		tykAPILogger.Error("could not create nonce for admin api:", dErr.Error())
+		tykAPILogger.Errorf("could not create nonce for admin api:", dErr.Error(), " Got: %v", retCode)
 	}
 
 	return returnVal, endpoint, dErr

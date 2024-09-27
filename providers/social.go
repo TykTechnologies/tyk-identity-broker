@@ -6,9 +6,12 @@ extending TAP to use more providers, add them to this section
 package providers
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/TykTechnologies/tyk/certs"
 	"sync"
 
 	"net/http"
@@ -66,6 +69,7 @@ type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
 	FailureRedirect string
+	JWE             jwe.Config `json:"jwe,omitempty"`
 }
 
 // Name returns the name of the provider
@@ -95,13 +99,23 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 	s.handler = handler
 	s.profile = profile
-
 	s.toth = toth.TothInstance{}
 	s.toth.Init()
 
 	unmarshallErr := json.Unmarshal(config, &s.config)
 	if unmarshallErr != nil {
 		return unmarshallErr
+	}
+
+	if s.config.JWE.Enabled {
+		certs := CertManager.List([]string{s.config.JWE.PrivateKeyLocation}, certs.CertificateAny)
+		if len(certs) == 0 {
+			socialLogger.Error("JWE Private Key was not loaded")
+		} else {
+			socialLogger.Debug("JWE Private Key Loaded")
+			s.config.JWE.Key = certs[0]
+		}
+
 	}
 
 	// TODO: Add more providers here
@@ -157,6 +171,7 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 // Handle is the main callback delegate for the generic auth flow
 func (s *Social) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
+
 	tothic.BeginAuthHandler(w, r, &s.toth, pathParams, profile)
 }
 
@@ -177,10 +192,31 @@ func (s *Social) checkConstraints(user interface{}) error {
 	return nil
 }
 
+func (s *Social) DecryptJWE(IDToken string) (string, error) {
+
+	if !s.config.JWE.Enabled {
+		return IDToken, nil
+	}
+
+	pk := s.config.JWE.Key.PrivateKey.(rsa.PrivateKey)
+	decrypted, err := jwe.Decrypt(IDToken, &pk)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Decrypted: ", string(decrypted))
+	return string(decrypted), nil
+}
+
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 
-	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile)
+	jweHandler := tothic.JWEHandler{
+		IsJWE:   s.config.JWE.Enabled,
+		Decrypt: s.DecryptJWE,
+	}
+
+	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &jweHandler)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return
