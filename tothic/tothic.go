@@ -191,7 +191,6 @@ as either "provider" or ":provider".
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *jwe.Handler) (goth.User, error) {
-
 	providerName, err := GetProviderName(profile)
 	if err != nil {
 		return goth.User{}, err
@@ -243,12 +242,6 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	}
 	JWTSession.IDToken = decryptedIDToken
 	return provider.FetchUser(JWTSession)
-}
-
-func UnmarshalIDToken(data string) (*openidConnect.Session, error) {
-	sess := &openidConnect.Session{}
-	err := json.NewDecoder(strings.NewReader(data)).Decode(sess)
-	return sess, err
 }
 
 // GetProviderName is a function used to get the name of a provider
