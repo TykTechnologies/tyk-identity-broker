@@ -171,7 +171,6 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 // Handle is the main callback delegate for the generic auth flow
 func (s *Social) Handle(w http.ResponseWriter, r *http.Request, pathParams map[string]string, profile tap.Profile) {
-
 	tothic.BeginAuthHandler(w, r, &s.toth, pathParams, profile)
 }
 
@@ -213,7 +212,7 @@ func (s *Social) DecryptJWE(IDToken string) (string, error) {
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
 
-	jweHandler := tothic.JWEHandler{
+	jweHandler := jwe.JWEHandler{
 		IsJWE:   s.config.JWE.Enabled,
 		Decrypt: s.DecryptJWE,
 	}

@@ -191,12 +191,7 @@ as either "provider" or ":provider".
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
 
-type JWEHandler struct {
-	IsJWE   bool
-	Decrypt func(IDToken string) (string, error)
-}
-
-var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *JWEHandler) (goth.User, error) {
+var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *jwe.JWEHandler) (goth.User, error) {
 
 	providerName, err := GetProviderName(profile)
 	if err != nil {

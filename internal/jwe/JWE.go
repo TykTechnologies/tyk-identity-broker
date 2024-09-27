@@ -14,6 +14,11 @@ type Config struct {
 	Key                *tls.Certificate `json:"-"`
 }
 
+type JWEHandler struct {
+	IsJWE   bool
+	Decrypt func(IDToken string) (string, error)
+}
+
 func Encrypt(token string) (string, error) {
 	// Convert payload to JSON
 	payloadBytes, err := json.Marshal(token)
