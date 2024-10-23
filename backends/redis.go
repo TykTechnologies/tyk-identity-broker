@@ -136,7 +136,7 @@ func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
 		}
 	}
 
-	if err := r.kv.Set(ctx, r.fixKey(key), strVal, 0); err != nil {
+	if err = r.kv.Set(ctx, r.fixKey(key), strVal, 0); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
