@@ -70,46 +70,6 @@ nfpms:
       signature:
         key_file: tyk.io.signing.key
         type: origin
-  - id: fips
-    vendor: "Tyk Technologies Ltd"
-    homepage: "https://tyk.io"
-    maintainer: "Tyk <info@tyk.io>"
-    description: Tyk Authentication Proxy for third-party login
-    package_name: tyk-identity-broker-fips
-    file_name_template: "{{ .ConventionalFileName }}"
-    builds:
-      - fips
-    formats:
-      - deb
-      - rpm
-    contents:
-      - src: "README.md"
-        dst: "/opt/share/docs/tyk-identity-broker/README.md"
-      - src: "ci/install/*"
-        dst: "/opt/tyk-identity-broker/install"
-      - src: ci/install/inits/systemd/system/tyk-identity-broker.service
-        dst: /lib/systemd/system/tyk-identity-broker.service
-      - src: ci/install/inits/sysv/init.d/tyk-identity-broker
-        dst: /etc/init.d/tyk-identity-broker
-      - src: "LICENSE.md"
-        dst: "/opt/share/docs/tyk-identity-broker/LICENSE.md"
-      - src: tib_sample.conf
-        dst: /opt/tyk-identity-broker/tib.conf
-        type: "config|noreplace"
-    scripts:
-      preinstall: "ci/install/before_install.sh"
-      postinstall: "ci/install/post_install.sh"
-      postremove: "ci/install/post_remove.sh"
-    bindir: "/opt/tyk-identity-broker"
-    rpm:
-      scripts:
-        posttrans: ci/install/post_trans.sh
-      signature:
-        key_file: tyk.io.signing.key
-    deb:
-      signature:
-        key_file: tyk.io.signing.key
-        type: origin
 publishers:
   - name: tyk-identity-broker-unstable
     env:
