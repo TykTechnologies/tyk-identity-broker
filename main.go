@@ -60,6 +60,7 @@ func init() {
 	// We set the http client's Transport to do InsecureSkipVerify to avoid error in case the certificate
 	// was signed by unknown authority, trusting the user to set up his profile with the correct .well-know URL.
 	http.DefaultClient.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: config.SSLInsecureSkipVerify,
 		},
