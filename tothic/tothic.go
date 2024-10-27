@@ -232,10 +232,6 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 		return goth.User{}, err
 	}
 
-	// for testing override the id token
-	JWTSession.IDToken, _ = jwe.Encrypt(JWTSession.IDToken)
-	//--end testing
-
 	// we must decrypt the ID token
 	err = jwe.DecryptIDToken(jweHandler, JWTSession)
 	if err != nil {

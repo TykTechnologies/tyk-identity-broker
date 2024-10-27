@@ -4,10 +4,9 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
+	"github.com/go-jose/go-jose/v3"
 
 	"github.com/markbates/goth/providers/openidConnect"
-	"gopkg.in/square/go-jose.v2"
-
 	"testing"
 
 	"github.com/stretchr/testify/assert"
