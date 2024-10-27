@@ -71,16 +71,15 @@ jobs:
         uses: supercharge/redis-github-action@1.2.0
         with:
           redis-version: ${{ matrix.redis-version }}
-     - name: Start MongoDB
-       uses: supercharge/mongodb-github-action@1.2.0
-       with:
-          mongodb-version: '${{ matrix.mongodb-version }}'
-          
-     - name: Run tests
-       run: |
-        ./bin/ci-tests.sh ${{ matrix.databases }}
-     - uses: actions/upload-artifact@v4
-       with:
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.2.0
+        with:
+           mongodb-version: '${{ matrix.mongodb-version }}'
+      - name: Run tests
+        run: |
+         ./bin/ci-tests.sh ${{ matrix.databases }}
+      - uses: actions/upload-artifact@v4
+        with:
          name: coverage
          retention-days: 1
          path: |
