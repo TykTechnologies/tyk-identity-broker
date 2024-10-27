@@ -260,3 +260,39 @@ func TestRedis_GetAll(t *testing.T) {
 	keys := rb.GetAll(orgId)
 	assert.Len(t, keys, 0)
 }
+
+// Test for toJSONString function
+func TestToJSONString(t *testing.T) {
+	tests := []struct {
+		input    interface{}
+		expected string
+		err      bool
+	}{
+		// Test cases with expected outputs
+		{input: map[string]string{"key": "value"}, expected: `{"key":"value"}`, err: false},
+		{input: []int{1, 2, 3}, expected: `[1,2,3]`, err: false},
+		{input: "Hello, world!", expected: `"Hello, world!"`, err: false},
+		{input: nil, expected: "null", err: false},
+		{input: struct{ Name string }{Name: "Alice"}, expected: `{"Name":"Alice"}`, err: false},
+
+		// Test case expected to fail (circular reference)
+		{input: func() {}, expected: "", err: true}, // Function types cannot be marshaled
+	}
+
+	for _, test := range tests {
+		result, err := toJSONString(test.input)
+
+		if test.err {
+			if err == nil {
+				t.Errorf("Expected error for input %v, got nil", test.input)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("Unexpected error for input %v: %v", test.input, err)
+			}
+			if result != test.expected {
+				t.Errorf("Expected %s for input %v, got %s", test.expected, test.input, result)
+			}
+		}
+	}
+}

@@ -116,8 +116,27 @@ func (r *RedisBackend) SetDb(kv temporal.KeyValue) {
 	redisLogger.Info("Set KV store")
 }
 
+func toJSONString(val interface{}) (string, error) {
+	jsonBytes, err := json.Marshal(val)
+	if err != nil {
+		return "", err // Return an error if marshaling fails
+	}
+	return string(jsonBytes), nil // Convert byte slice to string
+}
+
 func (r *RedisBackend) SetKey(key string, orgId string, val interface{}) error {
-	if err := r.kv.Set(ctx, r.fixKey(key), val.(string), 0); err != nil {
+	var err error
+	strVal, ok := val.(string)
+	if !ok {
+		// Handle the case where val is not a string. Convert it via json marshaller
+		strVal, err = toJSONString(val)
+		if err != nil {
+			redisLogger.WithError(err).Error("cannot store interface in redis")
+			return err
+		}
+	}
+
+	if err = r.kv.Set(ctx, r.fixKey(key), strVal, 0); err != nil {
 		redisLogger.WithError(err).Debug("Error trying to set value")
 		return err
 	}
