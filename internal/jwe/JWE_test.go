@@ -20,7 +20,6 @@ func generateMockPrivateKey() (*tls.Certificate, error) {
 	}
 	cert := &tls.Certificate{
 		PrivateKey: privKey,
-		// Normally you would also populate the Certificate fields, but it's not needed for this test
 	}
 	return cert, nil
 }

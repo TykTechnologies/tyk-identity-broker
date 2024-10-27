@@ -69,7 +69,7 @@ type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
 	FailureRedirect string
-	JWE             jwe.Handler `json:"jwe,omitempty"`
+	JWE             jwe.Handler `json:"JWE,omitempty"`
 }
 
 // Name returns the name of the provider
