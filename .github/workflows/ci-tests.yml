@@ -11,10 +11,10 @@ on:
       - release-**
 env:
   TYK_IB_STORAGE_STORAGETYPE: file
-  
+
 permissions:
   contents: read
-  
+
 jobs:
   golangci-lint:
     runs-on: ubuntu-latest
@@ -38,9 +38,9 @@ jobs:
           retention-days: 1
           path: |
             golanglint.xml
-  
+
   ci-test:
-    name: '${{ matrix.databases }}'
+    name: "${{ matrix.databases }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -52,26 +52,25 @@ jobs:
         redis-version: [5]
         mongodb-version: [4.2]
     steps:
-     - name: Checkout Code
-       uses: actions/checkout@v4
-       with:
-        fetch-depth: 2
-    
-     - name: Setup Go
-       uses: actions/setup-go@v2
-       with:
-        go-version: '^1.21'
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-     - name: Install Dependencies and basic hygiene test
-       id: hygiene
-       run: |
-        go install golang.org/x/tools/cmd/goimports@latest
-       
-     - name: Start Redis
-       uses: supercharge/redis-github-action@1.2.0
-       with:
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.21"
+
+      - name: Install Dependencies and basic hygiene test
+        id: hygiene
+        run: |
+          go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.2.0
+        with:
           redis-version: ${{ matrix.redis-version }}
-
      - name: Start MongoDB
        uses: supercharge/mongodb-github-action@1.2.0
        with:
@@ -86,7 +85,6 @@ jobs:
          retention-days: 1
          path: |
            *cov
-  
   sonar-cloud-analysis:
     runs-on: ubuntu-latest
     needs: [ci-test, golangci-lint]
@@ -114,27 +112,27 @@ jobs:
         id: check_files
         uses: andstor/file-existence-action@v1
         with:
-          files: '*.cov, golanglint.xml'
+          files: "*.cov, golanglint.xml"
       - name: Install Dependencies
         run: >
           go install github.com/wadey/gocovmerge@latest
-          
+
       - name: merge reports
         run: |
           ./bin/merge-cov.sh
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         with:
-         args: >
-          -Dsonar.organization=tyktechnologies
-          -Dsonar.projectKey=TykTechnologies_tyk-identity-broker
-          -Dsonar.sources=.
-          -Dsonar.exclusions=ci/**
-          -Dsonar.coverage.exclusions=**/*_test.go,**/mocks/*.go
-          -Dsonar.test.inclusions=**/*_test.go
-          -Dsonar.tests=.
-          -Dsonar.go.coverage.reportPaths=*.cov
-          -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
+          args: >
+            -Dsonar.organization=tyktechnologies
+            -Dsonar.projectKey=TykTechnologies_tyk-identity-broker
+            -Dsonar.sources=.
+            -Dsonar.exclusions=ci/**
+            -Dsonar.coverage.exclusions=**/*_test.go,**/mocks/*.go
+            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.tests=.
+            -Dsonar.go.coverage.reportPaths=*.cov
+            -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

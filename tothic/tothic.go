@@ -96,7 +96,7 @@ func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
 		return
 	}
 
-	err = pathParams.SetKey(profile.GetPrefix(), profile.OrgID, string(jsonbody))
+	err = pathParams.SetKey(profile.GetPrefix(), profile.OrgID, params)
 	if err != nil {
 		log.WithError(err).Error("saving path params")
 	}
