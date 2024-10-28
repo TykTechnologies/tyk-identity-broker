@@ -24,7 +24,6 @@ require (
 	golang.org/x/oauth2 v0.18.0
 	golang.org/x/text v0.16.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
-	gopkg.in/square/go-jose.v2 v2.3.1
 )
 
 require (
