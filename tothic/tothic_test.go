@@ -2,13 +2,14 @@ package tothic
 
 import (
 	"crypto/rsa"
+	"os"
+	"reflect"
+	"testing"
+
 	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/openidConnect"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"reflect"
-	"testing"
 )
 
 func TestKeyFromEnv(t *testing.T) {
