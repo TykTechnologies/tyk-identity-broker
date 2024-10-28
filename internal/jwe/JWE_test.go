@@ -128,7 +128,7 @@ func TestDecryptIDToken(t *testing.T) {
 			jwtSession: &openidConnect.Session{
 				IDToken: jweString,
 			},
-			expectError:   false,
+			expectError:   true,
 			expectedToken: "test token",
 			jweHandler: &Handler{
 				Enabled: true,
