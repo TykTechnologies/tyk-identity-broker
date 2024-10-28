@@ -32,8 +32,7 @@ jobs:
         with:
           version: latest
           args: --out-format=checkstyle:golanglint.xml --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }}
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
+      - uses: actions/upload-artifact@v3
         with:
           name: golangcilint
           retention-days: 1
@@ -81,7 +80,7 @@ jobs:
       - name: Run tests
         run: |
           ./bin/ci-tests.sh ${{ matrix.databases }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v3
         with:
           name: coverage
           retention-days: 1
