@@ -104,6 +104,7 @@ func TestDecryptIDToken(t *testing.T) {
 		jwtSession    *openidConnect.Session
 		expectError   bool
 		expectedToken string
+		jweHandler    *Handler
 	}{
 		{
 			name: "Successful Decryption",
@@ -112,6 +113,7 @@ func TestDecryptIDToken(t *testing.T) {
 			},
 			expectError:   false,
 			expectedToken: "test token",
+			jweHandler:    jweHandler,
 		},
 		{
 			name: "Invalid Token",
@@ -119,12 +121,24 @@ func TestDecryptIDToken(t *testing.T) {
 				IDToken: "invalid-token",
 			},
 			expectError: true,
+			jweHandler:  jweHandler,
+		},
+		{
+			name: "Failed Decryption due Key not loaded",
+			jwtSession: &openidConnect.Session{
+				IDToken: jweString,
+			},
+			expectError:   false,
+			expectedToken: "test token",
+			jweHandler: &Handler{
+				Enabled: true,
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := DecryptIDToken(jweHandler, tt.jwtSession)
+			err := DecryptIDToken(tt.jweHandler, tt.jwtSession)
 
 			if tt.expectError {
 				assert.Error(t, err)
