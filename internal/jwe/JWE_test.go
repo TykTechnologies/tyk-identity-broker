@@ -1,12 +1,7 @@
 package jwe
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
-	"crypto/tls"
-
-	"github.com/go-jose/go-jose/v3"
-
 	"testing"
 
 	"github.com/markbates/goth/providers/openidConnect"
@@ -14,45 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func generateMockPrivateKey() (*tls.Certificate, error) {
-	// Generate a new RSA private key for testing
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	cert := &tls.Certificate{
-		PrivateKey: privKey,
-	}
-	return cert, nil
-}
-
-func createJWE(payload []byte, recipient *rsa.PublicKey) (string, error) {
-
-	encrypter, err := jose.NewEncrypter(
-		jose.A256GCM,
-		jose.Recipient{
-			Algorithm: jose.RSA_OAEP_256,
-			Key:       recipient,
-		},
-		(&jose.EncrypterOptions{}).WithType("JWT"))
-	if err != nil {
-		return "", err
-	}
-	jwe, err := encrypter.Encrypt(payload)
-	if err != nil {
-		return "", err
-	}
-	return jwe.CompactSerialize()
-}
-
 // Test case for Handler.Decrypt
 func TestHandler_Decrypt(t *testing.T) {
 	// Generate a mock private key
-	mockCert, err := generateMockPrivateKey()
+	mockCert, err := GenerateMockPrivateKey()
 	assert.NoError(t, err)
 
 	// Create a valid JWE token for testing
-	jweString, err := createJWE([]byte("test token"), mockCert.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
+	jweString, err := CreateJWE([]byte("test token"), mockCert.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -122,11 +86,11 @@ func TestHandler_Decrypt(t *testing.T) {
 }
 
 func TestDecryptIDToken(t *testing.T) {
-	mockCert, err := generateMockPrivateKey()
+	mockCert, err := GenerateMockPrivateKey()
 	assert.NoError(t, err)
 
 	// Create a valid JWE token for testing
-	jweString, err := createJWE([]byte("test token"), mockCert.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
+	jweString, err := CreateJWE([]byte("test token"), mockCert.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
 	assert.NoError(t, err)
 
 	// Setup a valid JWE handler

@@ -221,23 +221,33 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 		return goth.User{}, err
 	}
 
-	// no decryption is required
-	if !jweHandler.Enabled {
-		return provider.FetchUser(sess)
+	JWTSession, err := prepareJWTSession(sess, jweHandler)
+	if err != nil {
+		return goth.User{}, err
 	}
 
+	return provider.FetchUser(JWTSession)
+}
+
+func prepareJWTSession(sess goth.Session, jweHandler *jwe.Handler) (goth.Session, error) {
+	// no decryption is required
+	if !jweHandler.Enabled {
+		return sess, nil
+	}
+
+	var err error
 	JWTSession := &openidConnect.Session{}
 	err = json.NewDecoder(strings.NewReader(sess.Marshal())).Decode(JWTSession)
 	if err != nil {
-		return goth.User{}, err
+		return nil, err
 	}
 
 	// we must decrypt the ID token
 	err = jwe.DecryptIDToken(jweHandler, JWTSession)
 	if err != nil {
-		return goth.User{}, err
+		return nil, err
 	}
-	return provider.FetchUser(JWTSession)
+	return JWTSession, nil
 }
 
 // GetProviderName is a function used to get the name of a provider
