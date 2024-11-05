@@ -13,7 +13,7 @@ import (
 
 type Handler struct {
 	Enabled            bool             `json:"Enabled"`
-	PrivateKeyLocation string           `json:"Private_key_location"`
+	PrivateKeyLocation string           `json:"PrivateKeyLocation"`
 	Key                *tls.Certificate `json:"-"`
 }
 
