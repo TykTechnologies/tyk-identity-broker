@@ -215,9 +215,17 @@ func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError 
 }
 
 func (s *Social) getCallBackURL(provider string) string {
-	return s.config.CallbackBaseURL + "/auth/" + s.profile.ID + "/" + provider + "/callback"
-}
+	baseURL, err := url.Parse(s.config.CallbackBaseURL)
+	if err != nil {
+		// handle error if the base URL is invalid
+		return ""
+	}
 
+	// Build the full callback path using the `path` package to ensure proper formatting
+	baseURL.Path = path.Join(baseURL.Path, "auth", s.profile.ID, provider, "callback")
+
+	return baseURL.String()
+}
 func (s *Social) HandleMetadata(http.ResponseWriter, *http.Request) {
 	socialLogger.Warning("metadata not implemented for provider")
 }
