@@ -16,6 +16,7 @@ import (
 
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/markbates/goth"
