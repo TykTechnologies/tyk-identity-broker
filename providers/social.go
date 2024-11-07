@@ -15,6 +15,7 @@ import (
 	"github.com/TykTechnologies/tyk/certs"
 
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/markbates/goth"
