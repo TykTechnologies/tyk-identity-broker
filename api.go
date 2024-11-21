@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/TykTechnologies/tyk-identity-broker/initializer"
+
 	tykerror "github.com/TykTechnologies/tyk-identity-broker/error"
 
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -83,7 +85,7 @@ func IsAuthenticated(h http.Handler) http.Handler {
 // ------ End Middleware methods -------
 
 func HandleGetProfileList(w http.ResponseWriter, r *http.Request) {
-	profiles := AuthConfigStore.GetAll("")
+	profiles := initializer.AuthConfigStore.GetAll("")
 
 	HandleAPIOK(profiles, "", 200, w, r)
 }
@@ -92,7 +94,7 @@ func HandleGetProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
 	thisProfile := tap.Profile{}
 
-	keyErr := AuthConfigStore.GetKey(key, thisProfile.OrgID, &thisProfile)
+	keyErr := initializer.AuthConfigStore.GetKey(key, thisProfile.OrgID, &thisProfile)
 	if keyErr != nil {
 		HandleAPIError(APILogTag, "Profile not found", keyErr, 404, w, r)
 		return
@@ -122,7 +124,7 @@ func HandleAddProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpErr := tap.AddProfile(thisProfile, AuthConfigStore, GlobalDataLoader.Flush)
+	httpErr := tap.AddProfile(thisProfile, initializer.AuthConfigStore, GlobalDataLoader.Flush)
 	if httpErr != nil {
 		HandleAPIError(APILogTag, httpErr.Message, httpErr.Error, httpErr.Code, w, r)
 		return
@@ -147,7 +149,7 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updateErr := tap.UpdateProfile(key, thisProfile, AuthConfigStore, GlobalDataLoader.Flush)
+	updateErr := tap.UpdateProfile(key, thisProfile, initializer.AuthConfigStore, GlobalDataLoader.Flush)
 	if updateErr != nil {
 		HandleAPIError(APILogTag, updateErr.Message, updateErr.Error, updateErr.Code, w, r)
 		return
@@ -158,7 +160,7 @@ func HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 func HandleDeleteProfile(w http.ResponseWriter, r *http.Request) {
 	key := mux.Vars(r)["id"]
-	err := tap.DeleteProfile(key, "", AuthConfigStore, GlobalDataLoader.Flush)
+	err := tap.DeleteProfile(key, "", initializer.AuthConfigStore, GlobalDataLoader.Flush)
 	if err != nil {
 		HandleAPIError(APILogTag, err.Message, err.Error, err.Code, w, r)
 		return
