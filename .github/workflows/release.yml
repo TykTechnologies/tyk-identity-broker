@@ -8,13 +8,11 @@ name: Release
 # - docker hub
 # - devenv ECR
 # - Cloudsmith
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 on:
-  # Trigger release every monday at midnight for master CI images
-  schedule:
-    - cron: "0 0 * * 1"
   pull_request:
   push:
     branches:
@@ -24,7 +22,7 @@ on:
       - 'v*'
 env:
   GOPRIVATE: github.com/TykTechnologies
-  VARIATION: inverted
+  VARIATION: prod-variation
   DOCKER_BUILD_SUMMARY: false
   DOCKER_BUILD_RECORD_UPLOAD: false
   # startsWith covers pull_request_target too
@@ -131,11 +129,12 @@ jobs:
         with:
           mask-password: 'true'
       - name: Docker metadata for CI
-        id: ci_metadata
+        id: ci_metadata_std
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.ecr.outputs.registry }}/tyk-identity-broker
+          images: |
+            ${{ steps.ecr.outputs.registry }}/tyk-identity-broker
           flavor: |
             latest=false
           tags: |
@@ -150,43 +149,52 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: "dist"
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/s390x
           file: ci/Dockerfile.distroless
           provenance: mode=max
           sbom: true
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ steps.ci_metadata.outputs.tags }}
+          tags: steps.ci_metadata_std.outputs.tags
           labels: ${{ steps.tag_metadata.outputs.labels }}
+          build-args: |
+            BUILD_PACKAGE_NAME=tyk-identity-broker
       - name: Docker metadata for tag push
-        id: tag_metadata
+        id: tag_metadata_std
         uses: docker/metadata-action@v5
         with:
           images: |
-            tykio/tyk-identity-broker
             docker.tyk.io/tyk-identity-broker/tyk-identity-broker
+
+            tykio/tyk-identity-broker
           flavor: |
             latest=false
             prefix=v
           tags: |
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{version}}
-          labels: "org.opencontainers.image.title=tyk-identity-broker  (distroless) \norg.opencontainers.image.description=Tyk Authentication Proxy for third-party login\norg.opencontainers.image.vendor=tyk.io\norg.opencontainers.image.version=${{ github.ref_name }}\n"
-      - name: push image to prod
+          labels: |
+            org.opencontainers.image.title=Tyk Identity Broker
+            org.opencontainers.image.description=Tyk Authentication Proxy for third-party login
+            org.opencontainers.image.vendor=tyk.io
+            org.opencontainers.image.version=${{ github.ref_name }}
+      - name: push std image to prod
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
         uses: docker/build-push-action@v6
         with:
           context: "dist"
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/s390x
           file: ci/Dockerfile.distroless
           provenance: mode=max
           sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ startsWith(github.ref, 'refs/tags') }}
-          tags: ${{ steps.tag_metadata.outputs.tags }}
-          labels: ${{ steps.tag_metadata.outputs.labels }}
+          tags: ${{ steps.tag_metadata_std.outputs.tags }}
+          labels: ${{ steps.tag_metadata_std.outputs.labels }}
+          build-args: |
+            BUILD_PACKAGE_NAME=tyk-identity-broker
       - name: save deb
         uses: actions/upload-artifact@v4
         if: ${{ matrix.golang_cross == '1.21-bookworm' }}
@@ -258,7 +266,7 @@ jobs:
           ARG TARGETARCH
           COPY tyk-identity-broker*_${TARGETARCH}.deb /tyk-identity-broker.deb
           RUN apt-get update && apt-get install -y curl
-          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.deb.sh | bash && apt-get install -y tyk-identity-broker=1.1.0
+          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker-unstable/script.deb.sh | bash && apt-get install -y tyk-identity-broker=1.1.0
           RUN dpkg -i /tyk-identity-broker.deb
 
           ' | tee Dockerfile
@@ -304,8 +312,8 @@ jobs:
           COPY tyk-identity-broker*.${RHELARCH}.rpm /tyk-identity-broker.rpm
           RUN command -v curl || yum install -y curl
           RUN command -v useradd || yum install -y shadow-utils
-          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.rpm.sh | bash && yum install -y tyk-identity-broker-1.1.0-1
-          RUN curl https://keyserver.tyk.io/tyk.io.rpm.signing.key.2020 -o tyk-identity-broker.key && rpm --import tyk-identity-broker.key
+          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker-unstable/script.rpm.sh | bash && yum install -y tyk-identity-broker-1.1.0-1
+          RUN curl https://keyserver.tyk.io/tyk.io.rpm.signing.key.2020 -o tyk-identity-broker-unstable.key && rpm --import tyk-identity-broker-unstable.key
           RUN rpm --checksig /tyk-identity-broker.rpm
           RUN rpm -Uvh --force /tyk-identity-broker.rpm
 
