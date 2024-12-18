@@ -11,6 +11,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/TykTechnologies/tyk/certs"
+
 	"net/http"
 	"strings"
 
@@ -66,6 +69,7 @@ type GothConfig struct {
 	UseProviders    []GothProviderConfig
 	CallbackBaseURL string
 	FailureRedirect string
+	JWE             jwe.Handler `json:"JWE,omitempty"`
 }
 
 // Name returns the name of the provider
@@ -95,13 +99,22 @@ func (s *Social) Init(handler tap.IdentityHandler, profile tap.Profile, config [
 
 	s.handler = handler
 	s.profile = profile
-
 	s.toth = toth.TothInstance{}
 	s.toth.Init()
 
 	unmarshallErr := json.Unmarshal(config, &s.config)
 	if unmarshallErr != nil {
 		return unmarshallErr
+	}
+
+	if s.config.JWE.Enabled {
+		keys := CertManager.List([]string{s.config.JWE.PrivateKeyLocation}, certs.CertificateAny)
+		if len(keys) == 0 {
+			socialLogger.Error("JWE Private Key was not loaded")
+		} else {
+			socialLogger.Debug("JWE Private Key Loaded")
+			s.config.JWE.Key = keys[0]
+		}
 	}
 
 	// TODO: Add more providers here
@@ -179,8 +192,7 @@ func (s *Social) checkConstraints(user interface{}) error {
 
 // HandleCallback handles the callback from the OAuth provider
 func (s *Social) HandleCallback(w http.ResponseWriter, r *http.Request, onError func(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request), profile tap.Profile) {
-
-	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile)
+	user, err := tothic.CompleteUserAuth(w, r, &s.toth, profile, &s.config.JWE)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return
