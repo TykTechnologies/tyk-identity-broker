@@ -1,12 +1,18 @@
 package tothic
 
 import (
+	"crypto/rsa"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/openidConnect"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestKeyFromEnv(t *testing.T) {
@@ -15,23 +21,94 @@ func TestKeyFromEnv(t *testing.T) {
 	t.Run("with new variable", func(t *testing.T) {
 		_ = os.Setenv("TYK_IB_SESSION_SECRET", expected)
 		_ = os.Setenv("SESSION_SECRET", "")
-		assert(t, expected, KeyFromEnv())
+		assertDeepEqual(t, expected, KeyFromEnv())
 	})
 
 	t.Run("with deprecated", func(t *testing.T) {
 		_ = os.Setenv("TYK_IB_SESSION_SECRET", "")
 		_ = os.Setenv("SESSION_SECRET", expected)
-		assert(t, expected, KeyFromEnv())
+		assertDeepEqual(t, expected, KeyFromEnv())
 	})
 
 	t.Run("with both", func(t *testing.T) {
 		_ = os.Setenv("SESSION_SECRET", "SOME_OTHER_SECRET")
 		_ = os.Setenv("TYK_IB_SESSION_SECRET", expected)
-		assert(t, expected, KeyFromEnv())
+		assertDeepEqual(t, expected, KeyFromEnv())
 	})
 }
 
-func assert(t *testing.T, expected interface{}, actual interface{}) {
+func TestProcessJWTSession_Success(t *testing.T) {
+
+	mockCert, err := jwe.GenerateMockPrivateKey()
+	assert.NoError(t, err)
+
+	IDTokenContents := "test-id-token"
+
+	// Create a valid JWE token for testing
+	jweString, err := jwe.CreateJWE([]byte(IDTokenContents), mockCert.PrivateKey.(*rsa.PrivateKey).Public().(*rsa.PublicKey))
+	assert.NoError(t, err)
+
+	tcs := []struct {
+		name         string
+		sess         goth.Session
+		jweHandler   jwe.Handler
+		expectedSess goth.Session
+		errExpected  bool
+	}{
+		{
+			name: "no id token encryption",
+			sess: &openidConnect.Session{
+				IDToken: "anything",
+			},
+			expectedSess: &openidConnect.Session{
+				IDToken: "anything",
+			},
+			jweHandler:  jwe.Handler{Enabled: false},
+			errExpected: false,
+		},
+		{
+			name: "failed decryption, no key present",
+			sess: &openidConnect.Session{
+				IDToken: "any-encrypted-val",
+			},
+			expectedSess: &openidConnect.Session{
+				IDToken: "any-encrypted-val",
+			},
+			jweHandler:  jwe.Handler{Enabled: true},
+			errExpected: true,
+		},
+		{
+			name: "successful decryption",
+			sess: &openidConnect.Session{
+				IDToken: jweString,
+			},
+			jweHandler: jwe.Handler{
+				Enabled: true,
+				Key:     mockCert,
+			},
+			expectedSess: &openidConnect.Session{
+				IDToken: IDTokenContents,
+			},
+			errExpected: false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Call the function
+			sessResult, err := prepareJWTSession(tc.sess, &tc.jweHandler)
+			// Assert results
+			didErr := err != nil
+			assert.Equal(t, tc.errExpected, didErr)
+			if !tc.errExpected {
+				assert.Equal(t, tc.expectedSess, sessResult)
+			}
+		})
+	}
+
+}
+
+func assertDeepEqual(t *testing.T, expected interface{}, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %v, actual %v", expected, actual)
 	}
@@ -39,16 +116,16 @@ func assert(t *testing.T, expected interface{}, actual interface{}) {
 
 func TestGetState(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
-	assert(t, "state", GetState(req))
+	assert.Equal(t, "state", GetState(req))
 
 	req, _ = http.NewRequest(http.MethodGet, "http://localhost?state=FooBar", nil)
-	assert(t, "FooBar", GetState(req))
+	assert.Equal(t, "FooBar", GetState(req))
 
 	req, _ = http.NewRequest(http.MethodPost, "http://localhost", nil)
-	assert(t, "state", GetState(req))
+	assert.Equal(t, "state", GetState(req))
 
 	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", nil)
-	assert(t, "FooBar", GetState(req))
+	assert.Equal(t, "FooBar", GetState(req))
 
 	data := url.Values{}
 	data.Add("state", "BarBaz")
@@ -58,10 +135,10 @@ func TestGetState(t *testing.T) {
 	req, _ = http.NewRequest(http.MethodPost, "http://localhost", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	assert(t, "BarBaz", GetState(req))
+	assert.Equal(t, "BarBaz", GetState(req))
 
 	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	assert(t, "FooBar", GetState(req))
+	assert.Equal(t, "FooBar", GetState(req))
 }

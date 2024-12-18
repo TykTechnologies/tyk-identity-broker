@@ -12,6 +12,10 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
+	"github.com/markbates/goth/providers/openidConnect"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
 	"github.com/TykTechnologies/tyk-identity-broker/tap"
@@ -92,7 +96,7 @@ func SetPathParams(newPathParams map[string]string, profile tap.Profile) {
 		return
 	}
 
-	err = pathParams.SetKey(profile.GetPrefix(), profile.OrgID, string(jsonbody))
+	err = pathParams.SetKey(profile.GetPrefix(), profile.OrgID, params)
 	if err != nil {
 		log.WithError(err).Error("saving path params")
 	}
@@ -201,8 +205,7 @@ as either "provider" or ":provider".
 
 See https://github.com/markbates/goth/examples/main.go to see this in action.
 */
-var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile) (goth.User, error) {
-
+var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *toth.TothInstance, profile tap.Profile, jweHandler *jwe.Handler) (goth.User, error) {
 	providerName, err := GetProviderName(profile)
 	if err != nil {
 		return goth.User{}, err
@@ -228,12 +231,37 @@ var CompleteUserAuth = func(res http.ResponseWriter, req *http.Request, toth *to
 	}
 
 	_, err = sess.Authorize(provider, req.URL.Query())
-
 	if err != nil {
 		return goth.User{}, err
 	}
 
-	return provider.FetchUser(sess)
+	JWTSession, err := prepareJWTSession(sess, jweHandler)
+	if err != nil {
+		return goth.User{}, err
+	}
+
+	return provider.FetchUser(JWTSession)
+}
+
+func prepareJWTSession(sess goth.Session, jweHandler *jwe.Handler) (goth.Session, error) {
+	// no decryption is required
+	if !jweHandler.Enabled {
+		return sess, nil
+	}
+
+	var err error
+	JWTSession := &openidConnect.Session{}
+	err = json.NewDecoder(strings.NewReader(sess.Marshal())).Decode(JWTSession)
+	if err != nil {
+		return nil, err
+	}
+
+	// we must decrypt the ID token
+	err = jwe.DecryptIDToken(jweHandler, JWTSession)
+	if err != nil {
+		return nil, err
+	}
+	return JWTSession, nil
 }
 
 // GetProviderName is a function used to get the name of a provider
