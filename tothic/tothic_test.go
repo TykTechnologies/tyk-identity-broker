@@ -2,8 +2,11 @@ package tothic
 
 import (
 	"crypto/rsa"
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/TykTechnologies/tyk-identity-broker/internal/jwe"
@@ -109,4 +112,33 @@ func assertDeepEqual(t *testing.T, expected interface{}, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("Expected %v, actual %v", expected, actual)
 	}
+}
+
+func TestGetState(t *testing.T) {
+	req, _ := http.NewRequest(http.MethodGet, "http://localhost", nil)
+	assert.Equal(t, "state", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodGet, "http://localhost?state=FooBar", nil)
+	assert.Equal(t, "FooBar", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost", nil)
+	assert.Equal(t, "state", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", nil)
+	assert.Equal(t, "FooBar", GetState(req))
+
+	data := url.Values{}
+	data.Add("state", "BarBaz")
+
+	requestBody := data.Encode()
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	assert.Equal(t, "BarBaz", GetState(req))
+
+	req, _ = http.NewRequest(http.MethodPost, "http://localhost?state=FooBar", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	assert.Equal(t, "FooBar", GetState(req))
 }
