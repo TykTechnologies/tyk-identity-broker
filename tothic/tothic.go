@@ -140,15 +140,14 @@ func BeginAuthHandler(res http.ResponseWriter, req *http.Request, toth *toth.Tot
 var GetState = func(req *http.Request) string {
 	params := req.URL.Query()
 
-	var state string
+	state := params.Get("state")
 
-	if params.Encode() == "" && req.Method == http.MethodPost {
+	if state == "" && req.Method == http.MethodPost {
 		state = req.FormValue("state")
-	} else {
-		state = params.Get("state")
 	}
 
 	if state == "" {
+		// no "state" found, returning the default value
 		state = "state"
 	}
 
