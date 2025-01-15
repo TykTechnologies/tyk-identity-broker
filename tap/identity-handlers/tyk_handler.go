@@ -43,6 +43,7 @@ type SSOAccessData struct {
 	EmailAddress              string
 	DisplayName               string
 	GroupID                   string
+	GroupsIDs                 []string
 	SSOOnlyForRegisteredUsers bool
 }
 
@@ -157,7 +158,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	gUser, ok := i.(goth.User)
 	email := ""
 	displayName := ""
-	groupID := ""
+	var groupsIDs []string
+	var groupID string
 	if ok {
 		email = GetEmail(gUser, t.profile.CustomEmailField)
 
@@ -174,16 +176,18 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 			displayName = email
 		}
 
-		groupID = GetGroupId(gUser, t.profile.CustomUserGroupField, t.profile.DefaultUserGroupID, t.profile.UserGroupMapping, t.profile.UserGroupSeparator)
+		groupsIDs = GetGroupId(gUser, t.profile.CustomUserGroupField, t.profile.DefaultUserGroupID, t.profile.UserGroupMapping, t.profile.UserGroupSeparator)
+		if len(groupsIDs) > 0 {
+			groupID = groupsIDs[0]
+		}
 	}
-
-	tykHandlerLogger.Debugf("The GroupID %s is used for SSO: ", groupID)
-
+	tykHandlerLogger.Debugf("The GroupIDs %s used for SSO: ", groupsIDs)
 	accessRequest := SSOAccessData{
 		ForSection:                thisModule,
 		OrgID:                     t.profile.OrgID,
 		EmailAddress:              email,
 		DisplayName:               displayName,
+		GroupsIDs:                 groupsIDs,
 		GroupID:                   groupID,
 		SSOOnlyForRegisteredUsers: t.profile.SSOOnlyForRegisteredUsers,
 	}
@@ -537,20 +541,41 @@ func GetUserID(gUser goth.User, CustomUserIDField string) string {
 	return gUser.UserID
 }
 
-func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string, userGroupSeparator string) string {
-	groupID := DefaultUserGroup
-	if CustomUserGroupField != "" {
-		groups := make([]string, 0)
-		if gUser.RawData[CustomUserGroupField] != nil {
-			groups = groupsStringer(gUser.RawData[CustomUserGroupField], userGroupSeparator)
-		}
+// Helper function to return either [DefaultUserGroup] or an empty slice
+func defaultOrEmptyGroupIDs(DefaultUserGroup string) []string {
+	if DefaultUserGroup == "" {
+		return []string{}
+	}
+	return []string{DefaultUserGroup}
+}
 
-		for _, group := range groups {
-			if gid, ok := userGroupMapping[group]; ok {
-				groupID = gid
-				log.Debug(groupID)
-			}
+func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, userGroupMapping map[string]string, userGroupSeparator string) []string {
+	if CustomUserGroupField == "" {
+		return defaultOrEmptyGroupIDs(DefaultUserGroup)
+	}
+
+	rawGroups, exists := gUser.RawData[CustomUserGroupField]
+	if !exists || rawGroups == nil {
+		return defaultOrEmptyGroupIDs(DefaultUserGroup)
+	}
+
+	groups := groupsStringer(gUser.RawData[CustomUserGroupField], userGroupSeparator)
+	if len(groups) == 0 {
+		return defaultOrEmptyGroupIDs(DefaultUserGroup)
+	}
+
+	var groupsIDs []string
+
+	// if empty then return []string{defaultUserGroup}
+	for _, group := range groups {
+		if gid, ok := userGroupMapping[group]; ok {
+			groupsIDs = append(groupsIDs, gid)
 		}
 	}
-	return groupID
+
+	if len(groupsIDs) == 0 {
+		return defaultOrEmptyGroupIDs(DefaultUserGroup)
+	}
+
+	return groupsIDs
 }
