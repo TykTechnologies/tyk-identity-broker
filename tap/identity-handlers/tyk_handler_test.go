@@ -3,6 +3,8 @@ package identityHandlers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/markbates/goth"
 )
 
@@ -120,7 +122,7 @@ func TestGetGroupId(t *testing.T) {
 		TestName           string
 		CustomGroupIDField string
 		user               goth.User
-		ExpectedGroupID    string
+		ExpectedGroupsIDs  []string
 		DefaultGroupID     string
 		UserGroupMapping   map[string]string
 		UserGroupSeparator string
@@ -129,7 +131,7 @@ func TestGetGroupId(t *testing.T) {
 			TestName:           "Custom group id field empty",
 			CustomGroupIDField: "",
 			user:               goth.User{},
-			ExpectedGroupID:    "",
+			ExpectedGroupsIDs:  []string{},
 			DefaultGroupID:     "",
 			UserGroupMapping:   UserGroupMapping,
 		},
@@ -137,7 +139,7 @@ func TestGetGroupId(t *testing.T) {
 			TestName:           "Custom group id field empty & default group set",
 			CustomGroupIDField: "",
 			user:               goth.User{},
-			ExpectedGroupID:    DefaultGroupId,
+			ExpectedGroupsIDs:  []string{DefaultGroupId},
 			DefaultGroupID:     DefaultGroupId,
 			UserGroupMapping:   UserGroupMapping,
 		},
@@ -145,15 +147,15 @@ func TestGetGroupId(t *testing.T) {
 			TestName:           "Custom group id field not empty but invalid & default group set",
 			CustomGroupIDField: "my-custom-group-id-field",
 			user:               goth.User{},
-			ExpectedGroupID:    DefaultGroupId,
 			DefaultGroupID:     DefaultGroupId,
+			ExpectedGroupsIDs:  []string{DefaultGroupId},
 			UserGroupMapping:   UserGroupMapping,
 		},
 		{
 			TestName:           "Custom group id field not empty but invalid & default group not set",
 			CustomGroupIDField: "my-custom-group-id-field",
 			user:               goth.User{},
-			ExpectedGroupID:    "",
+			ExpectedGroupsIDs:  []string{},
 			DefaultGroupID:     "",
 			UserGroupMapping:   UserGroupMapping,
 		},
@@ -165,9 +167,9 @@ func TestGetGroupId(t *testing.T) {
 					"my-custom-group-id-field": "admins",
 				},
 			},
-			ExpectedGroupID:  "admins-group",
-			DefaultGroupID:   "",
-			UserGroupMapping: UserGroupMapping,
+			ExpectedGroupsIDs: []string{"admins-group"},
+			DefaultGroupID:    "",
+			UserGroupMapping:  UserGroupMapping,
 		},
 		{
 			TestName:           "Receive many groups from idp with blank space separated",
@@ -177,9 +179,9 @@ func TestGetGroupId(t *testing.T) {
 					"my-custom-group-id-field": "devs admins",
 				},
 			},
-			ExpectedGroupID:  "admins-group",
-			DefaultGroupID:   "",
-			UserGroupMapping: UserGroupMapping,
+			ExpectedGroupsIDs: []string{"devs-group", "admins-group"},
+			DefaultGroupID:    "",
+			UserGroupMapping:  UserGroupMapping,
 		},
 		{
 			TestName:           "Receive many groups from idp with comma separated",
@@ -189,7 +191,7 @@ func TestGetGroupId(t *testing.T) {
 					"my-custom-group-id-field": "devs,admins",
 				},
 			},
-			ExpectedGroupID:    "admins-group",
+			ExpectedGroupsIDs:  []string{"devs-group", "admins-group"},
 			DefaultGroupID:     "",
 			UserGroupMapping:   UserGroupMapping,
 			UserGroupSeparator: ",",
@@ -202,9 +204,9 @@ func TestGetGroupId(t *testing.T) {
 					"my-custom-group-id-field": "admins",
 				},
 			},
-			ExpectedGroupID:  "admins-group",
-			DefaultGroupID:   "devs",
-			UserGroupMapping: UserGroupMapping,
+			ExpectedGroupsIDs: []string{"admins-group"},
+			DefaultGroupID:    "devs",
+			UserGroupMapping:  UserGroupMapping,
 		},
 		{
 			TestName:           "Custom group id field not empty, and the claim being an array",
@@ -218,18 +220,52 @@ func TestGetGroupId(t *testing.T) {
 					"CN=Normal Group,OU=Security Groups,OU=GenericOrg,DC=GenericOrg,DC=COM,DC=GEN",
 				},
 			}},
-			ExpectedGroupID:  "tyk-admin",
-			DefaultGroupID:   "devs",
-			UserGroupMapping: UserGroupMapping,
+			ExpectedGroupsIDs: []string{"tyk-admin"},
+			DefaultGroupID:    "devs",
+			UserGroupMapping:  UserGroupMapping,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.TestName, func(t *testing.T) {
-			id := GetGroupId(tc.user, tc.CustomGroupIDField, tc.DefaultGroupID, tc.UserGroupMapping, tc.UserGroupSeparator)
-			if id != tc.ExpectedGroupID {
-				t.Errorf("group id incorrect. Expected:%v got:%v", tc.ExpectedGroupID, id)
-			}
+			ids := GetGroupId(tc.user, tc.CustomGroupIDField, tc.DefaultGroupID, tc.UserGroupMapping, tc.UserGroupSeparator)
+			assert.Equal(t, tc.ExpectedGroupsIDs, ids)
+		})
+	}
+}
+
+func Test_defaultOrEmptyGroupIDs(t *testing.T) {
+	tests := []struct {
+		name             string
+		defaultUserGroup string
+		expectedGroupIDs []string
+	}{
+		{
+			name:             "Empty default user group",
+			defaultUserGroup: "",
+			expectedGroupIDs: []string{},
+		},
+		{
+			name:             "Non-empty default user group",
+			defaultUserGroup: "defaultGroup",
+			expectedGroupIDs: []string{"defaultGroup"},
+		},
+		{
+			name:             "Default user group with spaces",
+			defaultUserGroup: "default group",
+			expectedGroupIDs: []string{"default group"},
+		},
+		{
+			name:             "Default user group with special characters",
+			defaultUserGroup: "group@123",
+			expectedGroupIDs: []string{"group@123"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := defaultOrEmptyGroupIDs(tt.defaultUserGroup)
+			assert.Equal(t, tt.expectedGroupIDs, result, "The group IDs should match")
 		})
 	}
 }
