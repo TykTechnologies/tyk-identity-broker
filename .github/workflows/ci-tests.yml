@@ -28,7 +28,7 @@ jobs:
         run: git fetch origin ${{ github.base_ref }}
       - name: golangci-lint
         if: ${{ github.event_name == 'pull_request' }}
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --out-format=checkstyle:golanglint.xml --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }}
