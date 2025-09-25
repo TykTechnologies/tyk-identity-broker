@@ -14,17 +14,10 @@ import (
 
 	errors "github.com/TykTechnologies/tyk-identity-broker/error"
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
 	"github.com/TykTechnologies/tyk-identity-broker/tothic"
 	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"github.com/gorilla/mux"
 )
-
-// AuthConfigStore Is the back end we are storing our configuration files to
-var AuthConfigStore tap.AuthRegisterBackend
-
-// IdentityKeyStore keeps a record of identities tied to tokens (if needed)
-var IdentityKeyStore tap.AuthRegisterBackend
 
 // config is the system-wide configuration
 var config configuration.Configuration
@@ -48,7 +41,7 @@ func init() {
 	flag.Parse()
 
 	configuration.LoadConfig(confFile, &config)
-	AuthConfigStore, IdentityKeyStore = initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
+	initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
 
 	configStore := &backends.RedisBackend{KeyPrefix: "tib-provider-config-"}
 	configStore.Init(config.BackEnd.IdentityBackendSettings)
@@ -70,7 +63,7 @@ func init() {
 	if err != nil {
 		return
 	}
-	err = GlobalDataLoader.LoadIntoStore(AuthConfigStore)
+	err = GlobalDataLoader.LoadIntoStore(initializer.AuthConfigStore)
 	if err != nil {
 		mainLogger.Errorf("loading into store %v", err)
 		return
