@@ -1,4 +1,4 @@
-name: intelligent branch suggestions
+name: intelligent branch suggestion
 on:
   pull_request:
     types:
