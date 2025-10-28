@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   branch-suggestions:
-    uses: TykTechnologies/github-actions/.github/workflows/branch-suggestion.yml@TT-15793-implement-intelligent-merge-branches
+    uses: TykTechnologies/github-actions/.github/workflows/branch-suggestion.yml@30294fe
     secrets:
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_TOKEN }}
