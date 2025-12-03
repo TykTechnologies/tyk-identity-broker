@@ -16,7 +16,7 @@ func TestCreateDataMongoLoader(t *testing.T) {
 	if !isMongo {
 		t.Skip()
 	}
-
+	t.Fail()
 	url, driver := MongoEnvConf()
 
 	conf := configuration.Configuration{
