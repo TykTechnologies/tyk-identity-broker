@@ -328,3 +328,32 @@ jobs:
       DEPDASH_URL: ${{ secrets.DEPDASH_URL }}
       DEPDASH_KEY: ${{ secrets.DEPDASH_KEY }}
       ORG_GH_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
+  aggregator-ci-test:
+    name: Aggregated CI Status
+    runs-on: ubuntu-latest
+    needs: [ goreleaser ]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    steps:
+      - name: Aggregate results
+        run: |
+          failed=()
+          # Get the needs context as JSON once
+          needs_json='${{ toJSON(needs) }}'
+
+          # Loop through all jobs in the needs context
+          for job in $(echo "$needs_json" | jq -r 'keys[]'); do
+            job_result=$(echo "$needs_json" | jq -r --arg job "$job" '.[$job].result')
+
+            if [[ "$job_result" != "success" ]]; then
+              failed+=("$job")
+            fi
+          done
+
+          if (( ${#failed[@]} )); then
+            # Join the failed job names with commas
+            failed_jobs=$(IFS=", "; echo "${failed[*]}")
+            echo "❌ Failed jobs ----- : $failed_jobs"
+            exit 1
+          fi
+
+          echo "✅ All required jobs succeeded"
