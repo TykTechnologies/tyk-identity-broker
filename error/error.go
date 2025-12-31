@@ -35,5 +35,5 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	fmt.Fprint(w, string(responseMsg))
 }

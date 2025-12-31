@@ -404,7 +404,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 		tykHandlerLogger.Info("--> No redirect, returning token...")
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, string(asJson))
+		fmt.Fprint(w, string(asJson))
 		return
 	}
 
@@ -491,7 +491,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 
 	tykHandlerLogger.Info("--> No redirect, returning token...")
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(asJson))
+	fmt.Fprint(w, string(asJson))
 	return
 }
 
