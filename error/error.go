@@ -18,7 +18,7 @@ type APIErrorMessage struct {
 }
 
 // HandleError is a generic error handler
-func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
+func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, _ *http.Request) {
 	log.WithFields(logrus.Fields{
 		"prefix":   tag,
 		"errorMsg": errorMsg,
