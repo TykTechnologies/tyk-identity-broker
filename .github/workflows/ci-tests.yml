@@ -82,7 +82,7 @@ jobs:
           ./bin/ci-tests.sh ${{ matrix.databases }}
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage-${{ matrix.databases }}
           retention-days: 1
           path: |
             *cov
@@ -104,7 +104,8 @@ jobs:
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
         with:
-          name: coverage
+          pattern: coverage-*
+          merge-multiple: true
       - name: Download golangcilint artifacts
         uses: actions/download-artifact@v4
         with:
