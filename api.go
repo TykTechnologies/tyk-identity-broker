@@ -42,7 +42,7 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	fmt.Fprint(w, string(responseMsg))
 }
 
 func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
@@ -65,7 +65,7 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	fmt.Fprint(w, string(responseMsg))
 }
 
 // ------ Middleware methods -------
