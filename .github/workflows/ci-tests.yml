@@ -60,7 +60,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: "^1.21"
+          go-version: "1.24"
 
       - name: Install Dependencies and basic hygiene test
         id: hygiene
@@ -100,7 +100,7 @@ jobs:
       - name: Setup Golang
         uses: actions/setup-go@v3
         with:
-          go-version: 1.22.6
+          go-version: "1.24"
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
         with:
@@ -117,7 +117,7 @@ jobs:
           files: "*.cov, golanglint.xml"
       - name: Install Dependencies
         run: >
-          go install github.com/wadey/gocovmerge@b5bfa59ec0ad
+          go install github.com/wadey/gocovmerge@latest
 
       - name: merge reports
         run: |
