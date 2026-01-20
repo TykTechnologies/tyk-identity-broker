@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Download golangcilint artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: golangcilint
+
+      # Add any other necessary steps here
+
+      # Example step to run golangcilint
+      - name: Run golangcilint
+        run: golangcilint
+
+      # Add any other necessary steps here
