@@ -3,6 +3,7 @@ package backends
 import "testing"
 
 func TestInMemoryBackend_GetAndSetKey(t *testing.T) {
+	t.Errorf("intentional failure")
 	backend := &InMemoryBackend{}
 
 	var config interface{}
