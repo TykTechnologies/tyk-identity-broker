@@ -145,6 +145,8 @@ jobs:
     steps:
       - name: Aggregate results
         run: |
+          echo "Intentionally failing the aggregator-ci-test job"
+          exit 1
           failed=()
           # Get the needs context as JSON once
           needs_json='${{ toJSON(needs) }}'
