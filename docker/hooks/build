@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -e
+
+echo "$PWD"
+
+echo "CACHE_TAG: $CACHE_TAG"
+echo "IMAGE_NAME: $IMAGE_NAME"
+echo "DOCKER_REPO: $DOCKER_REPO"
+echo "DOCKER_TAG: $DOCKER_TAG"
+
+dockerfilepath="$PWD/Dockerfile"
+repopath="$(dirname $PWD)"
+versionfile="$(cat $repopath/version.go)"
+regex="v([0-9]+\.[0-9]+\.[0-9]+)"
+if [[ $versionfile =~ $regex ]]; then
+    TYKVERSION=${BASH_REMATCH[1]}
+else
+    echo "No version found in the version file, terminating"
+    exit 1
+fi
+
+REPOSITORY="tyk-identity-broker"
+imagetag=${IMAGE_NAME##*:}
+if [[ $imagetag == "unstable" ]]; then
+    REPOSITORY="$REPOSITORY-unstable"
+    TYKVERSION="*"  # Pick latest version from unstable repo
+fi
+
+
+echo "Executing custom build hook for version $TYKVERSION from $REPOSITORY packagecloud repo"
+docker build --build-arg TYKVERSION=$TYKVERSION --build-arg REPOSITORY=$REPOSITORY -f $dockerfilepath -t $IMAGE_NAME $repopath
+
