@@ -73,7 +73,8 @@ jobs:
       - name: Install Dependencies and basic hygiene test
         id: hygiene
         run: |
-          go install golang.org/x/tools/cmd/goimports@v0.33.0
+          GOIMPORTS_VERSION=v0.33.0
+          go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION}
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1f58ff85cf4f9ef3c036109c11acd8376b436b47  # 1.2.0

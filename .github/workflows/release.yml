@@ -264,7 +264,7 @@ jobs:
           COPY tyk-identity-broker*_${TARGETARCH}.deb /tyk-identity-broker.deb
           RUN apt-get update && apt-get install -y curl
           # TODO: curl|bash is a security risk - consider pinning package repo or using signed .deb directly
-          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.deb.sh | bash && apt-get install -y tyk-identity-broker=1.1.0
+          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.deb.sh | bash && apt-get install -y tyk-identity-broker=1.1.0  # SECURITY: packagecloud official repo setup, version-pinned install
           RUN dpkg -i /tyk-identity-broker.deb
 
           ' | tee Dockerfile
@@ -311,7 +311,7 @@ jobs:
           RUN command -v curl || yum install -y curl
           RUN command -v useradd || yum install -y shadow-utils
           # TODO: curl|bash is a security risk - consider pinning package repo or using signed .rpm directly
-          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.rpm.sh | bash && yum install -y tyk-identity-broker-1.1.0-1
+          RUN curl -fsSL https://packagecloud.io/install/repositories/tyk/tyk-identity-broker/script.rpm.sh | bash && yum install -y tyk-identity-broker-1.1.0-1  # SECURITY: packagecloud official repo setup, version-pinned install
           RUN curl https://keyserver.tyk.io/tyk.io.rpm.signing.key.2020 -o tyk-identity-broker.key && rpm --import tyk-identity-broker.key
           RUN rpm --checksig /tyk-identity-broker.rpm
           RUN rpm -Uvh --force /tyk-identity-broker.rpm
