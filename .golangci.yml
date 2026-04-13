@@ -1,0 +1,16 @@
+version: "2"
+
+run:
+  modules-download-mode: readonly
+  tests: true
+
+output:
+  formats:
+    text:
+      path: stdout
+    checkstyle:
+      path: golangci-lint-report.json
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
