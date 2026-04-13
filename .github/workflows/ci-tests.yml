@@ -74,12 +74,12 @@ jobs:
           go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
+        uses: supercharge/redis-github-action@1f58ff85cf4f9ef3c036109c11acd8376b436b47  # 1.2.0
         with:
           redis-version: ${{ matrix.redis-version }}
 
       - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.2.0
+        uses: supercharge/mongodb-github-action@751e4ddb1f8de2717b75f275abce04735664ef46  # 1.2.0
         with:
           mongodb-version: "${{ matrix.mongodb-version }}"
 
@@ -132,7 +132,7 @@ jobs:
         run: |
           ./bin/merge-cov.sh
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: sonarsource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8  # v5.0.0
         with:
           args: >
             -Dsonar.organization=tyktechnologies
