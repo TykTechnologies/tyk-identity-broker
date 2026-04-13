@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -36,13 +35,13 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, _
 			"prefix": APILogTag,
 			"error":  err,
 		}).Error("[OK Handler] Couldn't marshal message stats")
-		fmt.Fprintf(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
 
 func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, _ *http.Request) {
