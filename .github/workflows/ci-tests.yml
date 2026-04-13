@@ -117,14 +117,15 @@ jobs:
           pattern: coverage-*
           merge-multiple: true
       - name: Download golangcilint artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           name: golangcilint
       - name: Check reports existence
         id: check_files
-        uses: andstor/file-existence-action@v1
+        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6  # v3
         with:
-          files: "*.cov, golanglint.xml"
+          files: 'gateway-all.cov, golangci-lint-report.json'
+          fail: true
       - name: Install Dependencies
         run: >
           go install github.com/wadey/gocovmerge@latest
@@ -144,7 +145,7 @@ jobs:
             -Dsonar.test.inclusions=**/*_test.go
             -Dsonar.tests=.
             -Dsonar.go.coverage.reportPaths=*.cov
-            -Dsonar.go.golangci-lint.reportPaths=golanglint.xml
+            -Dsonar.go.golangci-lint.reportPaths=golangci-lint-report.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
