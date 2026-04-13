@@ -8,7 +8,7 @@ output:
   formats:
     text:
       path: stdout
-    checkstyle:
+    json:
       path: golangci-lint-report.json
 
 issues:
