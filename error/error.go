@@ -2,7 +2,6 @@ package error
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -29,11 +28,11 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 
 	if err != nil {
 		log.WithField("prefix", tag).Error("[Error Handler] Couldn't marshal error stats: ", err)
-		fmt.Fprintf(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
