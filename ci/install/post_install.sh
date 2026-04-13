@@ -18,9 +18,9 @@ fi
 cleanup() {
     # After installing, remove files that were not needed on this platform / system
     if [ "${use_systemctl}" = "True" ]; then
-        rm -f /lib/systemd/system/tyk-identity-broker.service
-    else
         rm -f /etc/init.d/tyk-identity-broker
+    else
+        rm -f /lib/systemd/system/tyk-identity-broker.service
     fi
 }
 
@@ -39,8 +39,8 @@ restoreServices() {
 setupOwnership() {
     printf "\033[32m Post Install of the install directory ownership and permissions\033[0m\n"
     [ "${change_ownership}" = "True" ] && chown -R tyk:tyk /opt/tyk-identity-broker
-    # Config file should never be world-readable
-    chmod 660 /opt/tyk-identity-broker/tib.conf
+    # Config file should never be world-readable (only if it exists)
+    [ -f /opt/tyk-identity-broker/tib.conf ] && chmod 660 /opt/tyk-identity-broker/tib.conf
 }
 
 cleanInstall() {
