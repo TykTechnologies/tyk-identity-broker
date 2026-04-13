@@ -12,12 +12,11 @@ on:
 env:
   TYK_IB_STORAGE_STORAGETYPE: file
 
-permissions:
-  contents: read
-
 jobs:
   golangci-lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Tyk Identity Broker
         uses: actions/checkout@v4
@@ -42,6 +41,8 @@ jobs:
   ci-test:
     name: "${{ matrix.databases }}"
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -89,6 +90,8 @@ jobs:
   sonar-cloud-analysis:
     runs-on: ubuntu-latest
     needs: [ci-test, golangci-lint]
+    permissions:
+      contents: read
     steps:
       - name: Checkout TIB
         uses: actions/checkout@v4
@@ -117,7 +120,7 @@ jobs:
           files: "*.cov, golanglint.xml"
       - name: Install Dependencies
         run: >
-          go install github.com/wadey/gocovmerge@latest
+          go install github.com/wadey/gocovmerge@b5bfa59ec0ad
 
       - name: merge reports
         run: |
