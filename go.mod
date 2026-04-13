@@ -1,6 +1,6 @@
 module github.com/TykTechnologies/tyk-identity-broker
 
-go 1.24
+go 1.25
 
 require (
 	github.com/Jeffail/gabs v1.4.0
