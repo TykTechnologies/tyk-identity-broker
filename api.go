@@ -59,13 +59,13 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 			"prefix": tag,
 			"error":  err,
 		}).Error("[Error Handler] Couldn't marshal error stats")
-		fmt.Fprintf(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
 
 // ------ Middleware methods -------
