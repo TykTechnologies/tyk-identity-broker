@@ -1,9 +1,10 @@
-FROM debian:buster-slim
+FROM debian:buster-slim@sha256:bb3dc79fddbca7e8903248ab916bb775c96ec61014b3d02b4f06043b604726dc
 
 ARG TYKVERSION
 ARG REPOSITORY
 LABEL Description="Tyk Identity Broker docker image" Vendor="Tyk" Version=$TYKVERSION
 
+# TODO: curl|pipe is a security risk - consider fetching GPG key via pinned URL or embedding it
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
