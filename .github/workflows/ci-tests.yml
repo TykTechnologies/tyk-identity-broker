@@ -6,6 +6,7 @@ on:
       - master
       - release-**
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - master
       - release-**
@@ -14,13 +15,19 @@ env:
   GO_VERSION: "1.25"
 
 jobs:
+  dep-guard:
+    uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@d3fa20888fa2878e877e22bb7702141217290e7c  # main
+    permissions:
+      contents: read
+
   golangci-lint:
+    needs: [dep-guard]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout Tyk Identity Broker
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
           fetch-depth: 2
       - name: Fetch base branch
@@ -35,7 +42,6 @@ jobs:
           args: --issues-exit-code=0 -v ./...
           skip-cache: false
           skip-save-cache: false
-
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: golangcilint
@@ -44,6 +50,7 @@ jobs:
             golangci-lint-report.json
 
   ci-test:
+    needs: [dep-guard]
     name: "${{ matrix.databases }}"
     runs-on: ubuntu-latest
     permissions:
@@ -59,7 +66,7 @@ jobs:
         mongodb-version: [4.2]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
           fetch-depth: 2
 
@@ -71,7 +78,8 @@ jobs:
       - name: Install Dependencies and basic hygiene test
         id: hygiene
         run: |
-          go install golang.org/x/tools/cmd/goimports@latest
+          GOIMPORTS_VERSION=v0.33.0
+          go install golang.org/x/tools/cmd/goimports@${GOIMPORTS_VERSION}
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1f58ff85cf4f9ef3c036109c11acd8376b436b47  # 1.2.0
@@ -86,7 +94,7 @@ jobs:
       - name: Run tests
         run: |
           ./bin/ci-tests.sh ${{ matrix.databases }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: coverage-${{ matrix.databases }}
           retention-days: 1
@@ -99,7 +107,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout TIB
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
           fetch-depth: 2
       - name: Fetch base branch
@@ -110,7 +118,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
         with:
           pattern: coverage-*
           merge-multiple: true
@@ -126,7 +134,7 @@ jobs:
           fail: true
       - name: Install Dependencies
         run: >
-          go install github.com/wadey/gocovmerge@latest
+          go install github.com/wadey/gocovmerge@b5bfa59ec0adc420475f97f89b58045c721d761c
 
       - name: merge reports
         run: |
@@ -158,22 +166,21 @@ jobs:
           failed=()
           # Get the needs context as JSON once
           needs_json='${{ toJSON(needs) }}'
-          
+
           # Loop through all jobs in the needs context
           for job in $(echo "$needs_json" | jq -r 'keys[]'); do
             job_result=$(echo "$needs_json" | jq -r --arg job "$job" '.[$job].result')
-          
+
             if [[ "$job_result" != "success" ]]; then
               failed+=("$job")
             fi
           done
-          
+
           if (( ${#failed[@]} )); then
             # Join the failed job names with commas
             failed_jobs=$(IFS=", "; echo "${failed[*]}")
             echo "❌ Failed jobs ----- : $failed_jobs"
             exit 1
           fi
-          
-          echo "✅ All required jobs succeeded"
 
+          echo "✅ All required jobs succeeded"
