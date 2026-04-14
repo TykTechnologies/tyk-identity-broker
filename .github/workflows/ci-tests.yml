@@ -6,6 +6,7 @@ on:
       - master
       - release-**
   pull_request:
+    types: [opened, reopened, synchronize, labeled]
     branches:
       - master
       - release-**
@@ -16,7 +17,13 @@ permissions:
   contents: read
 
 jobs:
+  dep-guard:
+    uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@d3fa20888fa2878e877e22bb7702141217290e7c  # main
+    permissions:
+      contents: read
+
   golangci-lint:
+    needs: [dep-guard]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Tyk Identity Broker
@@ -40,6 +47,7 @@ jobs:
             golanglint.xml
 
   ci-test:
+    needs: [dep-guard]
     name: "${{ matrix.databases }}"
     runs-on: ubuntu-latest
     strategy:
