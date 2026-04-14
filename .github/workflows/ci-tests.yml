@@ -6,6 +6,7 @@ on:
       - master
       - release-**
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - master
       - release-**
@@ -16,13 +17,13 @@ permissions:
   contents: read
 
 jobs:
-  dependency-guard:
-    if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'labeled') || github.event_name == 'pull_request' }}
+  dep-guard:
     uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@d3fa20888fa2878e877e22bb7702141217290e7c  # main
+    permissions:
+      contents: read
 
   golangci-lint:
-    needs: [dependency-guard]
-    if: ${{ always() && (needs.dependency-guard.result == 'success' || needs.dependency-guard.result == 'skipped') }}
+    needs: [dep-guard]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Tyk Identity Broker
@@ -46,8 +47,7 @@ jobs:
             golanglint.xml
 
   ci-test:
-    needs: [dependency-guard]
-    if: ${{ always() && (needs.dependency-guard.result == 'success' || needs.dependency-guard.result == 'skipped') }}
+    needs: [dep-guard]
     name: "${{ matrix.databases }}"
     runs-on: ubuntu-latest
     strategy:

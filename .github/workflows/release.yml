@@ -16,6 +16,7 @@ on:
   schedule:
     - cron: "0 0 * * 1"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches:
       - master
@@ -30,13 +31,14 @@ env:
   # startsWith covers pull_request_target too
   BASE_REF: ${{startsWith(github.event_name, 'pull_request') && github.base_ref || github.ref_name}}
 jobs:
-  dependency-guard:
-    if: ${{ github.event_name == 'pull_request' }}
+  dep-guard:
     uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@d3fa20888fa2878e877e22bb7702141217290e7c  # main
+    permissions:
+      contents: read
 
   goreleaser:
-    needs: [dependency-guard]
-    if: ${{ always() && github.event.pull_request.draft == false && (needs.dependency-guard.result == 'success' || needs.dependency-guard.result == 'skipped') }}
+    needs: [dep-guard]
+    if: ${{ github.event.pull_request.draft == false }}
     name: '${{ matrix.golang_cross }}'
     runs-on: ubuntu-latest-m
     permissions:
