@@ -2,13 +2,11 @@
 
 FROM debian:bookworm-slim@sha256:4724b8cc51e33e398f0e2e15e18d5ec2851ff0c2280647e1310bc1642182655d as DEB
 ARG TARGETARCH
-ARG BUILD_PACKAGE_NAME
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# The _ after the pkg name is to match tyk-gateway strictly and not tyk-gateway-fips (for example)
-COPY ${BUILD_PACKAGE_NAME}_*${TARGETARCH}.deb /
-RUN dpkg -i /${BUILD_PACKAGE_NAME}_*${TARGETARCH}.deb && rm /*.deb
+COPY *${TARGETARCH}.deb /
+RUN rm -f /*fips*.deb && dpkg -i /tyk-identity-broker*${TARGETARCH}.deb && rm /*.deb
 
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:a9329520abc449e3b14d5bc3a6ffae065bdde0f02667fa10880c49b35c109fd1
 
