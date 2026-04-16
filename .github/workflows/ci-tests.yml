@@ -58,9 +58,9 @@ jobs:
           fetch-depth: 2
 
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v5
         with:
-          go-version: "^1.21"
+          go-version: "1.25.x"
 
       - name: Install Dependencies and basic hygiene test
         id: hygiene
@@ -82,7 +82,7 @@ jobs:
           ./bin/ci-tests.sh ${{ matrix.databases }}
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage-${{ matrix.databases }}
           retention-days: 1
           path: |
             *cov
@@ -98,13 +98,14 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         run: git fetch origin ${{ github.base_ref }}
       - name: Setup Golang
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.22.6
+          go-version: "1.25.x"
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
         with:
-          name: coverage
+          pattern: coverage-*
+          merge-multiple: true
       - name: Download golangcilint artifacts
         uses: actions/download-artifact@v4
         with:
