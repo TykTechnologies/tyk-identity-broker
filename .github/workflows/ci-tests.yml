@@ -31,7 +31,7 @@ jobs:
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9  # v8
         with:
           version: latest
-          args: --out-format=checkstyle:golanglint.xml --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }}
+          args: --output.checkstyle.path=golanglint.xml --timeout=600s --max-issues-per-linter=0 --max-same-issues=0 --new-from-rev=origin/${{ github.base_ref }}
       - uses: actions/upload-artifact@v4
         with:
           name: golangcilint
