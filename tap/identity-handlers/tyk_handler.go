@@ -399,7 +399,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
 			tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-			fmt.Fprintf(w, "Data Failure")
+			w.Write([]byte("Data Failure")) //nolint:errcheck
 		}
 
 		tykHandlerLogger.Info("--> No redirect, returning token...")
@@ -486,7 +486,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
 		tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-		fmt.Fprintf(w, "Data Failure")
+		w.Write([]byte("Data Failure")) //nolint:errcheck
 	}
 
 	tykHandlerLogger.Info("--> No redirect, returning token...")
