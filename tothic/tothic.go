@@ -44,7 +44,7 @@ type PathParam struct {
 	Provider string `json:"provider"`
 }
 
-func (p *PathParam) UnmarshalBinary(data []byte) error {
+func (p PathParam) UnmarshalBinary(data []byte) error {
 	// convert data to yours, let's assume its json data
 	return json.Unmarshal(data, p)
 }

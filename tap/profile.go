@@ -56,7 +56,7 @@ type ProfileConstraint struct {
 	Group  string
 }
 
-func (p *Profile) UnmarshalBinary(data []byte) error {
+func (p Profile) UnmarshalBinary(data []byte) error {
 	// convert data to yours, let's assume its json data
 	return json.Unmarshal(data, p)
 }
