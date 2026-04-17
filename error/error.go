@@ -29,11 +29,11 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 
 	if err != nil {
 		log.WithField("prefix", tag).Error("[Error Handler] Couldn't marshal error stats: ", err)
-		fmt.Fprintf(w, "System Error")
+		fmt.Fprint(w, "System Error")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	fmt.Fprint(w, string(responseMsg))
 }
