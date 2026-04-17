@@ -337,7 +337,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, _ tap.Profile) {
 	tykHandlerLogger.Info("Starting OAuth Flow...")
 
 	// Generate identity key match ID
@@ -399,12 +399,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
 			tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-			_, _ = fmt.Fprint(w, "Data Failure")
+			w.Write([]byte("Data Failure")) //nolint:errcheck
 		}
 
 		tykHandlerLogger.Info("--> No redirect, returning token...")
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = fmt.Fprint(w, string(asJson))
+		w.Write(asJson) //nolint:errcheck
 		return
 	}
 
@@ -417,7 +417,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	}
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, _ tap.Profile) {
 	tykHandlerLogger.Info("Starting Token Flow...")
 
 	// Generate identity key match ID
@@ -486,12 +486,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
 		tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-		_, _ = fmt.Fprint(w, "Data Failure")
+		w.Write([]byte("Data Failure")) //nolint:errcheck
 	}
 
 	tykHandlerLogger.Info("--> No redirect, returning token...")
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = fmt.Fprint(w, string(asJson))
+	w.Write(asJson) //nolint:errcheck
 	return
 }
 

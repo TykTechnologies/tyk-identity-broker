@@ -2,7 +2,6 @@ package error
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	logger "github.com/TykTechnologies/tyk-identity-broker/log"
@@ -18,7 +17,7 @@ type APIErrorMessage struct {
 }
 
 // HandleError is a generic error handler
-func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
+func HandleError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, _ *http.Request) {
 	log.WithFields(logrus.Fields{
 		"prefix":   tag,
 		"errorMsg": errorMsg,
@@ -29,11 +28,11 @@ func HandleError(tag string, errorMsg string, rawErr error, code int, w http.Res
 
 	if err != nil {
 		log.WithField("prefix", tag).Error("[Error Handler] Couldn't marshal error stats: ", err)
-		_, _ = fmt.Fprint(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	_, _ = fmt.Fprint(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
