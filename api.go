@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -22,7 +21,7 @@ type APIOKMessage struct {
 	Data   interface{}
 }
 
-func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r *http.Request) {
+func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, _ *http.Request) {
 	okObj := APIOKMessage{
 		Status: "ok",
 		ID:     id,
@@ -36,16 +35,16 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 			"prefix": APILogTag,
 			"error":  err,
 		}).Error("[OK Handler] Couldn't marshal message stats")
-		fmt.Fprintf(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
 
-func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
+func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, _ *http.Request) {
 	log.WithFields(logrus.Fields{
 		"prefix": tag,
 		"error":  errorMsg,
@@ -59,13 +58,13 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 			"prefix": tag,
 			"error":  err,
 		}).Error("[Error Handler] Couldn't marshal error stats")
-		fmt.Fprintf(w, "System Error")
+		w.Write([]byte("System Error")) //nolint:errcheck
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprintf(w, string(responseMsg))
+	w.Write(responseMsg) //nolint:errcheck
 }
 
 // ------ Middleware methods -------
