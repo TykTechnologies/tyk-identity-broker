@@ -337,7 +337,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForPortal(w http.ResponseWrit
 	fmt.Fprintf(w, "Success! (Have you set a return URL?)")
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWriter, r *http.Request, i interface{}, _ tap.Profile) {
 	tykHandlerLogger.Info("Starting OAuth Flow...")
 
 	// Generate identity key match ID
@@ -417,7 +417,7 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 	}
 }
 
-func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, profile tap.Profile) {
+func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseWriter, r *http.Request, i interface{}, _ tap.Profile) {
 	tykHandlerLogger.Info("Starting Token Flow...")
 
 	// Generate identity key match ID

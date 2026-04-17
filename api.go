@@ -21,7 +21,7 @@ type APIOKMessage struct {
 	Data   interface{}
 }
 
-func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r *http.Request) {
+func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, _ *http.Request) {
 	okObj := APIOKMessage{
 		Status: "ok",
 		ID:     id,
@@ -44,7 +44,7 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 	w.Write(responseMsg) //nolint:errcheck
 }
 
-func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
+func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, _ *http.Request) {
 	log.WithFields(logrus.Fields{
 		"prefix": tag,
 		"error":  errorMsg,
