@@ -399,12 +399,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 		asJson, jErr := json.Marshal(resp)
 		if jErr != nil {
 			tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-			fmt.Fprint(w, "Data Failure")
+			_, _ = fmt.Fprint(w, "Data Failure")
 		}
 
 		tykHandlerLogger.Info("--> No redirect, returning token...")
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, string(asJson))
+		_, _ = fmt.Fprint(w, string(asJson))
 		return
 	}
 
@@ -486,12 +486,12 @@ func (t *TykIdentityHandler) CompleteIdentityActionForTokenAuth(w http.ResponseW
 	asJson, jErr := json.Marshal(resp)
 	if jErr != nil {
 		tykHandlerLogger.WithField("error", jErr).Error("--> Marshalling failure")
-		fmt.Fprint(w, "Data Failure")
+		_, _ = fmt.Fprint(w, "Data Failure")
 	}
 
 	tykHandlerLogger.Info("--> No redirect, returning token...")
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, string(asJson))
+	_, _ = fmt.Fprint(w, string(asJson))
 	return
 }
 

@@ -36,13 +36,13 @@ func HandleAPIOK(data interface{}, id string, code int, w http.ResponseWriter, r
 			"prefix": APILogTag,
 			"error":  err,
 		}).Error("[OK Handler] Couldn't marshal message stats")
-		fmt.Fprint(w, "System Error")
+		_, _ = fmt.Fprint(w, "System Error")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, string(responseMsg))
+	_, _ = fmt.Fprint(w, string(responseMsg))
 }
 
 func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.ResponseWriter, r *http.Request) {
@@ -59,13 +59,13 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 			"prefix": tag,
 			"error":  err,
 		}).Error("[Error Handler] Couldn't marshal error stats")
-		fmt.Fprint(w, "System Error")
+		_, _ = fmt.Fprint(w, "System Error")
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	fmt.Fprint(w, string(responseMsg))
+	_, _ = fmt.Fprint(w, string(responseMsg))
 }
 
 // ------ Middleware methods -------
