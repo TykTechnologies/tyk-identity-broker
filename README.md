@@ -1,4 +1,46 @@
-Table of Contents
+==========
+
+   * [Tyk Identity Broker (TIB)](#tyk-identity-broker-tib)
+      * [What is Tyk Identity Broker?](#what-is-tyk-identity-broker)
+         * [Requirements and dependencies](#requirements-and-dependencies)
+         * [Installation](#installation)
+            * [Run via docker](#run-via-docker)
+         * [Usage](#usage)
+         * [How it works](#how-it-works)
+            * [Identity Providers](#identity-providers)
+            * [Identity Handlers](#identity-handlers)
+      * [How to configure TIB](#how-to-configure-tib)
+         * [The tib.conf file](#the-tibconf-file)
+            * [Secret](#secret)
+            * [HttpServerOptions.UseSSL](#httpserveroptionsusessl)
+            * [HttpServerOptions.CertFile](#httpserveroptionscertfile)
+            * [HttpServerOptions.KeyFile](#httpserveroptionskeyfile)
+            * [SSLInsecureSkipVerify](#sslinsecureskipverify)
+            * [BackEnd](#backend)
+            * [BackEnd.Hosts](#backendhosts)
+            * [BackEnd.Password](#backendpassword)
+            * [BackEnd.Database](#backenddatabase)
+            * [BackEnd.EnableCluster](#backendenablecluster)
+            * [BackEnd.MaxIdle](#backendmaxidle)
+            * [BackEnd.MaxActive](#backendmaxactive)
+            * [TykAPISettings](#tykapisettings)
+            * [TykAPISettings.GatewayConfig.Endpoint](#tykapisettingsgatewayconfigendpoint)
+            * [TykAPISettings.GatewayConfig.Port](#tykapisettingsgatewayconfigport)
+            * [TykAPISettings.GatewayConfig.AdminSecret](#tykapisettingsgatewayconfigadminsecret)
+            * [TykAPISettings.DashboardConfig.Endpoint](#tykapisettingsdashboardconfigendpoint)
+            * [TykAPISettings.DashboardConfig.Port](#tykapisettingsdashboardconfigport)
+            * [TykAPISettings.DashboardConfig.AdminSecret](#tykapisettingsdashboardconfigadminsecret)
+         * [The profiles.json file](#the-profilesjson-file)
+      * [Using Identity Providers](#using-identity-providers)
+         * [Social](#social)
+         * [Troubleshooting](#troubleshooting)
+            * [Error: Unable to find an artifact with the name: golangcilint](#error-unable-to-find-an-artifact-with-the-name-golangcilint)
+               * [Possible Solutions](#possible-solutions)
+                  * [Check the workflow configuration](#check-the-workflow-configuration)
+                  * [Ensure the artifact is correctly uploaded](#ensure-the-artifact-is-correctly-uploaded)
+                  * [Update the workflow to use a different artifact](#update-the-workflow-to-use-a-different-artifact)
+=======
+new line(s) to replace
 =================
 
    * [Tyk Identity Broker (TIB)](#tyk-identity-broker-tib)
@@ -34,6 +76,29 @@ Table of Contents
          * [The profiles.json file](#the-profilesjson-file)
       * [Using Identity Providers](#using-identity-providers)
          * [Social](#social)
+## Troubleshooting
+
+### Error: Unable to find an artifact with the name: golangcilint
+
+If you encounter the error "Unable to find an artifact with the name: golangcilint" during the GitHub Actions run, it means that the specified artifact named "golangcilint" could not be found.
+
+#### Possible Solutions
+
+To resolve this issue, you can try the following troubleshooting steps:
+
+##### Check the workflow configuration
+
+Ensure that the workflow configuration file (e.g., `.github/workflows/main.yml`) specifies the correct artifact name. Double-check the spelling and capitalization of the artifact name to ensure it matches the artifact name specified in the workflow.
+
+##### Ensure the artifact is correctly uploaded
+
+Check the workflow steps to ensure that the artifact is correctly uploaded as part of the workflow. Verify that the artifact is being created and uploaded to the GitHub Actions artifacts storage.
+
+##### Update the workflow to use a different artifact
+
+If the artifact is not available or cannot be found, you may need to update the workflow to use a different artifact or modify the workflow steps to generate the required artifact.
+
+If none of the above solutions resolve the issue, you may need to investigate further or seek assistance from the repository maintainers or GitHub support.
             * [Authenticate a user for the portal using Google and a constraint:](#authenticate-a-user-for-the-portal-using-google-and-a-constraint)
                * [What did we just do?](#what-did-we-just-do)
             * [Authenticate a user for the dashboard using Google and a constraint:](#authenticate-a-user-for-the-dashboard-using-google-and-a-constraint)
