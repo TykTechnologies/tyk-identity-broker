@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/TykTechnologies/tyk-identity-broker/initializer"
+
 	"github.com/TykTechnologies/tyk-identity-broker/constants"
 	"github.com/TykTechnologies/tyk-identity-broker/providers"
 
@@ -33,7 +35,7 @@ func HandleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, thisProfile, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, thisProfile, err := providers.GetTapProfile(initializer.AuthConfigStore, initializer.IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		return
 	}
@@ -52,7 +54,7 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, thisProfile, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, thisProfile, err := providers.GetTapProfile(initializer.AuthConfigStore, initializer.IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
@@ -72,7 +74,7 @@ func HandleMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	thisIdentityProvider, _, err := providers.GetTapProfile(AuthConfigStore, IdentityKeyStore, thisId, TykAPIHandler)
+	thisIdentityProvider, _, err := providers.GetTapProfile(initializer.AuthConfigStore, initializer.IdentityKeyStore, thisId, TykAPIHandler)
 	if err != nil {
 		tykerrors.HandleError(constants.HandlerLogTag, err.Message, err.Error, err.Code, w, r)
 		return
