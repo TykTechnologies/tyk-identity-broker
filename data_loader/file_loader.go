@@ -38,7 +38,7 @@ func (f *FileLoader) LoadIntoStore(store tap.AuthRegisterBackend) error {
 		jsErr := json.Unmarshal(thisSet, &profiles)
 		if jsErr != nil {
 			dataLogger.WithField("error", jsErr).Error("Couldn't unmarshal profile set")
-			return err
+			return jsErr
 		}
 	}
 
