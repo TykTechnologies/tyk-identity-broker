@@ -126,3 +126,5 @@ replace gorm.io/gorm => github.com/TykTechnologies/gorm v1.20.7-0.20210409171139
 replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0
 
 exclude github.com/TykTechnologies/tyk/certs v0.0.1
+
+replace github.com/TykTechnologies/storage => github.com/TykTechnologies/storage v0.0.0-20260527150039-a2a20aae3035 // todo: remove and bump version to 1.3.2

@@ -3,9 +3,13 @@ package providers
 import (
 	"io/ioutil"
 	"strings"
+
+	"github.com/TykTechnologies/tyk/storage"
 )
 
-type FileLoader struct{}
+type FileLoader struct {
+	storage.SetExHandlerNoImplemented
+}
 
 var FileLoaderLogTag = "CERT FILE LOADER"
 var FileLoaderLogger = log.WithField("prefix", FileLoaderLogTag)
