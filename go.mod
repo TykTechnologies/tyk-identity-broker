@@ -130,7 +130,7 @@ replace github.com/jeffail/tunny => github.com/Jeffail/tunny v0.0.0-201711071252
 
 replace github.com/jensneuse/graphql-go-tools => github.com/TykTechnologies/graphql-go-tools v1.6.2-0.20211213120648-56cd4003725b
 
-replace gorm.io/gorm => github.com/TykTechnologies/gorm v1.20.7-0.20210409171139-b5c340f85ed0
+replace gorm.io/gorm => github.com/TykTechnologies/gorm v1.20.7-0.20260417144542-d6d1a2e12d9d
 
 replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0
 
