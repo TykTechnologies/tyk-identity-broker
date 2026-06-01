@@ -16,6 +16,7 @@ on:
   schedule:
     - cron: "0 0 * * 1"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches:
       - master
@@ -32,7 +33,7 @@ env:
 jobs:
   dep-guard:
     if: github.event_name == 'pull_request'
-    uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@d3fa20888fa2878e877e22bb7702141217290e7c # main
+    uses: TykTechnologies/github-actions/.github/workflows/dependency-guard.yml@production
     permissions:
       contents: read
   goreleaser:
@@ -43,7 +44,7 @@ jobs:
       (needs.dep-guard.result == 'success' || needs.dep-guard.result == 'skipped') &&
       github.event.pull_request.draft == false
     name: '${{ matrix.golang_cross }}'
-    runs-on: ${{ vars.DEFAULT_RUNNER }}
+    runs-on: ${{ vars.BUILD_RUNNER || vars.DEFAULT_RUNNER }}
     permissions:
       id-token: write # AWS OIDC JWT
       contents: read # actions/checkout
@@ -168,10 +169,9 @@ jobs:
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: "dist"
-          platforms: linux/amd64,linux/arm64,linux/s390x
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64,linux/s390x' }}
           file: ci/Dockerfile.distroless
           provenance: mode=max
-          sbom: true
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -181,6 +181,7 @@ jobs:
             BUILD_PACKAGE_NAME=tyk-identity-broker
       - name: Docker metadata for std tag push
         id: tag_metadata_std
+        if: startsWith(github.ref, 'refs/tags')
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: |
@@ -198,17 +199,15 @@ jobs:
             org.opencontainers.image.vendor=tyk.io
             org.opencontainers.image.version=${{ github.ref_name }}
       - name: push std image to prod
-        if: ${{ matrix.golang_cross == '1.25-bookworm' }}
+        if: ${{ matrix.golang_cross == '1.25-bookworm' && startsWith(github.ref, 'refs/tags') }}
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: "dist"
           platforms: linux/amd64,linux/arm64,linux/s390x
           file: ci/Dockerfile.distroless
           provenance: mode=max
-          sbom: true
           cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: ${{ startsWith(github.ref, 'refs/tags') }}
+          push: true
           tags: ${{ steps.tag_metadata_std.outputs.tags }}
           labels: ${{ steps.tag_metadata_std.outputs.labels }}
           build-args: |
@@ -237,7 +236,7 @@ jobs:
     name: Aggregated CI Status
     runs-on: ${{ vars.DEFAULT_RUNNER }}
     # Dynamically determine which jobs to depend on based on repository configuration
-    needs: [goreleaser]
+    needs: [dep-guard, goreleaser]
     if: ${{ always() && github.event_name == 'pull_request' }}
     steps:
       - name: Aggregate results
@@ -264,9 +263,12 @@ jobs:
 
           echo "✅ All required jobs succeeded"
   test-controller-distros:
-    if: github.event.pull_request.draft == false
     needs:
       - goreleaser
+    if: |
+      !cancelled() &&
+      needs.goreleaser.result == 'success' &&
+      github.event.pull_request.draft == false
     runs-on: ${{ vars.DEFAULT_RUNNER }}
     outputs:
       deb: ${{ steps.params.outputs.deb }}
