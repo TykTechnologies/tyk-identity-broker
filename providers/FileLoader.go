@@ -1,15 +1,12 @@
 package providers
 
 import (
+	"errors"
 	"io/ioutil"
 	"strings"
-
-	"github.com/TykTechnologies/tyk/storage"
 )
 
-type FileLoader struct {
-	storage.SetExHandlerNoImplemented
-}
+type FileLoader struct{}
 
 var FileLoaderLogTag = "CERT FILE LOADER"
 var FileLoaderLogger = log.WithField("prefix", FileLoaderLogTag)
@@ -149,4 +146,12 @@ func (f FileLoader) SetRollingWindow(key string, per int64, val string, pipeline
 
 func (f FileLoader) DeleteRawKeys([]string) bool {
 	panic("implement me")
+}
+
+func (f FileLoader) SetKeyEx(_ string, _ string, _ int64) error {
+	return errors.New("SetKeyEx not implemented")
+}
+
+func (f FileLoader) SetRawKeyEx(_ string, _ string, _ int64) error {
+	return errors.New("SetRawKeyEx not implemented")
 }
