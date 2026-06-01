@@ -24,8 +24,8 @@ github.com/TykTechnologies/opentelemetry v0.0.21 h1:/ew4NET0nbLKmsNKmuEavTU+Zp3L
 github.com/TykTechnologies/opentelemetry v0.0.21/go.mod h1:5LkNDN08FYVhSTH0gC3hwk6cH6jP3F8cc5mv2asUHyA=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0 h1:RRu/X3Ga0in1Quu9lg0+61GbgyCtz5pLRGT3KD3GI40=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
-github.com/TykTechnologies/storage v0.0.0-20260601093719-c313062824d4 h1:06+i1bazBZo6nSt6azuh8AhEbU2+wrXEVwXhYIHPpxo=
-github.com/TykTechnologies/storage v0.0.0-20260601093719-c313062824d4/go.mod h1:fw7yR9/LgVFVAlaQFLypFnfsIP/JOkF/tAsgAwMkKj0=
+github.com/TykTechnologies/storage v0.0.0-20260601101308-a5fb7c875ace h1:p4W75t/hFxqVjHZU2kRhsuLSt5z+n9OX4L7OcZhrKCM=
+github.com/TykTechnologies/storage v0.0.0-20260601101308-a5fb7c875ace/go.mod h1:fw7yR9/LgVFVAlaQFLypFnfsIP/JOkF/tAsgAwMkKj0=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d h1:0kX5e8ragu9+RBLWD4I7716lkj6IJ9XBd8NvM9xQocw=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d/go.mod h1:L6ih1W+zK6de61KQp2icjGP1/BpOsyWETrUlJm2lnPo=
 github.com/TykTechnologies/tyk-pump v1.10.0 h1:mc2sRUlY6pPN8cdOUzswi8Ukjgtoxo5YMSh1XUTinwQ=

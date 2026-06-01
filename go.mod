@@ -137,4 +137,4 @@ replace github.com/crewjam/saml => github.com/TykTechnologies/saml v0.4.6-0.2023
 
 exclude github.com/TykTechnologies/tyk/certs v0.0.1
 
-replace github.com/TykTechnologies/storage => github.com/TykTechnologies/storage v0.0.0-20260601093719-c313062824d4 // todo: remove and bump version to 1.3.2
+replace github.com/TykTechnologies/storage => github.com/TykTechnologies/storage v0.0.0-20260601101308-a5fb7c875ace // todo: remove and bump version to 1.3.2
