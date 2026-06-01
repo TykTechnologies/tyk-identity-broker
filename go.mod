@@ -55,6 +55,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
+	github.com/helloeave/json v1.15.3 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

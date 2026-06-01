@@ -14,8 +14,8 @@ github.com/Masterminds/sprig v2.22.0+incompatible h1:z4yfnGrZ7netVz+0EDJ0Wi+5VZC
 github.com/Masterminds/sprig v2.22.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
 github.com/TykTechnologies/gojsonschema v0.0.0-20170222154038-dcb3e4bb7990 h1:CJRTgg13M3vJG9S7k7kpnvDRMGMywm5OsN6eUE8VwJE=
 github.com/TykTechnologies/gojsonschema v0.0.0-20170222154038-dcb3e4bb7990/go.mod h1:SQT0NBrY4/pMikBgwFIrWCjcHBxg015Y8is0kAnMtug=
-github.com/TykTechnologies/gorm v1.20.7-0.20210409171139-b5c340f85ed0 h1:Q08OD/xvO1D3rzdtlwCMsPB4XOKeHMVw8FifVWEYHiM=
-github.com/TykTechnologies/gorm v1.20.7-0.20210409171139-b5c340f85ed0/go.mod h1:l/HFwXrJOl2N+sth1mqa2cd0Gx1Cqb1FRYBLhY1TIJw=
+github.com/TykTechnologies/gorm v1.20.7-0.20260417144542-d6d1a2e12d9d h1:wePfwBWzjkC+lc/jEQsvcbQ3Rt0u+7MIj3jXWPnU6Qo=
+github.com/TykTechnologies/gorm v1.20.7-0.20260417144542-d6d1a2e12d9d/go.mod h1:hz0d/E0QBTYarOnYtdcNnBWN/NYxVMP7nZNDT6E/fFM=
 github.com/TykTechnologies/graphql-go-tools v1.6.2-0.20240705065952-ae6008677a48 h1:dtK8xAF/inLBkjKRsHG+zwW5czgwRKidiTfToDxDvcQ=
 github.com/TykTechnologies/graphql-go-tools v1.6.2-0.20240705065952-ae6008677a48/go.mod h1:DCYkq1ZoUZ/pGESE+j3C7wuyDPSt1Mlu0jVgIoDABJY=
 github.com/TykTechnologies/murmur3 v0.0.0-20230310161213-aad17efd5632 h1:T5NWziFusj8au5nxAqMMh/bZyX9CAyYnBkaMSsfH6BA=
@@ -24,8 +24,8 @@ github.com/TykTechnologies/opentelemetry v0.0.21 h1:/ew4NET0nbLKmsNKmuEavTU+Zp3L
 github.com/TykTechnologies/opentelemetry v0.0.21/go.mod h1:5LkNDN08FYVhSTH0gC3hwk6cH6jP3F8cc5mv2asUHyA=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0 h1:RRu/X3Ga0in1Quu9lg0+61GbgyCtz5pLRGT3KD3GI40=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
-github.com/TykTechnologies/storage v0.0.0-20260527150039-a2a20aae3035 h1:ognT+SmQGd+edRM/kUApNIZH4QhmkQc9xgJ7YYvwDfI=
-github.com/TykTechnologies/storage v0.0.0-20260527150039-a2a20aae3035/go.mod h1:fw7yR9/LgVFVAlaQFLypFnfsIP/JOkF/tAsgAwMkKj0=
+github.com/TykTechnologies/storage v0.0.0-20260601093719-c313062824d4 h1:06+i1bazBZo6nSt6azuh8AhEbU2+wrXEVwXhYIHPpxo=
+github.com/TykTechnologies/storage v0.0.0-20260601093719-c313062824d4/go.mod h1:fw7yR9/LgVFVAlaQFLypFnfsIP/JOkF/tAsgAwMkKj0=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d h1:0kX5e8ragu9+RBLWD4I7716lkj6IJ9XBd8NvM9xQocw=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d/go.mod h1:L6ih1W+zK6de61KQp2icjGP1/BpOsyWETrUlJm2lnPo=
 github.com/TykTechnologies/tyk-pump v1.10.0 h1:mc2sRUlY6pPN8cdOUzswi8Ukjgtoxo5YMSh1XUTinwQ=
@@ -116,6 +116,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 h1:HWRh5R2+9EifMyIHV7ZV+MIZqgz
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0/go.mod h1:JfhWUomR1baixubs02l85lZYYOm7LV6om4ceouMv45c=
 github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/Co8=
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
+github.com/helloeave/json v1.15.3 h1:roUxUEGhsSvhuhi80c4qmLiW633d5uf0mkzUGzBMfX8=
+github.com/helloeave/json v1.15.3/go.mod h1:uTHhuUsgnrpm9cc7Gi3tfIUwgf1dq/7+uLfpUFLBFEQ=
 github.com/huandu/xstrings v1.2.1/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
 github.com/huandu/xstrings v1.3.3 h1:/Gcsuc1x8JVbJ9/rlye4xZnVAbEkGauT8lbebqcQws4=
 github.com/huandu/xstrings v1.3.3/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq4ovT0aE=
@@ -154,7 +156,7 @@ github.com/jensneuse/pipeline v0.0.0-20200117120358-9fb4de085cd6 h1:y8hvuqbuVGFN
 github.com/jensneuse/pipeline v0.0.0-20200117120358-9fb4de085cd6/go.mod h1:UsfzaMt+keVOxa007GcCJMFeTHr6voRfBGMQEW7DkdM=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
-github.com/jinzhu/now v1.1.1/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
+github.com/jinzhu/now v1.1.2/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
 github.com/jonboulle/clockwork v0.5.0 h1:Hyh9A8u51kptdkR+cqRpT1EebBwTn1oK9YfGYbdFz6I=
