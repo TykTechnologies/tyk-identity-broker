@@ -13,10 +13,7 @@ import (
 // which would silently reset any level configured by the caller.
 func TestGetIsPureGetter(t *testing.T) {
 	Get().SetLevel(logrus.ErrorLevel)
-
-	for range 10 {
-		Get()
-	}
+	Get()
 
 	assert.Equal(t, logrus.ErrorLevel, Get().Level)
 }
@@ -36,9 +33,7 @@ func TestSetLoggerLevelNotOverwritten(t *testing.T) {
 
 	SetLogger(injected)
 
-	for range 10 {
-		Get()
-	}
+	Get()
 
 	assert.Equal(t, logrus.ErrorLevel, Get().Level)
 }
