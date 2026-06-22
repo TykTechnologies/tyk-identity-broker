@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/Jeffail/gabs v1.4.0
-	github.com/TykTechnologies/storage v1.3.3
+	github.com/TykTechnologies/storage v1.3.4
 	github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d
 	github.com/crewjam/saml v0.4.14
 	github.com/go-jose/go-jose/v3 v3.0.5
@@ -60,7 +60,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.9.1 // indirect
+	github.com/jackc/pgx/v5 v5.9.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jensneuse/abstractlogger v0.0.4 // indirect
 	github.com/jensneuse/pipeline v0.0.0-20200117120358-9fb4de085cd6 // indirect

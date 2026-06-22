@@ -24,8 +24,8 @@ github.com/TykTechnologies/opentelemetry v0.0.21 h1:/ew4NET0nbLKmsNKmuEavTU+Zp3L
 github.com/TykTechnologies/opentelemetry v0.0.21/go.mod h1:5LkNDN08FYVhSTH0gC3hwk6cH6jP3F8cc5mv2asUHyA=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0 h1:RRu/X3Ga0in1Quu9lg0+61GbgyCtz5pLRGT3KD3GI40=
 github.com/TykTechnologies/saml v0.4.6-0.20231025135323-7acac1a634e0/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
-github.com/TykTechnologies/storage v1.3.3 h1:uFWmI4+JNAQ9SnfkC+DQlWwzdzdqyu4AJgygSL0dNAk=
-github.com/TykTechnologies/storage v1.3.3/go.mod h1:Pp+Mzi/o07kxb+m7kvojepkhLtZ2a0EnuzgN1MoXN4Q=
+github.com/TykTechnologies/storage v1.3.4 h1:avLJFoHdHSbBfGUSme0vOIuMEzVfdgroVf21szsZcys=
+github.com/TykTechnologies/storage v1.3.4/go.mod h1:H55F7A43TeOAYkvKgAqNQPQoqHa9gzAe7mkhhRsCtLc=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d h1:0kX5e8ragu9+RBLWD4I7716lkj6IJ9XBd8NvM9xQocw=
 github.com/TykTechnologies/tyk v1.9.2-0.20240815043856-ec7db94fbe3d/go.mod h1:L6ih1W+zK6de61KQp2icjGP1/BpOsyWETrUlJm2lnPo=
 github.com/TykTechnologies/tyk-pump v1.10.0 h1:mc2sRUlY6pPN8cdOUzswi8Ukjgtoxo5YMSh1XUTinwQ=
@@ -128,8 +128,8 @@ github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5TJZ
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
 github.com/jackc/pgx/v5 v5.3.0/go.mod h1:t3JDKnCBlYIc0ewLF0Q7B8MXmoIaBOZj/ic7iHozM/8=
-github.com/jackc/pgx/v5 v5.9.1 h1:uwrxJXBnx76nyISkhr33kQLlUqjv7et7b9FjCen/tdc=
-github.com/jackc/pgx/v5 v5.9.1/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
+github.com/jackc/pgx/v5 v5.9.2 h1:3ZhOzMWnR4yJ+RW1XImIPsD1aNSz4T4fyP7zlQb56hw=
+github.com/jackc/pgx/v5 v5.9.2/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
 github.com/jackc/puddle/v2 v2.2.0/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
