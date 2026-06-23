@@ -40,7 +40,7 @@ var ProfileFilename, confFile string
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", Version)
-	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
+	mainLogger.Info("Copyright Tyk Technologies Ltd 2026")
 
 	flag.StringVar(&confFile, "conf", "tib.conf", "Path to the config file")
 	flag.StringVar(&confFile, "c", "tib.conf", "Path to the config file")
