@@ -47,6 +47,24 @@ type IdentityBackendSettings struct {
 	Hosts                 map[string]string // Deprecated: Use Addrs instead.
 	MasterName            string
 	SentinelPassword      string
+	// IAMAuth configures cloud IAM-based authentication for the Redis/Valkey
+	// connection, using short-lived tokens instead of a static password.
+	IAMAuth IAMAuthConfig
+}
+
+// IAMAuthConfig configures cloud IAM-based authentication for the connection.
+// When enabled, TIB obtains short-lived credentials from the cloud provider
+// instead of using a static password.
+type IAMAuthConfig struct {
+	// Provider is the cloud provider identifier, for example "gcp".
+	Provider string
+	// ServiceAccount, when set, is the service account to impersonate.
+	ServiceAccount string
+	// TokenRefreshBeforeExpiry is how far ahead of expiry tokens are refreshed,
+	// as a Go duration string (for example "1m"). Empty uses the provider default.
+	TokenRefreshBeforeExpiry string
+	// Enabled turns on IAM-based authentication.
+	Enabled bool
 }
 
 type MongoConf struct {
