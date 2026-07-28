@@ -1,16 +1,94 @@
 version: "2"
-
 run:
+  concurrency: 4
   modules-download-mode: readonly
   tests: true
-
+  allow-parallel-runners: false
 output:
   formats:
     text:
       path: stdout
-    json:
+    checkstyle:
       path: golangci-lint-report.json
-
+linters:
+  enable:
+    - depguard
+    - dupl
+    - gocritic
+    - gosec
+    - lll
+    - misspell
+    - predeclared
+    - revive
+  settings:
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: "io/ioutil"
+              desc: "Use os and io packages instead (deprecated since Go 1.16)"
+    dupl:
+      threshold: 200
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    gocritic:
+      disabled-checks:
+        - hugeParam
+      enabled-tags:
+        - performance
+    gosec:
+      excludes:
+        - G601
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    lll:
+      line-length: 120
+      tab-width: 2
+    staticcheck:
+      checks:
+        - all
+    whitespace:
+      multi-if: false
+      multi-func: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - gosec
+        path: _test\.go
+      - path: (.+)\.go$
+        text: '^exported: exported var Err[A-Za-z0-9]+ should have comment or be unexported$'
+      - path: (.+)\.go$
+        text: 'shadow: declaration of .err. shadows declaration'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
