@@ -69,7 +69,22 @@ func (r *RedisBackend) Connect() error {
 		MaxVersion:         conf.MaxVersion,
 	}
 
-	connector, err := connector.NewConnector(model.RedisV9Type, model.WithRedisConfig(&optsR), model.WithTLS(&tls))
+	opts := []model.Option{model.WithRedisConfig(&optsR), model.WithTLS(&tls)}
+
+	if conf.IAMAuth.Enabled {
+		iamOpt, err := buildIAMAuthOption(context.Background(), conf.IAMAuth)
+		if err != nil {
+			redisLogger.WithError(err).Error("configuring IAM auth")
+			return err
+		}
+		if !conf.UseSSL {
+			redisLogger.Warning("IAM auth is enabled without TLS (use_ssl=false); " +
+				"in-transit encryption is strongly recommended for cloud-managed Redis/Valkey")
+		}
+		opts = append(opts, iamOpt)
+	}
+
+	connector, err := connector.NewConnector(model.RedisV9Type, opts...)
 	if err != nil {
 		redisLogger.WithError(err).Error("creating redis connector")
 		return err
