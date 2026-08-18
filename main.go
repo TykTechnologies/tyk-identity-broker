@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/TykTechnologies/tyk-identity-broker/backends"
 	"github.com/TykTechnologies/tyk-identity-broker/configuration"
@@ -40,7 +41,7 @@ var ProfileFilename, confFile string
 
 func init() {
 	mainLogger.Info("Tyk Identity Broker ", Version)
-	mainLogger.Info("Copyright Tyk Technologies Ltd 2020")
+	mainLogger.Info("Copyright Tyk Technologies Ltd " + strconv.Itoa(time.Now().Year()))
 
 	flag.StringVar(&confFile, "conf", "tib.conf", "Path to the config file")
 	flag.StringVar(&confFile, "c", "tib.conf", "Path to the config file")
