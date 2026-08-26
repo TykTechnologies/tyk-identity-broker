@@ -1,0 +1,33 @@
+# Redis and MongoDB for running the test suite locally. See "Running the tests"
+# in README.md.
+#
+# Image versions match the CI matrix in .github/workflows/ci-tests.yml.
+#
+# Both services are published on their default ports because the suite connects
+# to fixed addresses: localhost:6379 in backends/iam_auth_test.go and
+# mongodb://localhost/tyk_identity_broker in bin/ci-tests.sh. Remapping either
+# host port means the tests never reach these containers.
+services:
+  redis:
+    image: redis:5
+    container_name: tib-redis-test
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  mongodb:
+    image: mongo:4.2
+    container_name: tib-mongo-test
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: tyk_identity_broker
+    healthcheck:
+      # mongo:4.2 predates mongosh, so this calls the legacy mongo shell.
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
