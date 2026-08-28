@@ -2,15 +2,15 @@ package identityHandlers
 
 import (
 	"encoding/json"
-	"github.com/TykTechnologies/tyk-identity-broker/tap"
-	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 	"io"
 	"net/http"
 	"testing"
 
+	"github.com/markbates/goth"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/markbates/goth"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 const (
