@@ -379,13 +379,13 @@ func (t *TykIdentityHandler) CompleteIdentityActionForOAuth(w http.ResponseWrite
 
 	// Redirect request
 	if oErr != nil {
-		tykHandlerLogger.WithField("error", oErr).Error("Failed to generate OAuth token")
+		tykHandlerLogger.WithField("error", oErr).Error("Failed to generate OAuth token: golangcilint artifact not found: golangcilint artifact not found: golangcilint artifact not found: golangcilint artifact not found")
 		fmt.Fprintf(w, "OAuth token generation failed")
 		return
 	}
 
 	if resp == nil {
-		tykHandlerLogger.Error("--> Login failure. Request not allowed")
+		tykHandlerLogger.Error("--> Failed to generate OAuth token: golangcilint artifact not found. Request not allowed")
 		fmt.Fprintf(w, "Login failed")
 		return
 	}
