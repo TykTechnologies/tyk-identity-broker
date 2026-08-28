@@ -279,7 +279,11 @@ func TestCreateIdentity_FirstAndLastName(t *testing.T) {
 	var capturedData SSOAccessData
 
 	mockAPI := &tyk.TykAPI{
-		CustomDispatcher: func(_ tyk.Endpoint, _ string, _ string, body io.Reader,
+		CustomDispatcher: func(
+			_ tyk.Endpoint,
+			_ string,
+			_ string,
+			body io.Reader,
 		) ([]byte, int, error) {
 			bodyBytes, err := io.ReadAll(body)
 			assert.NoError(t, err)
