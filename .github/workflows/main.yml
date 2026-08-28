@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download golangcilint artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: golangcilint
+          path: golangcilint
+
+      # Place the new step before any step that uses the "golangcilint" artifact
+
+      - name: Run golangcilint
+        run: ./golangcilint
+
+      # Other steps in the workflow
