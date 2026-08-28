@@ -279,9 +279,13 @@ func TestCreateIdentity_FirstAndLastName(t *testing.T) {
 	var capturedData SSOAccessData
 
 	mockAPI := &tyk.TykAPI{
-		CustomDispatcher: func(_ tyk.Endpoint, _ string, _ string, body io.Reader) ([]byte, int, error) {
-			bodyBytes, _ := io.ReadAll(body)
-			_ = json.Unmarshal(bodyBytes, &capturedData)
+		CustomDispatcher: func(_ tyk.Endpoint, _ string, _ string, body io.Reader,
+		) ([]byte, int, error) {
+			bodyBytes, err := io.ReadAll(body)
+			assert.NoError(t, err)
+
+			err = json.Unmarshal(bodyBytes, &capturedData)
+			assert.NoError(t, err)
 
 			mockResponse := `{"Meta": "nonce-123"}`
 			return []byte(mockResponse), http.StatusOK, nil
