@@ -160,6 +160,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	displayName := ""
 	var groupsIDs []string
 	var groupID string
+	orgID := t.profile.OrgID
 	if ok {
 		email = GetEmail(gUser, t.profile.CustomEmailField)
 
@@ -180,11 +181,13 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		if len(groupsIDs) > 0 {
 			groupID = groupsIDs[0]
 		}
+
+		orgID = GetOrgId(gUser, t.profile.CustomUserOrgField, t.profile.DefaultOrgID, t.profile.OrgMapping, t.profile.OrgID)
 	}
 	tykHandlerLogger.Debugf("The GroupIDs %s used for SSO: ", groupsIDs)
 	accessRequest := SSOAccessData{
 		ForSection:                thisModule,
-		OrgID:                     t.profile.OrgID,
+		OrgID:                     orgID,
 		EmailAddress:              email,
 		DisplayName:               displayName,
 		GroupsIDs:                 groupsIDs,
@@ -578,4 +581,75 @@ func GetGroupId(gUser goth.User, CustomUserGroupField, DefaultUserGroup string, 
 	}
 
 	return groupsIDs
+}
+
+// Helper function to return either the DefaultOrgID or the org the profile itself is bound to.
+// We can never hand the dashboard an empty org, that would mint a session without a tenant.
+func defaultOrProfileOrgID(DefaultOrgID, profileOrgID string) string {
+	if DefaultOrgID == "" {
+		return profileOrgID
+	}
+	return DefaultOrgID
+}
+
+// orgClaimStringer turns the raw org claim into the list of values to look up in the mapping.
+// Unlike groups, the org claim is single valued so a plain string is taken as-is (an org name
+// may contain spaces), lists are handed over to groupsStringer as the IDPs send them. Anything
+// else is not something we know how to read, so it resolves to nothing and we fall back.
+func orgClaimStringer(rawOrgs interface{}) []string {
+	switch v := rawOrgs.(type) {
+	case string:
+		if v == "" {
+			return nil
+		}
+		return []string{v}
+	case []string:
+		return groupsStringer(rawOrgs, "")
+	case []interface{}:
+		// groupsStringer asserts the members are strings, check before it does so a
+		// numeric tenant id in the claim cannot take the login down
+		for _, item := range v {
+			if _, ok := item.(string); !ok {
+				return nil
+			}
+		}
+		return groupsStringer(rawOrgs, "")
+	default:
+		return nil
+	}
+}
+
+// GetOrgId returns the org the user is logging into. If the profile has no CustomUserOrgField then
+// this is the org the profile itself belongs to, which is the behaviour of a single tenant profile.
+// Otherwise the claim is mapped through OrgMapping, falling back to DefaultOrgID and then to the
+// profile's own org, so the returned org id is never empty.
+func GetOrgId(gUser goth.User, CustomUserOrgField, DefaultOrgID string, orgMapping map[string]string, profileOrgID string) string {
+	if CustomUserOrgField == "" {
+		return profileOrgID
+	}
+
+	rawOrgs, exists := gUser.RawData[CustomUserOrgField]
+	if !exists || rawOrgs == nil {
+		orgID := defaultOrProfileOrgID(DefaultOrgID, profileOrgID)
+		tykHandlerLogger.WithField("org_claim_field", CustomUserOrgField).WithField("org_id", orgID).
+			Warning("Org claim not found in the identity, falling back")
+		return orgID
+	}
+
+	orgs := orgClaimStringer(rawOrgs)
+
+	// a user belongs to one tenant only, so the first value we can map wins, anything
+	// else would make the tenant ambiguous
+	for _, org := range orgs {
+		if oid, ok := orgMapping[org]; ok && oid != "" {
+			tykHandlerLogger.WithField("org_claim_field", CustomUserOrgField).WithField("org_claim", org).
+				WithField("org_id", oid).Debug("Resolved org from the identity claim")
+			return oid
+		}
+	}
+
+	orgID := defaultOrProfileOrgID(DefaultOrgID, profileOrgID)
+	tykHandlerLogger.WithField("org_claim_field", CustomUserOrgField).WithField("org_claim", rawOrgs).
+		WithField("org_id", orgID).Warning("Org claim not mapped to any org, falling back")
+	return orgID
 }
