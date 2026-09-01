@@ -1,11 +1,16 @@
 package identityHandlers
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
 	"testing"
 
+	"github.com/markbates/goth"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/markbates/goth"
+	"github.com/TykTechnologies/tyk-identity-broker/tap"
+	"github.com/TykTechnologies/tyk-identity-broker/tyk-api"
 )
 
 const (
@@ -268,4 +273,49 @@ func Test_defaultOrEmptyGroupIDs(t *testing.T) {
 			assert.Equal(t, tt.expectedGroupIDs, result, "The group IDs should match")
 		})
 	}
+}
+
+func TestCreateIdentity_FirstAndLastName(t *testing.T) {
+	var capturedData SSOAccessData
+
+	mockAPI := &tyk.TykAPI{
+		CustomDispatcher: func(
+			_ tyk.Endpoint,
+			_ string,
+			_ string,
+			body io.Reader,
+		) ([]byte, int, error) {
+			bodyBytes, err := io.ReadAll(body)
+			assert.NoError(t, err)
+
+			err = json.Unmarshal(bodyBytes, &capturedData)
+			assert.NoError(t, err)
+
+			mockResponse := `{"Meta": "nonce-123"}`
+			return []byte(mockResponse), http.StatusOK, nil
+		},
+	}
+
+	handler := &TykIdentityHandler{
+		API: mockAPI,
+		profile: tap.Profile{
+			OrgID:      "test-org",
+			ActionType: tap.GenerateOrLoginDeveloperProfile,
+		},
+	}
+
+	gUser := goth.User{
+		Email:     "test@example.com",
+		FirstName: "John",
+		LastName:  "Doe",
+	}
+
+	nonce, err := handler.CreateIdentity(gUser)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "nonce-123", nonce)
+
+	assert.Equal(t, "John", capturedData.Firstname)
+	assert.Equal(t, "Doe", capturedData.Lastname)
+	assert.Equal(t, "John Doe", capturedData.DisplayName)
 }

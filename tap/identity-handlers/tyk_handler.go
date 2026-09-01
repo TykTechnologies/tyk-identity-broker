@@ -42,6 +42,8 @@ type SSOAccessData struct {
 	OrgID                     string
 	EmailAddress              string
 	DisplayName               string
+	Firstname                 string
+	Lastname                  string
 	GroupID                   string
 	GroupsIDs                 []string
 	SSOOnlyForRegisteredUsers bool
@@ -156,8 +158,7 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 	}
 
 	gUser, ok := i.(goth.User)
-	email := ""
-	displayName := ""
+	var email, displayName, fName, lName string
 	var groupsIDs []string
 	var groupID string
 	if ok {
@@ -165,12 +166,14 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 
 		if gUser.FirstName != "" {
 			displayName = gUser.FirstName
+			fName = gUser.FirstName
 		}
 		if gUser.LastName != "" {
 			if displayName != "" { //i.e. it already contains FirstName, adding space so it'll be "FirstName LastName"
 				displayName += " "
 			}
 			displayName += gUser.LastName
+			lName = gUser.LastName
 		}
 		if displayName == "" {
 			displayName = email
@@ -187,6 +190,8 @@ func (t *TykIdentityHandler) CreateIdentity(i interface{}) (string, error) {
 		OrgID:                     t.profile.OrgID,
 		EmailAddress:              email,
 		DisplayName:               displayName,
+		Firstname:                 fName,
+		Lastname:                  lName,
 		GroupsIDs:                 groupsIDs,
 		GroupID:                   groupID,
 		SSOOnlyForRegisteredUsers: t.profile.SSOOnlyForRegisteredUsers,
