@@ -1228,6 +1228,89 @@ POST /Authorization: test-secret
 
 The existing profiles.json file will be backed up to a new file, and a the current profiles data in memory will be flushed to disk as the new profiles.json file. Backups are time stamped (e.g. `profiles_backup_1452677499.json`).
 
+## Running the tests
+
+CI runs the test suite with Go 1.26 (`GO_VERSION` in
+[`.github/workflows/ci-tests.yml`](.github/workflows/ci-tests.yml)) across three storage
+back ends: `file`, `mongo-mgo` and `mongo-official`. You can run the same suite locally.
+
+### Prerequisites
+
+Install `goimports`, which the test script uses for its import-ordering check:
+
+```
+go install golang.org/x/tools/cmd/goimports@v0.33.0
+```
+
+Make sure the install directory is on your `PATH`, otherwise the script fails at the
+`goimports` step:
+
+```
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+### Start Redis and MongoDB
+
+The `mongo-mgo` and `mongo-official` variants need Redis and MongoDB reachable on their
+**default ports**, because the test suite connects to `localhost:6379` and
+`mongodb://localhost/tyk_identity_broker`. The `file` variant needs neither.
+
+[`docker-compose.test.yml`](docker-compose.test.yml) in the repository root defines both
+services with the image versions CI uses. Start them and wait for both to report healthy:
+
+```
+docker compose -f docker-compose.test.yml up -d --wait
+```
+
+Check ports 6379 and 27017 for collisions before starting, or point the suite at your own
+Redis and MongoDB instances on those ports instead.
+
+### Run the tests
+
+For a quick check, run the packages directly:
+
+```
+go test ./...
+```
+
+To run what CI runs, including `go vet`, the `gofmt` and `goimports` checks, and
+per-package coverage with the race detector enabled, use the CI script. With no argument
+it uses the `file` back end:
+
+```
+./bin/ci-tests.sh
+```
+
+The Mongo variants take the back end as an argument:
+
+```
+./bin/ci-tests.sh mongo-mgo
+./bin/ci-tests.sh mongo-official
+```
+
+Two tests in `data_loader` are skipped under the `file` back end and only run under the
+Mongo variants, so run all three to cover the suite.
+
+### Clean up
+
+```
+docker compose -f docker-compose.test.yml down
+```
+
+`./bin/ci-tests.sh` writes a `<package>-<backend>.cov` coverage file per package into the
+repository root. These are build artifacts. Remove them before committing:
+
+```
+rm -f *.cov
+```
+
+### Troubleshooting
+
+If a Mongo variant stalls and logs `failed to init MongoDB connection ... no reachable
+servers` on a loop, nothing is listening on port 27017. The driver retries instead of
+failing, so the run hangs until the 10 minute per-package test timeout fires. Check that
+the containers are up and that MongoDB is published on 27017 rather than a remapped port.
+
 ## Security Issues
 
 If you discover a security vulnerability within this project, please don't use the issue tracker. Instead, kindly email us directly at [support@tyk.io](mailto:support@tyk.io). We take security seriously and will promptly address your concerns.
