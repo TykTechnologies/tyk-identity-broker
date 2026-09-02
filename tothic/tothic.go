@@ -54,8 +54,14 @@ func (p PathParam) MarshalBinary() ([]byte, error) {
 }
 
 func SetupSessionStore() {
-	key := KeyFromEnv()
-	Store = sessions.NewCookieStore([]byte(key))
+	Store = NewSessionStore(KeyFromEnv())
+}
+
+// NewSessionStore creates a Gorilla cookie store signed with the given secret.
+// Use this instead of SetupSessionStore when you supply the secret directly
+// from your application config rather than via the TYK_IB_SESSION_SECRET env var.
+func NewSessionStore(secret string) sessions.Store {
+	return sessions.NewCookieStore([]byte(secret))
 }
 
 func KeyFromEnv() (key string) {
