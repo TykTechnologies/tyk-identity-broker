@@ -27,6 +27,7 @@ jobs:
       contents: read    # actions/checkout
     with:
       repo_name: tyk-identity-broker
+      upgrade_repo: tyk-identity-broker
       golang_cross: 1.26-bookworm
       cgo: '0'
       platforms_std: 'linux/amd64,linux/arm64,linux/s390x'
