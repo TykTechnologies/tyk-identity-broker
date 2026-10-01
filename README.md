@@ -118,7 +118,9 @@ docker run -p 3010:3010 -e TYK_IB_SESSION_SECRET=<your-secret> -v $(pwd)/tib.con
 No command line arguments are needed, but if you are running TIB from another dir or during startup, you will need to set the absolute paths to the profile and config files
 
 	Usage of ./tyk-identity-broker:
-	  -c, -conf string
+	  -c string
+			Path to the config file (default "tib.conf")
+	  -conf string
 			Path to the config file (default "tib.conf")
 	  -p string
 			Path to the profiles file (default "./profiles.json")
