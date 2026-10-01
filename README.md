@@ -77,6 +77,18 @@ The Tyk Identity Broker provides a service-level component that enables delegate
 
 ![image](https://user-images.githubusercontent.com/14009/109294803-bbdc1400-783e-11eb-8d5c-640a2d944399.png)
 
+> [!NOTE]
+> TIB is embedded in Tyk Dashboard (from v3.0) and Tyk Developer Portal (from v1.12.0). For Single Sign-On into the Dashboard or the Developer Portal, you do not need to install TIB separately. See [SSO into Tyk Dashboard](https://tyk.io/docs/tyk-identity-broker/dashboard-sso) or [SSO into Tyk Developer Portal](https://tyk.io/docs/tyk-stack/tyk-developer-portal/enterprise-developer-portal/managing-access/enable-sso). This repository is the standalone TIB service.
+
+### Documentation
+
+- [Tyk Identity Broker overview](https://tyk.io/docs/tyk-identity-broker/overview)
+- [Install standalone TIB](https://tyk.io/docs/tyk-identity-broker/standalone-tib)
+- [Issue API tokens and OAuth tokens via TIB](https://tyk.io/docs/api-management/access-control/sessions-and-keys/issuing-tokens-via-tib)
+- [Configuration reference](https://tyk.io/docs/tyk-configuration-reference/tyk-identity-broker-configuration)
+- [TIB REST API](https://tyk.io/docs/tyk-identity-broker/tib-rest-api)
+- [Release notes](https://tyk.io/docs/developer-support/release-notes/tib)
+
 
 ### Requirements and dependencies
 
@@ -84,30 +96,32 @@ TIB requires:
 
 - Tyk Gateway v1.9.1+
 - Redis
-- Tyk Dashboard v0.9.7.1+ (Only if you want to do SSO to Tyk Dashbaord UI or Tyk Developer Portal)
+- Tyk Dashboard v0.9.7.1+ (Only if you want to do SSO to Tyk Dashboard UI or Tyk Developer Portal)
 
 ### Installation
 
 You can install via Docker https://hub.docker.com/r/tykio/tyk-identity-broker/
 
-Of via packages (deb or rpm): https://packagecloud.io/tyk/tyk-identity-broker/install#bash-deb
+Or via packages (deb or rpm): https://packagecloud.io/tyk/tyk-identity-broker/install#bash-deb
+
+Set the `TYK_IB_SESSION_SECRET` environment variable before you start TIB. Without it, the default cookie store is not available and the login flows fail.
 
 #### Run via Docker
 To run the container, you can use the following command (assuming that you run it from the directory which contains `tib.conf` and `profiles.json` files, which **must** be edited according to [How to configure TIB](#how-to-configure-tib) section before running it):
 
 ```
-docker run -p 3010:3010 -v $(pwd)/tib.conf:/opt/tyk-identity-broker/tib.conf -v $(pwd)/profiles.json:/opt/tyk-identity-broker/profiles.json tykio/tyk-identity-broker
+docker run -p 3010:3010 -e TYK_IB_SESSION_SECRET=<your-secret> -v $(pwd)/tib.conf:/opt/tyk-identity-broker/tib.conf -v $(pwd)/profiles.json:/opt/tyk-identity-broker/profiles.json tykio/tyk-identity-broker
 ```
 
 ### Usage
 
 No command line arguments are needed, but if you are running TIB from another dir or during startup, you will need to set the absolute paths to the profile and config files
 
-	Usage of ./tyk-auth-proxy:
-	  -c=string
+	Usage of ./tyk-identity-broker:
+	  -c, -conf string
 			Path to the config file (default "tib.conf")
-	  -p#=string
-			Path to the profiles file (default "profiles.json")
+	  -p string
+			Path to the profiles file (default "./profiles.json")
 
 ### Log level
 You set the log level using the environment variable `TYK_LOGLEVEL`
