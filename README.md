@@ -10,6 +10,7 @@ Table of Contents
          * [How it works](#how-it-works)
             * [Identity Providers](#identity-providers)
             * [Identity Handlers](#identity-handlers)
+      * [Embedding TIB in a Go application](#embedding-tib-in-a-go-application)
       * [How to configure TIB](#how-to-configure-tib)
          * [The tib.conf file](#the-tibconf-file)
             * [Secret](#secret)
@@ -148,6 +149,107 @@ An identity handler will perform a predefined set of actions once a provider has
 These are actions are all handled by the `tap.providers.TykIdentityHandler` module which wraps the Tyk Gateway, Dashboard and Admin APIs to grant access to a stack.
 
 Handlers are not limited to Tyk, a handler can be added quite easily by implementing the `TAProvider` so long as it implements this pattern and is registered it can handle any of the above actions for it's own target.
+
+## Embedding TIB in a Go application
+
+TIB can run in-process inside another Go application — no config file, no Redis, no separate process. This is how both **tyk-analytics** (Tyk Dashboard) and **ai-studio** embed it.
+
+### Step 1 — Implement a storage backend
+
+You need one or two types that implement `tap.AuthRegisterBackend` (5 methods). Use the same type for both stores, or different types for each:
+
+```go
+// ProfileStore — holds authentication profiles (read-heavy, managed via your own DB)
+// KVStore      — holds OAuth session state and nonce tokens (short-lived, read/write/delete)
+type MyBackend struct { /* your DB connection */ }
+
+func (b *MyBackend) Init(conf interface{}) error                             { return nil }
+func (b *MyBackend) SetKey(key, orgID string, val interface{}) error         { /* write */ }
+func (b *MyBackend) GetKey(key, orgID string, val interface{}) error         { /* read */ }
+func (b *MyBackend) GetAll(orgID string) []interface{}                       { /* list */ }
+func (b *MyBackend) DeleteKey(key, orgID string) error                       { /* delete */ }
+```
+
+If you don't have a file or MongoDB source for profiles (e.g. your app manages them via the TIB management API or its own DB), use `data_loader.NoopDataLoader` — no file or MongoDB connection is needed.
+
+### Step 2 — Initialise the broker
+
+```go
+import (
+    "github.com/TykTechnologies/tyk-identity-broker/initializer"
+    tyk "github.com/TykTechnologies/tyk-identity-broker/tyk-api"
+)
+
+broker := initializer.New(initializer.EmbedConfig{
+    // Signs the OAuth session cookie. Use any stable secret from your config.
+    // Omit and set TYK_IB_SESSION_SECRET env var instead if you prefer.
+    SessionSecret: cfg.APISecret,
+
+    // Optional — injects your application's logrus logger.
+    Logger: myLogger,
+
+    // Profile storage — looked up by profile ID on every auth request.
+    ProfileStore: myProfileBackend,
+
+    // KV storage — OAuth session state + one-time nonce tokens.
+    KVStore: myKVBackend,
+
+    // Route TIB→Tyk API calls through your own router in-process.
+    // When nil, TIB makes real HTTP calls using GatewayConfig/DashboardConfig.
+    CustomDispatcher: func(target tyk.Endpoint, method, usercode string, body io.Reader) ([]byte, int, error) {
+        return myInternalRouter(target, method, body)
+    },
+})
+```
+
+### Step 3 — Register routes
+
+**gorilla/mux:**
+```go
+broker.RegisterRoutes(router)
+// Registers: /auth/{id}/{provider}
+//            /auth/{id}/{provider}/callback
+//            /auth/{id}/saml/metadata
+```
+
+**gin / echo / chi / any other router:**
+```go
+// Extract {id} and {provider} from the URL in your own router, then call:
+broker.HandleAuth(w, r, profileID, providerName)
+broker.HandleCallback(w, r, profileID)
+broker.HandleMetadata(w, r, profileID)  // SAML only
+```
+
+### Step 4 — Load a profile
+
+Profiles are `tap.Profile` objects stored via your `ProfileStore` backend. Here is a minimal example using a proxy (passthrough) provider that delegates auth to an upstream HTTP endpoint:
+
+```go
+profile := tap.Profile{
+    ID:           "my-sso",
+    OrgID:        "my-org",
+    ActionType:   tap.GenerateTemporaryAuthToken,
+    ProviderName: "ProxyProvider",
+    Type:         tap.PASSTHROUGH_PROVIDER,
+    ProviderConfig: map[string]interface{}{
+        "TargetHost":  "https://my-auth-service/validate",
+        "OKCode":      200,
+        "ResponseIsJson": true,
+        "UsernameField": "username",
+    },
+}
+// Store it in your ProfileStore under key = profile.ID, orgID = profile.OrgID
+```
+
+For OAuth2/OIDC social providers or SAML, use the profile formats documented in the [Using Identity Providers](#using-identity-providers) section — the profile structure is identical whether TIB runs standalone or embedded.
+
+### Backward compatibility
+
+All existing call sites in tyk-analytics (`SetLogger`, `SetConfigHandler`, `tothic.TothErrorHandler`, `tothic.Store`, `providers.GetTapProfile`) remain unchanged. The `initializer.New` API is purely additive.
+
+Run `go test ./compat/` after any change to TIB's public API to catch regressions in the embedding surface.
+
+---
 
 ## How to configure TIB
 

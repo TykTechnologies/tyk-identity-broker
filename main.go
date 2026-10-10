@@ -5,6 +5,7 @@ import (
 	"flag"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -43,10 +44,12 @@ func init() {
 	mainLogger.Info("Tyk Identity Broker ", Version)
 	mainLogger.Info("Copyright Tyk Technologies Ltd " + strconv.Itoa(time.Now().Year()))
 
+	flag.CommandLine.Init(os.Args[0], flag.ContinueOnError)
 	flag.StringVar(&confFile, "conf", "tib.conf", "Path to the config file")
 	flag.StringVar(&confFile, "c", "tib.conf", "Path to the config file")
 	flag.StringVar(&ProfileFilename, "p", "./profiles.json", "Path to the profiles file")
-	flag.Parse()
+	//flag.Parse()
+	_ = flag.CommandLine.Parse(os.Args[1:])
 
 	configuration.LoadConfig(confFile, &config)
 	AuthConfigStore, IdentityKeyStore = initializer.InitBackend(config.BackEnd.ProfileBackendSettings, config.BackEnd.IdentityBackendSettings)
