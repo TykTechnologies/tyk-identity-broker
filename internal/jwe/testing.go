@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 )
 
 func GenerateMockPrivateKey() (*tls.Certificate, error) {
