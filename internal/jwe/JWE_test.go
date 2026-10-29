@@ -2,6 +2,8 @@ package jwe
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/go-jose/go-jose/v4"
@@ -123,6 +125,17 @@ func TestHandler_Decrypt_Algorithms(t *testing.T) {
 		assert.NoError(t, err)
 
 		_, err = handler.Decrypt(token)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error parsing JWE")
+	})
+
+	t.Run("Unsupported content encryption", func(t *testing.T) {
+		token, err := CreateJWE([]byte("test token"), publicKey.(*rsa.PublicKey))
+		assert.NoError(t, err)
+		parts := strings.Split(token, ".")
+		parts[0] = base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RSA-OAEP-256","enc":"A999GCM"}`))
+
+		_, err = handler.Decrypt(strings.Join(parts, "."))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error parsing JWE")
 	})
