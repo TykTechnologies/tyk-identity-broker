@@ -2,8 +2,11 @@ package jwe
 
 import (
 	"crypto/rsa"
+	"encoding/base64"
+	"strings"
 	"testing"
 
+	"github.com/go-jose/go-jose/v4"
 	"github.com/markbates/goth/providers/openidConnect"
 
 	"github.com/stretchr/testify/assert"
@@ -83,6 +86,59 @@ func TestHandler_Decrypt(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test that every supported algorithm combination decrypts and unsupported ones are rejected
+func TestHandler_Decrypt_Algorithms(t *testing.T) {
+	mockCert, err := GenerateMockPrivateKey()
+	assert.NoError(t, err)
+
+	handler := &Handler{
+		Enabled: true,
+		Key:     mockCert,
+	}
+	publicKey := mockCert.PrivateKey.(*rsa.PrivateKey).Public()
+
+	for _, keyAlg := range keyAlgorithms {
+		for _, enc := range contentEncryptions {
+			t.Run(string(keyAlg)+"/"+string(enc), func(t *testing.T) {
+				encrypter, err := jose.NewEncrypter(enc, jose.Recipient{Algorithm: keyAlg, Key: publicKey}, nil)
+				assert.NoError(t, err)
+				object, err := encrypter.Encrypt([]byte("test token"))
+				assert.NoError(t, err)
+				token, err := object.CompactSerialize()
+				assert.NoError(t, err)
+
+				decrypted, err := handler.Decrypt(token)
+				assert.NoError(t, err)
+				assert.Equal(t, "test token", decrypted)
+			})
+		}
+	}
+
+	t.Run("Unsupported key algorithm", func(t *testing.T) {
+		encrypter, err := jose.NewEncrypter(jose.A128GCM, jose.Recipient{Algorithm: jose.A128KW, Key: make([]byte, 16)}, nil)
+		assert.NoError(t, err)
+		object, err := encrypter.Encrypt([]byte("test token"))
+		assert.NoError(t, err)
+		token, err := object.CompactSerialize()
+		assert.NoError(t, err)
+
+		_, err = handler.Decrypt(token)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error parsing JWE")
+	})
+
+	t.Run("Unsupported content encryption", func(t *testing.T) {
+		token, err := CreateJWE([]byte("test token"), publicKey.(*rsa.PublicKey))
+		assert.NoError(t, err)
+		parts := strings.Split(token, ".")
+		parts[0] = base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RSA-OAEP-256","enc":"A999GCM"}`))
+
+		_, err = handler.Decrypt(strings.Join(parts, "."))
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error parsing JWE")
+	})
 }
 
 func TestDecryptIDToken(t *testing.T) {
