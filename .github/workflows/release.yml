@@ -202,6 +202,7 @@ jobs:
           enforce: "false"
       - name: Publish packages
         if: startsWith(github.ref, 'refs/tags/')
+        timeout-minutes: 60
         env:
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
         run: |
@@ -215,7 +216,28 @@ jobs:
             exit 1
           fi
           cat /tmp/packages
-          xargs -P 4 -n 2 sh -c 'packagecloud publish --debvers "$DEBVERS" --rpmvers "$RPMVERS" "$0" "$1"' < /tmp/packages
+          xargs -P 4 -n 2 sh -c '
+            case "$1" in
+              *.deb) vers=$DEBVERS ;;
+              *.rpm) vers=$RPMVERS ;;
+              *) exec packagecloud publish --debvers "$DEBVERS" --rpmvers "$RPMVERS" "$0" "$1" ;;
+            esac
+            rc=0
+            for v in $vers; do
+              n=1
+              until packagecloud publish --debvers "$v" --rpmvers "$v" "$0" "$1"; do
+                if [ "$n" -ge 3 ]; then
+                  echo "Upload of $1 for $v failed after 3 attempts" >&2
+                  rc=1
+                  break
+                fi
+                echo "Upload of $1 for $v failed (attempt $n of 3), retrying in $((n * 15))s" >&2
+                sleep $((n * 15))
+                n=$((n + 1))
+              done
+            done
+            exit $rc
+          ' < /tmp/packages
           EOF
           chmod +x /tmp/publish.sh
           docker run --rm \
