@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -70,7 +71,8 @@ func HandleAPIError(tag string, errorMsg string, rawErr error, code int, w http.
 // ------ Middleware methods -------
 func IsAuthenticated(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != config.Secret {
+		provided := r.Header.Get("Authorization")
+		if config.Secret == "" || subtle.ConstantTimeCompare([]byte(provided), []byte(config.Secret)) != 1 {
 			HandleAPIError(APILogTag, "Authorization failed", errors.New("Header mismatch"), 401, w, r)
 			return
 		}
